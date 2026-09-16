@@ -1,289 +1,552 @@
 """
 pages_content/entry_timing.py
--------------------------
-หน้า "Entry Timing" ของ CIS Dashboard
+--------------------------------------------------------------------
+Institutional Grade UI - Bloomberg / TradingView Inspired
+IKB v3.1 (Single-source-of-truth signal classification)
 
-วิธีทดสอบหน้านี้แบบเดี่ยว (ไม่ต้องรอทีมคนอื่น):
-    streamlit run preview_my_page.py
-    (แล้วเลือกโมดูลนี้จาก dropdown ในไฟล์ preview_my_page.py)
-
-ข้อมูลที่ใช้ได้ใน ctx (ดูนิยามเต็มใน common.py -> class PageContext):
-    ctx.selected_ticker, ctx.stock_info, ctx.stock_daily, ctx.fin_stock, ctx.sector_peers,
-    ctx.scores_df, ctx.fin_df, ctx.feat_imp_df, ctx.backtest_df, ctx.risk_hist_df,
-    ctx.health_yearly_df, ctx.fair_value_yearly_df,
-    ctx.current_price, ctx.change_pct, ctx.change_val, ctx.change_color, ctx.change_sign, ctx.arrow_sign
-
-ห้ามแก้ CSS ส่วนกลางหรือ helper function ใน common.py จากไฟล์นี้ — ถ้าจำเป็นต้องแก้ ให้แจ้ง Layout Lead ก่อน
+Changelog vs v3.0:
+- FIX: reads 'trend_available_count' / 'mom_available_count' (matches
+  the backend's actual key names). Previously read 'trend_avail_count' /
+  'mom_avail_count', which never existed, so every PASS badge showed
+  "+0.0 pts" instead of its real point value.
+- FIX: status_label / status_color / action_th / readiness now come
+  from calculate_modules.entry_timing.classify_signal(total_score)
+  instead of a second, hand-duplicated threshold block that had
+  drifted out of sync with the backend's copy (e.g. different BEARISH
+  action text).
+- FIX: Risk/Reward is now a 7th item in the SIGNAL CHECKLIST, matching
+  the fact that it contributes 30/100 to the score. total_checks is
+  now 7, and the confidence dots loop over total_checks instead of a
+  hardcoded 7 (which previously left one dot permanently gray).
+- FIX: "TOTAL SCORE" row in the checklist card renamed to
+  "CHECKS PASSED" to avoid it being read as the 0-100 composite score.
+- Cleanup: dropped the redundant `unsafe_allow_html=True` kwargs on
+  calls to `_render_html`, since the function always renders as HTML.
 """
-import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
 
-from common import fmt_mb, fmt_ratio, safe, show_chart, render_nav_footer, COMPANY_NAMES, SECTOR_MAP
+import html
+import re
+import textwrap
+
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import streamlit as st
+
+from common import safe, render_nav_footer
+from calculate_modules.entry_timing import classify_signal
+
+# --------------------------------------------------------------------
+# Design tokens
+# --------------------------------------------------------------------
+BG_PAGE = "#0B1120"
+BG_CARD = "#0F172A"
+BG_CARD_2 = "#111C30"
+BG_CHIP = "#1E293B"
+BORDER = "#334155"
+BORDER_SOFT = "#1E293B"
+TEXT_MUTED = "#94A3B8"
+TEXT = "#E2E8F0"
+TEXT_WHITE = "#FFFFFF"
+ACCENT = "#38BDF8"
+GREEN = "#10B981"
+RED = "#EF4444"
+AMBER = "#F59E0B"
+
+
+def _badge(ok, available):
+    if not available:
+        return "N/A", TEXT_MUTED, "148,163,184"
+    if ok:
+        return "PASS", GREEN, "16,185,129"
+    return "FAIL", RED, "239,68,68"
+
+
+def _card_style(extra=""):
+    return (
+        f"background:{BG_CARD};"
+        f"border:1px solid {BORDER};"
+        "border-radius:10px;"
+        "padding:16px;"
+        f"{extra}"
+    )
+
+
+def _render_html(markup):
+    clean = textwrap.dedent(markup)
+    clean = re.sub(r"\s*\n\s*", " ", clean).strip()
+    st.markdown(clean, unsafe_allow_html=True)
+
+
+def _metric_card(label, value, sub="", value_color=TEXT_WHITE, is_summary=False):
+    content_style = (
+        "font-size:11px;font-weight:700;color:#E2E8F0;margin-top:4px;"
+        "overflow:hidden;text-overflow:ellipsis;display:-webkit-box;"
+        "-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35;"
+        if is_summary else
+        f"font-size:17px;font-weight:900;color:{value_color};margin-top:4px;"
+        "white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+    )
+    return f"""
+    <div style="{_card_style('height:100%;box-sizing:border-box;')}">
+        <div style="font-size:10px;font-weight:800;color:{TEXT_MUTED};letter-spacing:.5px;">{label}</div>
+        <div style="{content_style}">{value}</div>
+        <div style="font-size:10px;color:{TEXT_MUTED};margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            {sub}
+        </div>
+    </div>
+    """
 
 
 def render(ctx):
-    st.markdown("""<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
-    <div><div style="display:flex; align-items:center; gap:8px;"><h2 style="margin:0; font-size:23px; font-weight:bold; color:#F8FAFC; letter-spacing:0.5px;">ENTRY TIMING ANALYSIS</h2></div>
-    <div style="font-size:15px; color:#94A3B8; margin-top:2px;">วิเคราะห์จังหวะเข้าลงทุนด้วย Technical Indicators จริงจากราคาปิดรายวัน</div></div>
-    </div>""", unsafe_allow_html=True)
+    info = ctx.stock_info
+    c_p = float(ctx.current_price)
+    ticker_safe = html.escape(str(ctx.selected_ticker))
 
-    timing_score = safe(ctx.stock_info.get('timing_score'), 50)
-    trend_signal = ctx.stock_info.get('trend_signal', 'NEUTRAL')
-    sig_color = "#10B981" if trend_signal == "BULLISH" else ("#EF4444" if trend_signal == "BEARISH" else "#F59E0B")
-    sig_icon = "🐂" if trend_signal == "BULLISH" else ("🐻" if trend_signal == "BEARISH" else "⚖️")
-    suggested_action = "Wait for Pullback" if trend_signal == "BULLISH" else ("Avoid / Wait for Reversal" if trend_signal == "BEARISH" else "Watch & Wait")
+    adx_val = float(safe(info.get("adx"), 0.0))
 
-    r1_c1, r1_c2, r1_c3, r1_c4 = st.columns([1.1, 2.5, 0.9, 0.95])
+    r1 = float(safe(info.get("resistance_60d"), c_p * 1.05))
+    r2 = float(safe(info.get("resistance_2"), r1 * 1.05))
+    s1 = float(safe(info.get("support_60d"), c_p * 0.95))
+    s2 = float(safe(info.get("support_2"), s1 * 0.95))
+    pp = float(safe(info.get("pivot_point"), round((r1 + s1 + c_p) / 3, 2)))
 
-    with r1_c1:
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:16px; min-height:495px; display:flex; flex-direction:column; justify-content:space-between; text-align:center;">
-    <div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px; text-align:left;">OVERALL ENTRY SIGNAL</div>
-    <div style="margin:auto 0;">
-    <div style="margin:0 auto; width:150px;"><svg viewBox="0 0 100 58" style="width:140px; height:89px; display:block; margin:0 auto;">
-    <path d="M 12 50 A 38 38 0 0 1 88 50" fill="none" stroke="#1E293B" stroke-width="10" stroke-linecap="round" />
-    <path d="M 12 50 A 38 38 0 0 1 88 50" fill="none" stroke="{sig_color}" stroke-width="10" stroke-linecap="round" stroke-dasharray="{round(119.38*min(1,timing_score/100),2)} 119.38" />
-    <text x="50" y="44" text-anchor="middle" font-size="25" fill="{sig_color}">{sig_icon}</text></svg></div>
-    <div style="font-size:19px; font-weight:bold; color:{sig_color}; margin-top:4px;">{trend_signal}</div>
-    <div style="font-size:14px; color:#CBD5E1;">Score {timing_score:.0f}/100</div></div>
-    <div style="background-color:#151E2F; border:1px solid #1E293B; border-radius:8px; padding:10px 12px; margin-bottom:10px;">
-    <div style="font-size:12.5px; color:{sig_color}; font-weight:bold;">SUGGESTED ACTION</div>
-    <div style="font-size:16.5px; font-weight:bold; color:#FFFFFF; margin-top:2px;">{suggested_action}</div></div>
-    <div><div style="display:flex; justify-content:space-between; font-size:13px; color:#94A3B8; margin-bottom:4px;"><span>SIGNAL STRENGTH</span><span style="font-weight:bold; color:#CBD5E1;">{'High' if timing_score>=65 or timing_score<35 else 'Medium'}</span></div>
-    <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:15px; font-weight:bold; color:#FFFFFF;">{timing_score:.0f}<span style="font-size:12.5px; color:#64748B;">/100</span></span>
-    <div style="background:#1E293B; height:10px; flex-grow:1; border-radius:5px; overflow:hidden;"><div style="background:{sig_color}; width:{timing_score:.0f}%; height:100%;"></div></div></div></div>
-    </div>""", unsafe_allow_html=True)
+    total_score = float(safe(info.get("timing_score"), 50.0))
 
-    with r1_c2:
-        st.markdown("""
-        <style>
-        section.main div[data-testid="stRadio"] > div { display: flex; justify-content: flex-end; gap: 4px; flex-wrap: nowrap; background: transparent; margin-bottom: 2px; }
-        section.main div[data-testid="stRadio"] label { background-color: #151E2F !important; border: 1px solid #1E293B !important; border-radius: 6px !important; padding: 4px 10px !important; margin: 0 !important; cursor: pointer !important; }
-        section.main div[data-testid="stRadio"] label > div:first-child { display: none !important; }
-        section.main div[data-testid="stRadio"] label div[data-testid="stMarkdownContainer"] p { font-size: 10px !important; color: #94A3B8 !important; font-weight: 600 !important; margin: 0 !important; }
-        section.main div[data-testid="stRadio"] label:has(input:checked) { background-color: #2563EB !important; border-color: #2563EB !important; }
-        section.main div[data-testid="stRadio"] label:has(input:checked) div[data-testid="stMarkdownContainer"] p { color: #FFFFFF !important; font-weight: bold !important; }
-        </style>
-        """, unsafe_allow_html=True)
+    # Single source of truth: classify_signal() lives in the backend module.
+    # Do not re-derive status_label/status_color/action_th/readiness here —
+    # that duplication is what caused the UI and backend to drift apart before.
+    sig = classify_signal(total_score)
+    status_label = sig["status_label"]
+    status_color = sig["status_color"]
+    action_th = sig["action_th"]
+    readiness = sig["readiness"]
 
-        head_c1, head_c2 = st.columns([1, 2.2])
-        with head_c1:
-            st.markdown("""<div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px; padding-top:4px;">PRICE CHART (Actual OHLC)</div>""", unsafe_allow_html=True)
-        with head_c2:
-            tf_selected = st.radio("Timeframe", ["1M", "3M", "6M", "1Y", "2Y", "ALL"], index=2, horizontal=True, label_visibility="collapsed", key="timing_timeframe_selector")
+    price_chg_pct = float(safe(info.get("price_change_pct"), 0.0))
+    pe_ratio = safe(info.get("pe_ratio"), None)
+    roe_pct = safe(info.get("roe_pct"), None)
+    data_as_of = str(safe(info.get("data_as_of"), "-"))
+    sector_label = str(safe(info.get("sector_label"), ""))
+
+    k15_ok = bool(info.get("k15_ok", False))
+    k16_ok = bool(info.get("k16_ok", False))
+    k17_ok = bool(info.get("k17_ok", False))
+    k18_ok = bool(info.get("k18_ok", False))
+    k19_ok = bool(info.get("k19_ok", False))
+    k20_ok = bool(info.get("k20_ok", False))
+    k_rr_ok = bool(info.get("k_rr_ok", False))
+
+    k15_av = bool(info.get("k15_available", False))
+    k16_av = bool(info.get("k16_available", False))
+    k17_av = bool(info.get("k17_available", False))
+    k18_av = bool(info.get("k18_available", False))
+    k19_av = bool(info.get("k19_available", False))
+    k20_av = bool(info.get("k20_available", False))
+
+    # FIX: these key names must match calculate_timing_module()'s output
+    # exactly ('trend_available_count' / 'mom_available_count'), or every
+    # pillar_pts_label() call below silently divides by zero-available and
+    # shows "+0.0 pts" for everything.
+    trend_avail_count = int(safe(info.get("trend_available_count"), 0))
+    mom_avail_count = int(safe(info.get("mom_available_count"), 0))
+
+    rr_ratio = float(safe(info.get("rr_ratio"), 0.0))
+    rr_score = float(safe(info.get("rr_score"), 0.0))
+    downside_pct = float(safe(info.get("downside_pct"), 0.0))
+    upside_pct = float(safe(info.get("upside_pct"), 0.0))
+
+    vol_series = next(
+        (
+            ctx.stock_daily[v]
+            for v in ["volume", "Volume", "vol", "Vol"]
+            if v in ctx.stock_daily.columns
+        ),
+        None,
+    )
+
+    def pillar_pts_label(ok, available, n_available, pillar_max):
+        if not available:
+            return "N/A"
+        share = pillar_max / n_available if n_available > 0 else 0
+        return f"+{share:.1f} pts" if ok else "0.0 pts"
+
+    # 7 items total: 3 Trend + 3 Momentum + 1 Risk/Reward, matching the
+    # 40/30/30 pillar weighting used by the scoring backend.
+    checklist = [
+        (k15_ok, k15_av, "Short-Term Trend",
+         "ราคายืนเหนือเส้น EMA20" if k15_ok else "ราคาต่ำกว่าเส้น EMA20",
+         pillar_pts_label(k15_ok, k15_av, trend_avail_count, 40.0)),
+        (k16_ok, k16_av, "Medium-Term Trend",
+         "EMA20 อยู่เหนือ EMA50" if k16_ok else "EMA20 ยังไม่ตัดขึ้นเหนือ EMA50",
+         pillar_pts_label(k16_ok, k16_av, trend_avail_count, 40.0)),
+        (k17_ok, k17_av, "Long-Term Trend",
+         "ราคายืนเหนือเส้น MA200" if k17_ok else "ราคายังอยู่ต่ำกว่า MA200",
+         pillar_pts_label(k17_ok, k17_av, trend_avail_count, 40.0)),
+        (k18_ok, k18_av, "Momentum (MACD)",
+         "MACD อยู่ในโซนบวก" if k18_ok else "MACD อยู่ในโซนลบ",
+         pillar_pts_label(k18_ok, k18_av, mom_avail_count, 30.0)),
+        (k19_ok, k19_av, "Trend Strength (ADX)",
+         f"ADX {adx_val:.1f} (มีแรงเหวี่ยงดี)" if k19_ok else f"ADX {adx_val:.1f} (ต่ำกว่าเกณฑ์)",
+         pillar_pts_label(k19_ok, k19_av, mom_avail_count, 30.0)),
+        (k20_ok, k20_av, "Volume Confirmation",
+         "วอลุ่มล่าสุดสูงกว่าค่าเฉลี่ย" if k20_ok else "วอลุ่มเบาบางกว่าค่าเฉลี่ย",
+         pillar_pts_label(k20_ok, k20_av, mom_avail_count, 30.0)),
+        (k_rr_ok, True, "Risk / Reward",
+         f"RR {rr_ratio:.2f} : 1 ผ่านเกณฑ์ขั้นต่ำ" if k_rr_ok else f"RR {rr_ratio:.2f} : 1 ต่ำกว่าเกณฑ์ขั้นต่ำ",
+         f"+{rr_score:.1f} pts" if k_rr_ok else "0.0 pts"),
+    ]
+
+    bullish_count = sum(1 for ok, av, *_ in checklist if ok and av)
+    total_checks = len(checklist)
+    failed_items = [name for ok, av, name, _, _ in checklist if not ok and av]
+
+    if bullish_count >= 6:
+        summary_text = f"สัญญาณพร้อมสูง ({bullish_count}/{total_checks}) โครงสร้างราคาและโมเมนตัมสนับสนุนการเข้าสะสม"
+    elif len(failed_items) <= 2:
+        missing_str = ", ".join(failed_items)
+        summary_text = f"ผ่าน {bullish_count}/{total_checks} เกณฑ์ --- <b>รอการยืนยันจาก: {missing_str}</b>"
+    else:
+        summary_text = f"ผ่าน {bullish_count}/{total_checks} เกณฑ์ --- <b>สัญญาณยังไม่ครบถ้วน ควรงดเข้าซื้อ</b>"
+
+    chg_color = GREEN if price_chg_pct >= 0 else RED
+    chg_arrow = "▲" if price_chg_pct >= 0 else "▼"
+
+    pe_html = (
+        f'<div><span style="color:{TEXT_MUTED};">P/E:</span> <b style="color:{TEXT_WHITE};">{pe_ratio}x</b></div>'
+        if pe_ratio not in (None, "") else ""
+    )
+    roe_html = (
+        f'<div><span style="color:{TEXT_MUTED};">ROE:</span> <b style="color:{TEXT_WHITE};">{roe_pct}%</b></div>'
+        if roe_pct not in (None, "") else ""
+    )
+
+    # --- TOP HEADER BAR ---
+    _render_html(
+        f"""
+        <div style="{_card_style('display:flex;justify-content:space-between;align-items:center;padding:12px 20px;margin-bottom:12px;')}">
+            <div style="font-size:18px;font-weight:900;color:{TEXT_WHITE};letter-spacing:.5px;">
+                {ticker_safe} <span style="font-size:11.5px;font-weight:500;color:{TEXT_MUTED};">{sector_label}</span>
+            </div>
+            <div style="display:flex;gap:20px;font-size:11.5px;align-items:center;">
+                <div>
+                    <span style="color:{TEXT_MUTED};">Price:</span>
+                    <b style="color:{TEXT_WHITE};font-size:14px;">{c_p:.2f} THB</b>
+                    <span style="color:{chg_color};font-weight:700;">({price_chg_pct:+.2f}%) {chg_arrow}</span>
+                </div>
+                {pe_html} {roe_html}
+                <div>
+                    <span style="color:{TEXT_MUTED};">Data as of:</span>
+                    <b style="color:{ACCENT};">{data_as_of}</b>
+                </div>
+            </div>
+        </div>
+        """
+    )
+
+    readiness_color = GREEN if readiness == "READY" else AMBER
+    confidence_dots = "".join([
+        f'<span style="height:7px; width:7px; background-color:{"#10B981" if i < bullish_count else "#334155"}; '
+        f'border-radius:50%; display:inline-block; margin-right:3px;"></span>'
+        for i in range(total_checks)
+    ])
+
+    kpi_html = f"""
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1.6fr;gap:10px;margin-bottom:12px;">
+        {_metric_card("MARKET TREND", status_label, action_th, status_color)}
+        {_metric_card("ENTRY READINESS", readiness, "รอการยืนยันสัญญาณเพิ่มเติม", readiness_color)}
+        <div style="{_card_style()}">
+            <div style="font-size:10px;font-weight:800;color:{TEXT_MUTED};letter-spacing:.5px;">CONFIDENCE</div>
+            <div style="font-size:17px;font-weight:900;color:{TEXT_WHITE};margin-top:4px;">{bullish_count} / {total_checks}</div>
+            <div style="margin-top:4px;">{confidence_dots}</div>
+        </div>
+        {_metric_card("ℹ️ สรุปสั้น ๆ", summary_text, "ภาพรวมสถานะการลงทุนเชิงปริมาณ", TEXT, is_summary=True)}
+    </div>
+    """
+    _render_html(kpi_html)
+
+    # ปรับสัดส่วนคอลัมน์ให้สมมาตรและพอดีกับจอภาพแบบ Institutional Grade
+    left, center, right = st.columns([1.0, 2.3, 1.15], gap="medium")
+
+    with left:
+        total_arc = 125.66
+        score_fill = round(total_arc * min(1.0, max(0.0, total_score / 100.0)), 2)
+
+        _render_html(
+            f"""
+            <div style="{_card_style('margin-bottom:12px;')}">
+                <div style="border-bottom:2px solid {ACCENT};padding-bottom:5px;font-size:12px;font-weight:800;color:{TEXT_WHITE};">
+                    ⏱️ ENTRY TIMING ANALYSIS
+                </div>
+                <div style="text-align:center;margin-top:8px;">
+                    <svg viewBox="0 0 100 55" style="width:120px;height:66px;display:block;margin:0 auto;">
+                        <path d="M 10 48 A 38 38 0 0 1 90 48" fill="none" stroke="#1E293B" stroke-width="7" stroke-linecap="round"/>
+                        <path d="M 10 48 A 38 38 0 0 1 90 48" fill="none" stroke="{status_color}" stroke-width="7"
+                              stroke-linecap="round" stroke-dasharray="{score_fill} {total_arc}"/>
+                        <text x="50" y="33" text-anchor="middle" font-size="18" font-weight="900" fill="{TEXT_WHITE}">{total_score:.0f}</text>
+                        <text x="50" y="43" text-anchor="middle" font-size="7" font-weight="700" fill="{TEXT_MUTED}">/ 100</text>
+                    </svg>
+                    <div style="font-size:14px;font-weight:900;color:{status_color};margin-top:2px;">{status_label}</div>
+                    <div style="font-size:9.5px;color:{TEXT_MUTED};">{action_th}</div>
+                </div>
+                <div style="border-top:1px solid {BORDER_SOFT};margin-top:8px;padding-top:5px;display:flex;justify-content:space-between;font-size:10px;font-weight:800;">
+                    <span style="color:{TEXT_WHITE};">CONFLUENCE</span>
+                    <span style="color:{status_color};">{bullish_count} / {total_checks} ผ่าน</span>
+                </div>
+            </div>
+            """
+        )
+
+        checklist_items = []
+        for ok, av, label, sub, points in checklist:
+            badge_label, badge_color, badge_bg = _badge(ok, av)
+            icon = "✓" if ok and av else ("✕" if av else "--")
+            checklist_items.append(
+                f"""
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};">
+                    <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                        <div style="background:rgba({badge_bg},.15);color:{badge_color};width:16px;height:16px;border-radius:50%;
+                                    display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:bold;flex-shrink:0;">{icon}</div>
+                        <div style="min-width:0;">
+                            <div style="font-size:10px;color:{TEXT_WHITE};font-weight:700;">{label}</div>
+                            <div style="font-size:8.5px;color:{TEXT_MUTED};">{sub}</div>
+                        </div>
+                    </div>
+                    <span style="background:rgba({badge_bg},.15);color:{badge_color};font-size:9px;font-weight:800;
+                                 padding:2px 5px;border-radius:4px;white-space:nowrap;margin-left:5px;">{badge_label}</span>
+                </div>
+                """
+            )
+
+        _render_html(
+            f"""
+            <div style="{_card_style()}">
+                <div style="font-size:11.5px;font-weight:800;color:{TEXT_WHITE};margin-bottom:6px;border-bottom:2px solid {ACCENT};
+                            padding-bottom:4px;display:flex;justify-content:space-between;">
+                    <span>🛡️ SIGNAL CHECKLIST</span>
+                    <span style="color:{status_color};">{bullish_count} / {total_checks} ผ่าน</span>
+                </div>
+                {''.join(checklist_items)}
+                <div style="margin-top:8px;font-size:11.5px;font-weight:900;color:{status_color};display:flex;justify-content:space-between;">
+                    <span>CHECKS PASSED</span><span>{bullish_count} / {total_checks}</span>
+                </div>
+            </div>
+            """
+        )
+
+    with center:
+        c_head1, c_head2 = st.columns([1, 1.5])
+        with c_head1:
+            _render_html(
+                f'<div style="font-size:12px;font-weight:800;color:{TEXT_WHITE};padding-top:4px;">PRICE ACTION &amp; VOLUME</div>'
+            )
+        with c_head2:
+            tf_selected = st.radio(
+                "TF", ["1M", "3M", "6M", "1Y", "2Y", "ALL"], index=2,
+                horizontal=True, label_visibility="collapsed", key="timing_tf_sel",
+            )
 
         tf_bars = {"1M": 22, "3M": 66, "6M": 132, "1Y": 252, "2Y": 504, "ALL": len(ctx.stock_daily)}
         n_bars = min(tf_bars.get(tf_selected, 132), len(ctx.stock_daily))
         chart_df = ctx.stock_daily.tail(n_bars).copy()
-        chart_df['SMA100'] = ctx.stock_daily['close'].rolling(100, min_periods=1).mean().tail(n_bars).values
 
-        fig_main = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.03, row_heights=[0.78, 0.22])
-        fig_main.add_trace(go.Candlestick(
-            x=chart_df['date'], open=chart_df['open'], high=chart_df['high'], low=chart_df['low'], close=chart_df['close'],
-            name='Price', increasing_line_color='#10B981', increasing_fillcolor='#10B981',
-            decreasing_line_color='#EF4444', decreasing_fillcolor='#EF4444', whiskerwidth=0.7, line=dict(width=1.2)
-        ), row=1, col=1)
-        fig_main.add_trace(go.Scatter(x=chart_df['date'], y=chart_df['EMA20'], line=dict(color='#F59E0B', width=1.4), name='EMA 20'), row=1, col=1)
-        fig_main.add_trace(go.Scatter(x=chart_df['date'], y=chart_df['EMA50'], line=dict(color='#38BDF8', width=1.4), name='EMA 50'), row=1, col=1)
-        fig_main.add_trace(go.Scatter(x=chart_df['date'], y=chart_df['SMA100'], line=dict(color='#A855F7', width=1.4), name='SMA 100'), row=1, col=1)
+        aliases = {"Close": "close", "Open": "open", "High": "high", "Low": "low", "Date": "date"}
+        for source, target in aliases.items():
+            if source in chart_df.columns and target not in chart_df.columns:
+                chart_df[target] = chart_df[source]
 
-        bar_colors = ['#10B981' if c >= o else '#EF4444' for c, o in zip(chart_df['close'], chart_df['open'])]
-        vol_col = chart_df['volume'] if 'volume' in chart_df.columns else pd.Series([0] * len(chart_df))
-        fig_main.add_trace(go.Bar(x=chart_df['date'], y=vol_col, marker_color=bar_colors, name='Volume', showlegend=False), row=2, col=1)
+        required = {"close", "open", "high", "low", "date"}
+        if not required.issubset(chart_df.columns):
+            st.error("ไม่พบข้อมูล OHLC/Date ที่จำเป็นสำหรับกราฟ")
+        else:
+            fig_main = make_subplots(
+                rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.03, row_heights=[0.78, 0.22]
+            )
+            fig_main.add_trace(
+                go.Candlestick(
+                    x=chart_df["date"], open=chart_df["open"], high=chart_df["high"],
+                    low=chart_df["low"], close=chart_df["close"], name="Price",
+                    increasing_line_color=GREEN, decreasing_line_color=RED, line=dict(width=1),
+                ),
+                row=1, col=1,
+            )
+            if "EMA20" in chart_df.columns:
+                fig_main.add_trace(
+                    go.Scatter(x=chart_df["date"], y=chart_df["EMA20"], line=dict(color=AMBER, width=1.2), name="EMA 20"),
+                    row=1, col=1,
+                )
+            if "EMA50" in chart_df.columns:
+                fig_main.add_trace(
+                    go.Scatter(x=chart_df["date"], y=chart_df["EMA50"], line=dict(color=ACCENT, width=1.2), name="EMA 50"),
+                    row=1, col=1,
+                )
+            if "MA200" in chart_df.columns:
+                fig_main.add_trace(
+                    go.Scatter(x=chart_df["date"], y=chart_df["MA200"], line=dict(color="#A78BFA", width=1.2), name="MA 200"),
+                    row=1, col=1,
+                )
 
-        fig_main.add_annotation(xref="paper", yref="y1", x=1.0, y=ctx.current_price, text=f"<b>{ctx.current_price:.2f}</b>", showarrow=True,
-                                 arrowhead=0, arrowwidth=1.5, arrowcolor=ctx.change_color, ax=44, ay=0, font=dict(size=12.5, color="#FFFFFF"),
-                                 bgcolor=ctx.change_color, bordercolor=ctx.change_color, borderwidth=1, borderpad=3)
+            bar_colors = [GREEN if c >= o else RED for c, o in zip(chart_df["close"], chart_df["open"])]
+            vol_data = vol_series.tail(n_bars) if vol_series is not None else pd.Series(
+                np.zeros(len(chart_df)), index=chart_df.index
+            )
+            fig_main.add_trace(
+                go.Bar(x=chart_df["date"], y=vol_data, marker_color=bar_colors, showlegend=False),
+                row=2, col=1,
+            )
 
-        fig_main.update_layout(
-            height=395, margin=dict(l=10, r=52, t=8, b=8), paper_bgcolor="#0F172A", plot_bgcolor="#0F172A",
-            xaxis=dict(gridcolor="#1E293B", showticklabels=False, zeroline=False),
-            xaxis2=dict(gridcolor="#1E293B", tickfont=dict(size=11.5, color="#64748B"), nticks=7, zeroline=False),
-            yaxis=dict(gridcolor="#1E293B", tickfont=dict(size=11.5, color="#64748B"), side='right', zeroline=False),
-            yaxis2=dict(gridcolor="#1E293B", showticklabels=False, zeroline=False),
-            legend=dict(orientation="h", yanchor="bottom", y=1.01, xanchor="left", x=0.01, font=dict(size=12, color="#CBD5E1")),
-            xaxis_rangeslider_visible=False
+            lines_to_plot = [
+                (r2, "dot", "#F87171", 1.0),
+                (r1, "dash", RED, 1.2),
+                (pp, "dash", "#FFFFFF", 1.2),
+                (s1, "dash", GREEN, 1.2),
+                (s2, "dash", RED, 1.2),
+            ]
+            for val, dash_type, col_hex, w in lines_to_plot:
+                fig_main.add_hline(y=val, line_dash=dash_type, line_color=col_hex, line_width=w)
+
+            # ขยายความสูงของกราฟให้เติมเต็มพื้นที่ฝั่งขวาพอดี (height=525)
+            fig_main.update_layout(
+                height=525, margin=dict(l=8, r=40, t=25, b=5),
+                paper_bgcolor=BG_CARD, plot_bgcolor=BG_CARD,
+                xaxis=dict(gridcolor=BORDER_SOFT, showticklabels=False),
+                xaxis2=dict(gridcolor=BORDER_SOFT, tickfont=dict(size=10, color=TEXT_MUTED)),
+                yaxis=dict(gridcolor=BORDER_SOFT, side="right", tickfont=dict(size=10, color=TEXT_MUTED)),
+                yaxis2=dict(showticklabels=False),
+                legend=dict(orientation="h", y=1.12, x=0.01, font=dict(size=10, color=TEXT_WHITE), bgcolor="rgba(0,0,0,0)"),
+                xaxis_rangeslider_visible=False, hovermode="x unified",
+            )
+            st.plotly_chart(fig_main, use_container_width=True, config={"displayModeBar": True, "displaylogo": False})
+
+        with right:
+            _render_html(
+                f"""
+                <div style="{_card_style('margin-bottom:12px;')}">
+                    <div style="border-bottom:2px solid {ACCENT};padding-bottom:5px;display:flex;justify-content:space-between;
+                                align-items:center;flex-wrap:wrap;row-gap:4px;">
+                        <span style="font-size:12px;font-weight:800;color:{TEXT_WHITE};">PRICE SETUP</span>
+                        <span style="background:rgba(56,189,248,.15);color:{ACCENT};font-size:9.5px;font-weight:800;
+                                     padding:2px 6px;border-radius:4px;">Current {c_p:.2f}</span>
+                    </div>
+                    <div style="margin-top:8px;">
+                        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:11px;">
+                            <span style="color:{TEXT_MUTED};">Current Price</span><b style="color:{TEXT_WHITE};">{c_p:.2f} THB</b>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:11px;">
+                            <span style="color:{GREEN};">Preferred Entry</span><b style="color:{GREEN};">{s1:.2f} -- {pp:.2f}</b>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:11px;">
+                            <span style="color:{AMBER};">Watch Zone</span><b style="color:{AMBER};">{pp:.2f} -- {r1:.2f}</b>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:11px;">
+                            <span style="color:{RED};">Stop Loss</span><b style="color:{RED};">&lt; {s2:.2f}</b>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:11px;">
+                            <span style="color:{TEXT_WHITE};">Target 1</span><b style="color:{TEXT_WHITE};">{r1:.2f}</b>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:11px;">
+                            <span style="color:{TEXT_WHITE};">Target 2</span><b style="color:{TEXT_WHITE};">{r2:.2f}</b>
+                        </div>
+                    </div>
+                </div>
+                """
+            )
+
+            _render_html(
+                f"""
+                <div style="{_card_style()}">
+                    <div style="font-size:11.5px;font-weight:800;color:{TEXT_WHITE};margin-bottom:6px;border-bottom:2px solid {ACCENT};padding-bottom:4px;">
+                        ℹ️ SYSTEM SCORING METHODOLOGY
+                    </div>
+                    <div style="font-size:10.5px;color:{TEXT_MUTED};line-height:1.45;">
+                        <b style="color:{TEXT_WHITE};">Trend --- 40 pts</b><br>ราคาเทียบ EMA20, EMA50 และ MA200<br><br>
+                        <b style="color:{TEXT_WHITE};">Momentum --- 30 pts</b><br>MACD, ADX และ Volume Confirmation<br><br>
+                        <b style="color:{TEXT_WHITE};">Reward / Risk --- 30 pts</b><br>ประเมินจากผลตอบแทนเทียบกับ downside
+                    </div>
+                </div>
+                """
+            )
+
+    # ==============================================================
+    # BOTTOM SECTION
+    # ==============================================================
+    st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
+    b_c1, b_c2 = st.columns([1.0, 1.5], gap="medium")
+
+    with b_c1:
+        rr_color = GREEN if rr_ratio >= 2.0 else (AMBER if rr_ratio >= 1.5 else RED)
+        upside_bar = min(100, max(0, upside_pct * 2))
+        downside_bar = min(100, max(0, downside_pct * 5))
+
+        _render_html(
+            f"""
+            <div style="{_card_style()}">
+                <div style="font-size:12px;font-weight:800;color:{TEXT_WHITE};margin-bottom:8px;border-bottom:2px solid {ACCENT};padding-bottom:4px;">
+                    RISK / REWARD
+                </div>
+                <div style="margin-bottom:6px;">
+                    <div style="display:flex;justify-content:space-between;font-size:10.5px;color:{TEXT_MUTED};">
+                        <span>Expected Upside</span><b style="color:{GREEN};">+{upside_pct:.1f}%</b>
+                    </div>
+                    <div style="background:{BORDER_SOFT};height:5px;border-radius:2.5px;overflow:hidden;margin-top:2px;">
+                        <div style="background:{GREEN};width:{upside_bar:.0f}%;height:100%;"></div>
+                    </div>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <div style="display:flex;justify-content:space-between;font-size:10.5px;color:{TEXT_MUTED};">
+                        <span>Maximum Risk</span><b style="color:{RED};">-{downside_pct:.1f}%</b>
+                    </div>
+                    <div style="background:{BORDER_SOFT};height:5px;border-radius:2.5px;overflow:hidden;margin-top:2px;">
+                        <div style="background:{RED};width:{downside_bar:.0f}%;height:100%;"></div>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid {BORDER_SOFT};padding-top:6px;">
+                    <span style="font-size:15px;font-weight:900;color:{rr_color};">{rr_ratio:.2f} : 1</span>
+                    <span style="font-size:9.5px;color:{TEXT_MUTED};text-align:right;">Potential upside is significantly<br>higher than defined downside.</span>
+                </div>
+            </div>
+            """
         )
-        show_chart(fig_main, key="entry_timing_candles", expand_height=750)
 
-    with r1_c3:
-        r1_val = safe(ctx.stock_info.get('resistance_60d'), ctx.current_price * 1.05)
-        s1_val = safe(ctx.stock_info.get('support_60d'), ctx.current_price * 0.95)
-        w20 = ctx.stock_daily.tail(20)
-        w120 = ctx.stock_daily.tail(120)
-        r2_val = round(float(w20['high'].max()), 2) if not w20.empty else r1_val
-        r3_val = round(float(w120['high'].max()), 2) if not w120.empty else r1_val * 1.02
-        s2_val = round(float(w20['low'].min()), 2) if not w20.empty else s1_val
-        s3_val = round(float(w120['low'].min()), 2) if not w120.empty else s1_val * 0.98
+    with b_c2:
+        reasons = [
+            ("Trend", "✓" if k15_ok and k16_ok else "✕", GREEN if k15_ok and k16_ok else RED,
+             "โครงสร้างราคาเหนือเส้นเฉลี่ย" if k15_ok and k16_ok else "ราคาอยู่ใต้ EMA20"),
+            ("Momentum", "✓" if k18_ok else "✕", GREEN if k18_ok else RED,
+             "MACD สนับสนุนโมเมนตัม" if k18_ok else "MACD เป็นขาลง"),
+            ("Volume", "✓" if k20_ok else "✕", GREEN if k20_ok else RED,
+             "มี Volume ยืนยัน" if k20_ok else "วอลุ่มไม่หนุน"),
+            ("Risk / Reward", "✓" if k_rr_ok else "✕", GREEN if k_rr_ok else RED,
+             "อัตราผลตอบแทนคุ้มค่า" if k_rr_ok else "อัตราผลตอบแทนยังไม่คุ้มความเสี่ยง"),
+        ]
 
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:495px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">KEY LEVELS (Actual, from price history)</div>
-    <div><div style="font-size:12.5px; font-weight:bold; color:#EF4444; margin-bottom:6px;">RESISTANCE</div>
-    <div style="display:flex; justify-content:space-between; font-size:13.5px; color:#CBD5E1; padding:4px 0; border-bottom:1px dashed #1E293B;"><span style="color:#64748B;">R3 (120d high)</span><b style="color:#F8FAFC;">{r3_val:.2f}</b></div>
-    <div style="display:flex; justify-content:space-between; font-size:13.5px; color:#CBD5E1; padding:4px 0; border-bottom:1px dashed #1E293B;"><span style="color:#64748B;">R2 (20d high)</span><b style="color:#F8FAFC;">{r2_val:.2f}</b></div>
-    <div style="display:flex; justify-content:space-between; font-size:13.5px; color:#CBD5E1; padding:4px 0;"><span style="color:#64748B;">R1 (60d high)</span><b style="color:#F8FAFC;">{r1_val:.2f}</b></div></div>
-    <div style="border:1px dashed #3B82F6; padding:10px 0; text-align:center; background:rgba(59,130,246,0.08); border-radius:8px; margin:auto 0;">
-    <div style="font-size:12.5px; color:#93C5FD; font-weight:bold;">CURRENT PRICE</div><div style="font-size:18.5px; font-weight:bold; color:#38BDF8; margin-top:2px;">{ctx.current_price:.2f}</div></div>
-    <div><div style="font-size:12.5px; font-weight:bold; color:#10B981; margin-bottom:6px;">SUPPORT</div>
-    <div style="display:flex; justify-content:space-between; font-size:13.5px; color:#CBD5E1; padding:4px 0; border-bottom:1px dashed #1E293B;"><span style="color:#64748B;">S1 (60d low)</span><b style="color:#F8FAFC;">{s1_val:.2f}</b></div>
-    <div style="display:flex; justify-content:space-between; font-size:13.5px; color:#CBD5E1; padding:4px 0; border-bottom:1px dashed #1E293B;"><span style="color:#64748B;">S2 (20d low)</span><b style="color:#F8FAFC;">{s2_val:.2f}</b></div>
-    <div style="display:flex; justify-content:space-between; font-size:13.5px; color:#CBD5E1; padding:4px 0;"><span style="color:#64748B;">S3 (120d low)</span><b style="color:#F8FAFC;">{s3_val:.2f}</b></div></div>
-    </div>""", unsafe_allow_html=True)
+        reason_cards = "".join(
+            f"""
+            <div style="background:{BG_CHIP};padding:7px;border-radius:6px;text-align:center;">
+                <div style="font-size:9.5px;color:{color};font-weight:bold;">{icon} {name}</div>
+                <div style="font-size:9px;color:{TEXT_MUTED};margin-top:1px;">{desc}</div>
+            </div>
+            """
+            for name, icon, color, desc in reasons
+        )
 
-    with r1_c4:
-        buy_zone_lo, buy_zone_hi = s1_val, round((s1_val + ctx.current_price) / 2, 2)
-        stop_loss = s3_val
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:495px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">RECOMMENDED ZONE</div>
-    <div><div style="font-size:13px; color:#94A3B8;">Ideal Buy Zone</div>
-    <div style="font-size:17.5px; font-weight:bold; color:#10B981; margin-top:2px;">{buy_zone_lo:.2f} - {buy_zone_hi:.2f}</div>
-    <div style="font-size:12.5px; color:#64748B;">อ้างอิงจากแนวรับ 60 วันย้อนหลัง</div></div>
-    <div style="background:rgba(239,68,68,0.08); border-left:3px solid #EF4444; padding:8px 10px; border-radius:4px; margin-top:auto;">
-    <div style="font-size:12.5px; color:#EF4444; font-weight:bold;">STOP LOSS</div>
-    <div style="font-size:16px; font-weight:bold; color:#EF4444; margin-top:2px;">&lt; {stop_loss:.2f}</div>
-    <div style="font-size:12px; color:#94A3B8; margin-top:2px;">ตัดขาดทุนหากหลุดแนวรับ 120 วัน</div></div>
-    </div>""", unsafe_allow_html=True)
+        wait_title = "WHY WAIT?" if readiness != "READY" else "WHY NOW?"
+        wait_subtitle = "เหตุผลที่ระบบยังรอการยืนยันก่อนเข้าซื้อ" if readiness != "READY" else "เหตุผลที่สัญญาณมีความพร้อมมากขึ้น"
 
-    st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
-    r2_c1, r2_c2, r2_c3, r2_c4, r2_c5 = st.columns(5)
-
-    last30 = ctx.stock_daily.tail(30)
-    rsi_now = safe(ctx.stock_info.get('rsi'), 50)
-    macd_now = safe(ctx.stock_info.get('macd'), 0)
-    adx_now = safe(ctx.stock_info.get('adx'), 20)
-
-    def sparkline_svg(series, color, height=50):
-        vals = series.dropna().tolist()
-        if len(vals) < 2:
-            return ""
-        lo, hi = min(vals), max(vals)
-        rng = (hi - lo) or 1
-        w = 160
-        pts = []
-        for i, v in enumerate(vals):
-            x = 5 + (w - 10) * i / (len(vals) - 1)
-            y = 48 - ((v - lo) / rng) * 40
-            pts.append(f"{x:.1f} {y:.1f}")
-        path = "M " + " L ".join(pts)
-        return f'<svg viewBox="0 0 {w} {height}" style="width:100%; height:{height}px; display:block;"><path d="{path}" fill="none" stroke="{color}" stroke-width="2"/></svg>'
-
-    with r2_c1:
-        macd_status = "BULLISH" if macd_now > 0 else "BEARISH"
-        macd_color = "#10B981" if macd_now > 0 else "#EF4444"
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:220px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:14.5px; font-weight:bold; color:#CBD5E1;">MACD</span><span style="color:{macd_color}; font-size:13.5px; font-weight:bold;">{macd_status}</span></div>
-    <div style="font-size:23px; font-weight:bold; color:#FFFFFF; margin-top:4px;">{macd_now:.3f}</div></div>
-    <div style="margin-top:auto;">{sparkline_svg(last30['MACD'], macd_color)}</div></div>""", unsafe_allow_html=True)
-
-    with r2_c2:
-        rsi_status = "OVERBOUGHT" if rsi_now >= 70 else ("OVERSOLD" if rsi_now <= 30 else "NEUTRAL")
-        rsi_color = "#EF4444" if rsi_now >= 70 else ("#10B981" if rsi_now <= 30 else "#F59E0B")
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:220px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:14.5px; font-weight:bold; color:#CBD5E1;">RSI (14)</span><span style="color:{rsi_color}; font-size:13.5px; font-weight:bold;">{rsi_status}</span></div>
-    <div style="font-size:26px; font-weight:bold; color:#FFFFFF; margin-top:4px;">{rsi_now:.1f}</div></div>
-    <div style="margin-top:auto;">{sparkline_svg(last30['RSI14'], '#A855F7')}</div></div>""", unsafe_allow_html=True)
-
-    with r2_c3:
-        adx_status = "STRONG TREND" if adx_now >= 25 else "WEAK / RANGE"
-        adx_color = "#10B981" if adx_now >= 25 else "#94A3B8"
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:220px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:14.5px; font-weight:bold; color:#CBD5E1;">ADX (14)</span><span style="color:{adx_color}; font-size:13.5px; font-weight:bold;">{adx_status}</span></div>
-    <div style="font-size:26px; font-weight:bold; color:#FFFFFF; margin-top:4px;">{adx_now:.1f}</div></div>
-    <div style="margin-top:auto;">{sparkline_svg(last30['ADX'], '#F8FAFC')}</div></div>""", unsafe_allow_html=True)
-
-    with r2_c4:
-        ema_status = "GOLDEN (Bullish)" if ctx.stock_info.get('ema20', 0) > ctx.stock_info.get('ema50', 0) else "DEATH (Bearish)"
-        ema_color = "#10B981" if ctx.stock_info.get('ema20', 0) > ctx.stock_info.get('ema50', 0) else "#EF4444"
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:220px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:14.5px; font-weight:bold; color:#CBD5E1;">EMA20 / EMA50</span><span style="color:{ema_color}; font-size:13.5px; font-weight:bold;">{ema_status}</span></div>
-    <div style="font-size:16.5px; font-weight:bold; color:#F59E0B; margin-top:4px;">{safe(ctx.stock_info.get('ema20')):.2f} <span style="color:#64748B; font-size:13.5px;">/</span> <span style="color:#38BDF8;">{safe(ctx.stock_info.get('ema50')):.2f}</span></div></div>
-    <div style="margin-top:auto;">{sparkline_svg(last30['EMA20'], '#F59E0B')}</div></div>""", unsafe_allow_html=True)
-
-    with r2_c5:
-        vol_now = safe(last30.iloc[-1]['volume']) if not last30.empty else 0
-        vol_avg = safe(last30.iloc[-1]['Volume Avg']) if not last30.empty and 'Volume Avg' in last30.columns else vol_now
-        vol_diff = ((vol_now - vol_avg) / vol_avg * 100) if vol_avg else 0
-        vol_status = "Increasing" if vol_diff > 0 else "Decreasing"
-        vol_color = "#10B981" if vol_diff > 0 else "#EF4444"
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:220px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div><div style="font-size:14.5px; font-weight:bold; color:#CBD5E1;">VOLUME (vs 20D avg)</div>
-    <div style="font-size:16.5px; font-weight:bold; color:{vol_color}; margin-top:4px;">{vol_status}</div><div style="font-size:13px; color:#94A3B8;">{vol_diff:+.1f}% vs Avg.</div></div>
-    <div style="margin-top:auto;">{sparkline_svg(last30['volume'], vol_color)}</div></div>""", unsafe_allow_html=True)
-
-    st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
-    r3_c1, r3_c2, r3_c3, r3_c4 = st.columns([1.1, 1.25, 1.4, 1.55])
-
-    short_bull = ctx.current_price > safe(ctx.stock_info.get('ema20'))
-    med_bull = safe(ctx.stock_info.get('ema20')) > safe(ctx.stock_info.get('ema50'))
-    long_ref = ctx.stock_daily.iloc[max(0, len(ctx.stock_daily) - 252)]['close'] if len(ctx.stock_daily) > 0 else ctx.current_price
-    long_bull = ctx.current_price > long_ref
-
-    def trend_row(label, sub, is_bull):
-        c = "#10B981" if is_bull else "#EF4444"
-        txt = "Bullish ↗" if is_bull else "Bearish ↘"
-        return f"""<div style="background:#151E2F; border:1px solid #1E293B; border-radius:8px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center;">
-    <span style="font-size:14px; color:#CBD5E1;">{label} <span style="font-size:12.5px; color:#64748B;">({sub})</span></span>
-    <span style="background:rgba(16,185,129,0.15); color:{c}; font-size:14px; font-weight:bold; padding:3px 10px; border-radius:12px;">{txt}</span></div>"""
-
-    with r3_c1:
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:16px; min-height:295px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">TREND ANALYSIS</div>
-    <div style="display:flex; flex-direction:column; gap:10px; margin:auto 0;">
-    {trend_row("Short Term", "Price vs EMA20", short_bull)}
-    {trend_row("Medium Term", "EMA20 vs EMA50", med_bull)}
-    {trend_row("Long Term", "vs ~1Y ago", long_bull)}
-    </div></div>""", unsafe_allow_html=True)
-
-    with r3_c2:
-        summary_items = []
-        summary_items.append((short_bull, "ราคาปัจจุบันอยู่เหนือ EMA20" if short_bull else "ราคาปัจจุบันอยู่ต่ำกว่า EMA20"))
-        summary_items.append((med_bull, "EMA20 อยู่เหนือ EMA50 (แนวโน้มขาขึ้นระยะกลาง)" if med_bull else "EMA20 อยู่ต่ำกว่า EMA50 (แนวโน้มขาลงระยะกลาง)"))
-        summary_items.append((macd_now > 0, "MACD เป็นบวก ส่งสัญญาณโมเมนตัมขาขึ้น" if macd_now > 0 else "MACD เป็นลบ ส่งสัญญาณโมเมนตัมขาลง"))
-        summary_items.append((adx_now >= 25, f"ADX ที่ {adx_now:.1f} ยืนยันแนวโน้มแข็งแรง" if adx_now >= 25 else f"ADX ที่ {adx_now:.1f} บ่งชี้ตลาด sideway"))
-        sig_html = "".join([f'<div style="display:flex; gap:8px;"><span style="color:{"#10B981" if ok else "#EF4444"}; font-size:15px;">{"✔" if ok else "✖"}</span><span>{txt}</span></div>' for ok, txt in summary_items])
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:16px; min-height:295px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">SIGNAL SUMMARY</div>
-    <div style="font-size:14px; color:#CBD5E1; line-height:1.6; display:flex; flex-direction:column; gap:6px; margin:auto 0;">{sig_html}</div>
-    </div>""", unsafe_allow_html=True)
-
-    with r3_c3:
-        # หา EMA20/EMA50 crossover จริงในช่วง 120 วันล่าสุด
-        hist120 = ctx.stock_daily.tail(120).copy().reset_index(drop=True)
-        hist120['diff'] = hist120['EMA20'] - hist120['EMA50']
-        hist120['cross'] = np.sign(hist120['diff']).diff().fillna(0)
-        events = hist120[hist120['cross'] != 0].tail(5)
-        rows_html = ""
-        for _, ev in events.iloc[::-1].iterrows():
-            label = "Golden Cross" if ev['cross'] > 0 else "Death Cross"
-            lc = "#10B981" if ev['cross'] > 0 else "#EF4444"
-            rows_html += f"""<tr style="border-bottom:1px solid #1E293B;"><td style="padding:4px 0; color:#94A3B8;">{ev['date'].strftime('%d %b %Y')}</td>
-    <td><span style="color:{lc}; font-weight:bold;">{label}</span></td><td>{ev['close']:.2f}</td><td style="color:#64748B;">EMA Crossover</td></tr>"""
-        if not rows_html:
-            rows_html = '<tr><td colspan="4" style="padding:8px 0; color:#64748B; text-align:center;">ไม่พบสัญญาณ Cross ในช่วง 120 วันล่าสุด</td></tr>'
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:16px; min-height:295px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">RECENT SIGNAL HISTORY (EMA Crossovers, actual)</div>
-    <table style="width:100%; text-align:left; font-size:13.5px; color:#CBD5E1; border-collapse:collapse; margin:auto 0;">
-    <tr style="border-bottom:1px solid #1E293B; color:#64748B; font-size:12.5px;"><th style="padding:4px 0;">Date</th><th>Signal</th><th>Price</th><th>Type</th></tr>
-    {rows_html}
-    </table></div>""", unsafe_allow_html=True)
-
-    with r3_c4:
-        risk_lvl = "HIGH" if adx_now < 15 else ("MEDIUM" if adx_now < 25 else "LOW")
-        risk_lvl_color = {"LOW": "#10B981", "MEDIUM": "#F59E0B", "HIGH": "#EF4444"}[risk_lvl]
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:16px; min-height:295px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div><div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px; margin-bottom:6px;">TECHNICAL NOTES</div>
-    <p style="font-size:13px; color:#CBD5E1; line-height:1.55; margin:0;">
-    สัญญาณรวมล่าสุดของ {ctx.selected_ticker} คือ <b>{trend_signal}</b> (Timing Score {timing_score:.0f}/100) แนวรับใกล้สุดอยู่ที่ {s1_val:.2f} บาท และแนวต้านอยู่ที่ {r1_val:.2f} บาท หากราคาหลุด {s3_val:.2f} ควรพิจารณาตัดขาดทุน
-    </p></div>
-    <div style="display:flex; justify-content:space-between; align-items:flex-end; border-top:1px solid #1E293B; padding-top:10px;">
-    <div><div style="font-size:12.5px; color:#94A3B8; font-weight:bold; margin-bottom:4px;">RISK LEVEL (จาก ADX)</div>
-    <div style="font-size:16px; font-weight:bold; color:{risk_lvl_color};">{risk_lvl}</div></div>
-    <div style="text-align:right;"><div style="font-size:12.5px; color:#94A3B8; font-weight:bold;">MACD SIGNAL</div>
-    <div style="font-size:15px; font-weight:bold; color:{macd_color}; margin-top:2px;">{macd_status}</div></div>
-    </div></div>""", unsafe_allow_html=True)
+        _render_html(
+            f"""
+            <div style="{_card_style()}">
+                <div style="font-size:12px;font-weight:800;color:{ACCENT};margin-bottom:4px;">💡 {wait_title}</div>
+                <div style="font-size:10.5px;color:{TEXT};margin-bottom:6px;">{wait_subtitle}</div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px;">
+                    {reason_cards}
+                </div>
+                <div style="background:rgba(56,189,248,.08);border-left:3px solid {ACCENT};padding:6px 10px;
+                            border-radius:0 6px 6px 0;font-size:10.5px;color:{TEXT};">
+                    <b>สรุป:</b> {summary_text}
+                </div>
+            </div>
+            """
+        )
 
     render_nav_footer("m3", prev_page=" ⚖️ Fair Value", next_page=" 🔮 AI Prediction")
-
