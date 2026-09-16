@@ -31,6 +31,9 @@ def render(ctx):
     ai_color = "#10B981" if ai_score >= 70 else ("#F59E0B" if ai_score >= 45 else "#EF4444")
     prob_up = safe(ctx.stock_info.get('prob_up'), 50)
     down_prob = round(100 - prob_up, 1)
+    acc_val = safe(ctx.stock_info.get('accuracy'), 50)                    # <-- เพิ่มบรรทัดนี้
+    baseline_val = safe(ctx.stock_info.get('baseline_accuracy'), acc_val) # <-- เพิ่มบรรทัดนี้
+    reliability_low = acc_val < 50 
 
     st.markdown(f"""<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
     <div><div style="font-size:14.5px; color:#64748B; margin-bottom:2px;">Home / Module 4 / AI Prediction</div>
@@ -148,6 +151,10 @@ def render(ctx):
     <div style="background:#151E2F; border:1px solid #1E293B; border-radius:6px; padding:6px 2px;"><div style="font-size:12px; color:#64748B;">Precision</div><div style="font-size:16px; font-weight:bold; color:#F8FAFC;">{safe(ctx.stock_info.get('precision')):.1f}%</div></div>
     <div style="background:#151E2F; border:1px solid #1E293B; border-radius:6px; padding:6px 2px;"><div style="font-size:12px; color:#64748B;">ROC-AUC</div><div style="font-size:16px; font-weight:bold; color:#F8FAFC;">{safe(ctx.stock_info.get('roc_auc')):.2f}</div></div>
     <div style="background:#151E2F; border:1px solid #1E293B; border-radius:6px; padding:6px 2px;"><div style="font-size:12px; color:#64748B;">F1-Score</div><div style="font-size:16px; font-weight:bold; color:#F8FAFC;">{safe(ctx.stock_info.get('f1_score')):.1f}%</div></div>
+    </div></div>
+    <div style="font-size:11.5px; color:{'#EF4444' if acc_val < safe(ctx.stock_info.get('baseline_accuracy'), acc_val) else '#10B981'}; border-top:1px dashed #1E293B; padding-top:5px; margin-top:4px;">
+    vs. Baseline (naive majority-class): {safe(ctx.stock_info.get('baseline_accuracy')):.1f}%
+    </div>
     </div></div><div style="font-size:11.5px; color:#64748B; border-top:1px solid #1E293B; padding-top:6px;">Validation: Out-of-time (Train 2023-24 / Test 2025)</div>
     </div>""", unsafe_allow_html=True)
 
@@ -185,6 +192,12 @@ def render(ctx):
     </div></div></div>""", unsafe_allow_html=True)
 
     with r3_c4:
+    acc_val = safe(ctx.stock_info.get('accuracy'), 50)
+    reliability_badge = (
+        '<div style="display:inline-block; background:rgba(239,68,68,0.15); border:1px solid #EF4444; '
+        'color:#EF4444; font-size:10.5px; font-weight:bold; padding:2px 7px; border-radius:6px; margin-bottom:5px;">'
+        '⚠ LOW RELIABILITY</div>'
+    ) if acc_val < 50 else ""
         st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:290px; display:flex; flex-direction:column; justify-content:space-between;">
     <div><div style="font-size:13.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">AI RECOMMENDATION</div>
     <div style="display:flex; align-items:center; gap:8px; margin:8px 0 4px 0;"><div>
