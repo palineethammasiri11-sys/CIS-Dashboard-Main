@@ -61,12 +61,13 @@ def train_and_predict_ai(df_price_ticker, ticker):
     backtest_df = pd.DataFrame(columns=['date', 'actual_close', 'predicted_up_prob'])
 
     if len(train_data) < 50 or len(test_data) < 20:
-        return ({'ai_score': 65.0, 'prob_up': 65.0, 'accuracy': 75.0, 'ai_signal': 'ACCUMULATE',
+         return ({'ai_score': 65.0, 'prob_up': 65.0, 'accuracy': 75.0, 'baseline_accuracy': 65.0, 'ai_signal': 'ACCUMULATE',
                  'precision': 70.0, 'recall': 70.0, 'f1_score': 70.0, 'roc_auc': 0.70},
                 feature_importance, backtest_df)
 
     X_train, y_train = train_data[FEATURES], train_data['target']
     X_test, y_test = test_data[FEATURES], test_data['target']
+    baseline_acc = float(max(y_test.mean(), 1 - y_test.mean()) * 100)  # <-- เพิ่ม: ความแม่นยำถ้าทายกลุ่มส่วนใหญ่เฉยๆ
 
     model = RandomForestClassifier(n_estimators=200, max_depth=4, random_state=42)
     model.fit(X_train, y_train)
@@ -101,6 +102,7 @@ def train_and_predict_ai(df_price_ticker, ticker):
         'ai_score': ai_score,
         'prob_up': round(float(prob_up), 1),
         'accuracy': round(float(acc), 1),
+        'baseline_accuracy': round(baseline_acc, 1), # <-- เพิ่มบรรทัดนี้
         'precision': round(float(prec), 1),
         'recall': round(float(rec), 1),
         'f1_score': round(float(f1), 1),
