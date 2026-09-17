@@ -161,7 +161,7 @@ def render(ctx):
     <div><div style="font-size:13px; font-weight:bold; color:#CBD5E1;">INTRINSIC VALUATION (DCF)</div>
     <table style="width:100%; font-size:13px; color:#CBD5E1; border-collapse:collapse; margin-top:6px;">
     <tr style="border-bottom:1px solid #1E293B; color:#64748B; font-size:12.5px;"><th style="text-align:left; padding:2px 0;">Metric</th><th>Value</th></tr>
-    <tr style="border-bottom:1px solid #1E293B;"><td style="padding:3px 0;">WACC</td><td>8.2%</td></tr>
+    <tr style="border-bottom:1px solid #1E293B;"><td style="padding:3px 0;">WACC</td><td>{fmt_ratio(ctx.stock_info.get('wacc_used'), suffix="%", decimals=1)}</td></tr>
     <tr><td style="padding:3px 0;">DCF Fair Value</td><td>{safe(ctx.stock_info.get('dcf_fair_value')):.2f} THB</td></tr>
     </table></div></div>""", unsafe_allow_html=True)
 
@@ -185,16 +185,21 @@ def render(ctx):
     r4_c1, r4_c2 = st.columns([1.3, 1.7])
 
     with r4_c1:
-        st.markdown("""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:220px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div style="font-size:13.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">DCF ASSUMPTIONS</div>
+        wacc_disp = fmt_ratio(ctx.stock_info.get('wacc_used'), suffix="%", decimals=1)
+        g_disp = fmt_ratio(ctx.stock_info.get('terminal_growth_used'), suffix="%", decimals=1)
+        fcf_g_disp = fmt_ratio(ctx.stock_info.get('fcf_growth_assumed'), suffix="%", decimals=1)
+        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:220px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div style="font-size:13.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">DCF ASSUMPTIONS <span style="font-size:11.5px; color:#64748B; font-weight:normal;">({ctx.stock_info.get('sector','-')})</span></div>
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; font-size:13px; color:#CBD5E1; margin:auto 0;">
-    <div><span style="color:#64748B;">WACC</span><br><b style="color:#F8FAFC;">8.2%</b></div>
-    <div><span style="color:#64748B;">Terminal Growth</span><br><b style="color:#F8FAFC;">2.0%</b></div>
-    <div><span style="color:#64748B;">Forecast Period</span><br><b style="color:#F8FAFC;">1 Year FCF x1.05</b></div>
+    <div><span style="color:#64748B;">WACC</span><br><b style="color:#F8FAFC;">{wacc_disp}</b></div>
+    <div><span style="color:#64748B;">Terminal Growth</span><br><b style="color:#F8FAFC;">{g_disp}</b></div>
+    <div><span style="color:#64748B;">FCF Growth (Yr 1)</span><br><b style="color:#F8FAFC;">{fcf_g_disp}</b></div>
     <div><span style="color:#64748B;">Target P/E</span><br><b style="color:#F8FAFC;">18-22x (by sector)</b></div>
     <div><span style="color:#64748B;">DCF Weight</span><br><b style="color:#F8FAFC;">55%</b></div>
     <div><span style="color:#64748B;">P/E Weight</span><br><b style="color:#F8FAFC;">45%</b></div>
-    </div></div>""", unsafe_allow_html=True)
+    </div>
+    <div style="font-size:11px; color:#64748B; border-top:1px solid #1E293B; padding-top:6px; margin-top:4px;">WACC/Growth ปรับตามกลุ่มอุตสาหกรรม (ไม่ใช่ค่าคงที่เดียวทุกหุ้นแล้ว) &bull; FCF ฐานใช้ค่าเฉลี่ย 2 ปีล่าสุด</div>
+    </div>""", unsafe_allow_html=True)
 
     with r4_c2:
         st.markdown("""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px 12px 0 0; padding:12px 16px 0 16px;">
