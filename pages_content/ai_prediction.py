@@ -192,7 +192,7 @@ def render(ctx):
     </div></div></div>""", unsafe_allow_html=True)
 
     with r3_c4:
-    acc_val = safe(ctx.stock_info.get('accuracy'), 50)
+        acc_val = safe(ctx.stock_info.get('accuracy'), 50)
     reliability_badge = (
         '<div style="display:inline-block; background:rgba(239,68,68,0.15); border:1px solid #EF4444; '
         'color:#EF4444; font-size:10.5px; font-weight:bold; padding:2px 7px; border-radius:6px; margin-bottom:5px;">'
