@@ -193,11 +193,11 @@ def render(ctx):
 
     with r3_c4:
         acc_val = safe(ctx.stock_info.get('accuracy'), 50)
-    reliability_badge = (
-        '<div style="display:inline-block; background:rgba(239,68,68,0.15); border:1px solid #EF4444; '
-        'color:#EF4444; font-size:10.5px; font-weight:bold; padding:2px 7px; border-radius:6px; margin-bottom:5px;">'
-        '⚠ LOW RELIABILITY</div>'
-    ) if acc_val < 50 else ""
+        reliability_badge = (
+            '<div style="display:inline-block; background:rgba(239,68,68,0.15); border:1px solid #EF4444; '
+            'color:#EF4444; font-size:10.5px; font-weight:bold; padding:2px 7px; border-radius:6px; margin-bottom:5px;">'
+            '⚠ LOW RELIABILITY</div>'
+        ) if acc_val < 50 else ""
         st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:290px; display:flex; flex-direction:column; justify-content:space-between;">
     <div><div style="font-size:13.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">AI RECOMMENDATION</div>
     <div style="display:flex; align-items:center; gap:8px; margin:8px 0 4px 0;"><div>
