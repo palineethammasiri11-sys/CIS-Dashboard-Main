@@ -28,7 +28,8 @@ import streamlit as st
 import common
 
 # ⬇️⬇️⬇️ แก้บรรทัดนี้บรรทัดเดียว ให้ตรงกับโมดูลที่คุณรับผิดชอบ ⬇️⬇️⬇️
-MODULE_NAME = "industry_benchmark"
+MODULE_NAME = "industry_benchmark
+"
 # ตัวเลือก: "overview", "company_health", "fair_value", "entry_timing",
 #           "ai_prediction", "risk_analysis", "industry_benchmark"
 # (หมายเหตุ: "overview" ไม่มีไฟล์คู่ใน calculate_modules/ เพราะเป็นหน้ารวมผลจากทุกโมดูล ไม่ได้คำนวณเอง)
