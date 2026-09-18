@@ -14,15 +14,66 @@ pages_content/risk_analysis.py
     ctx.current_price, ctx.change_pct, ctx.change_val, ctx.change_color, ctx.change_sign, ctx.arrow_sign
 
 ห้ามแก้ CSS ส่วนกลางหรือ helper function ใน common.py จากไฟล์นี้ — ถ้าจำเป็นต้องแก้ ให้แจ้ง Layout Lead ก่อน
+
+=== อัปเดตล่าสุด ===
+- เพิ่ม CVaR 95% (Historical), PSR (Probabilistic Sharpe Ratio), Recovery Duration
+  ให้ตรงกับ key ใหม่จาก calculate_modules/risk_analysis.py (cvar_95, psr, recovery_days)
+- ตัด "STRESS TEST SCENARIO" (rate_impact, recession_impact) ออกทั้งหมดตามมติทีม
+  เพราะไม่มีข้อมูลเศรษฐกิจมหภาค (CPI/อัตราดอกเบี้ย) รองรับการคำนวณจริง
+  แถวที่ 3 (r3) จึงเหลือแค่ 2 คอลัมน์แทนที่จะเป็น 3
 """
 import streamlit as st
 import pandas as pd
 import numpy as np
+import math
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 
 from common import fmt_mb, fmt_ratio, safe, show_chart, render_nav_footer, COMPANY_NAMES, SECTOR_MAP
+
+
+def _fallback_cvar_95(stock_daily, confidence=0.95):
+    """คำนวณ CVaR 95% (Historical Simulation) สดจาก ctx.stock_daily ที่มีอยู่แล้วเสมอทุกหุ้น
+    ใช้เป็น fallback กรณี cis_summary_scores ยังไม่มีคอลัมน์ cvar_95 (เช่น ยังไม่ได้รัน
+    calculate_scores.py ใหม่หลังอัปเดต calculate_modules/risk_analysis.py) — สูตรเดียวกับ backend
+    คืน None เฉพาะกรณีมีข้อมูลราคาน้อยกว่า 20 วันจริงๆ เท่านั้น (แทบไม่เกิดกับ 8 หุ้นที่ระบบติดตาม)"""
+    try:
+        closes = stock_daily['close'].astype(float)
+        returns = closes.pct_change().dropna()
+        if len(returns) < 20:
+            return None
+        cutoff = np.percentile(returns, (1 - confidence) * 100)
+        tail = returns[returns <= cutoff]
+        if tail.empty:
+            return None
+        return round(float(abs(tail.mean()) * 100), 2)
+    except Exception:
+        return None
+
+
+def _fallback_psr(stock_daily, sr_benchmark=0.0):
+    """คำนวณ Probabilistic Sharpe Ratio สดจาก ctx.stock_daily เป็น fallback แบบเดียวกับ CVaR
+    (สูตรเดียวกับ calculate_modules/risk_analysis.py) คืน None เฉพาะข้อมูลน้อยกว่า 30 วัน
+    หรือผลตอบแทนนิ่งสนิท (std=0) จริงๆ เท่านั้น"""
+    try:
+        closes = stock_daily['close'].astype(float)
+        r = closes.pct_change().dropna()
+        n = len(r)
+        if n < 30 or r.std() == 0:
+            return None
+        sr_hat = r.mean() / r.std()
+        skew = r.skew()
+        kurt = r.kurtosis() + 3
+        denom_sq = 1 - skew * sr_hat + ((kurt - 1) / 4) * sr_hat ** 2
+        if denom_sq <= 0:
+            return None
+        denom = math.sqrt(denom_sq)
+        z = (sr_hat - sr_benchmark) * math.sqrt(n - 1) / denom
+        psr = 0.5 * (1 + math.erf(z / math.sqrt(2)))
+        return round(float(psr) * 100, 1)
+    except Exception:
+        return None
 
 
 def render(ctx):
@@ -47,7 +98,9 @@ def render(ctx):
     r1_c1, r1_c2 = st.columns([1.15, 2.85])
 
     with r1_c1:
-        needle_frac = min(1.0, risk_score / 100)
+        # risk_score นิยามว่า "higher = safer" แต่ arc วาดจากเขียว(ซ้าย)->แดง(ขวา)
+        # ต้อง invert (1 - ...) ไม่งั้นคะแนนสูง (ปลอดภัย) จะดันเข็มไปทางแดงแทนที่จะเป็นเขียว
+        needle_frac = 1 - min(1.0, risk_score / 100)
         st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:16px; min-height:260px; display:flex; flex-direction:column; justify-content:space-between; text-align:center;">
     <div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px; text-align:left;">RISK SUMMARY</div>
     <div style="margin:auto 0;"><svg viewBox="0 0 100 55" style="width:140px; height:90px; display:block; margin:0 auto;">
@@ -130,9 +183,12 @@ def render(ctx):
             st.info("ไม่มีข้อมูล")
 
     with r2_c3:
+        recovery_days = ctx.stock_info.get('recovery_days')
+        recovery_txt = f"ฟื้นตัวใน {int(recovery_days)} วัน" if recovery_days is not None else "ยังไม่ฟื้นตัวกลับสู่จุดสูงสุดเดิม"
         st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px 12px 0 0; padding:12px 14px 0 14px;">
     <div style="font-size:14px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">DRAWDOWN — Actual (2023-2025)</div>
-    <div style="font-size:19px; font-weight:bold; color:#EF4444; margin-top:2px;">-{dd_val:.1f}%</div></div>""", unsafe_allow_html=True)
+    <div style="font-size:19px; font-weight:bold; color:#EF4444; margin-top:2px;">-{dd_val:.1f}%</div>
+    <div style="font-size:11.5px; color:#94A3B8; margin-top:2px;">Recovery: {recovery_txt}</div></div>""", unsafe_allow_html=True)
         if not rh.empty:
             fig_dd = go.Figure()
             fig_dd.add_trace(go.Scatter(x=rh['date'], y=rh['drawdown_pct'], mode='lines', line=dict(color='#EF4444', width=1.5), fill='tozeroy', fillcolor='rgba(239,68,68,0.2)'))
@@ -146,39 +202,64 @@ def render(ctx):
             st.info("ไม่มีข้อมูล")
 
     st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
-    r3_c1, r3_c2, r3_c3 = st.columns([1.25, 1.25, 1.5])
+    r3_c1, r3_c2 = st.columns(2)
 
     with r3_c1:
+        # ลำดับความสำคัญ: 1) ใช้ cvar_95 จาก cis_summary_scores ถ้ามี (เร็วสุด, คำนวณไว้ล่วงหน้าแล้ว)
+        # 2) ถ้าไม่มี (ยังไม่ได้รันคำนวณคะแนนใหม่) → คำนวณสดจาก ctx.stock_daily แทนทันที
+        # 3) ถ้าคำนวณไม่ได้จริงๆ (ข้อมูลราคาน้อยกว่า 20 วัน) → ซ่อนช่อง CVaR ไปเลย ไม่โชว์ N/A
+        cvar_val = ctx.stock_info.get('cvar_95')
+        if cvar_val is None:
+            cvar_val = _fallback_cvar_95(ctx.stock_daily)
+
+        if cvar_val is not None:
+            downside_metrics_html = f"""<div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; text-align:center; margin:auto 0;">
+    <div><div style="font-size:22px; font-weight:bold; color:#EF4444;">-{safe(ctx.stock_info.get('var_95')):.2f}%</div><div style="font-size:12px; color:#64748B;">VaR 95%</div></div>
+    <div><div style="font-size:22px; font-weight:bold; color:#EF4444;">-{safe(cvar_val):.2f}%</div><div style="font-size:12px; color:#64748B;">CVaR 95%</div></div>
+    </div>
+    <div style="font-size:12px; color:#64748B; border-top:1px solid #1E293B; padding-top:6px;">VaR = ขาดทุนสูงสุดที่คาดใน 95% ของวัน (Parametric) | CVaR = ขาดทุนเฉลี่ยจริงในวันที่แย่กว่านั้น (Historical, จับ tail risk ได้ดีกว่า)</div>"""
+        else:
+            # กรณีคำนวณ CVaR ไม่ได้จริงๆ (ข้อมูลราคาน้อยเกินไป) — โชว์แค่ VaR อย่างเดียว ไม่มีช่อง N/A
+            downside_metrics_html = f"""<div style="margin:auto 0;">
+    <div style="font-size:24px; font-weight:bold; color:#EF4444;">-{safe(ctx.stock_info.get('var_95')):.2f}%</div><div style="font-size:12.5px; color:#64748B;">VaR 95% — Expected 1-Day Maximum Loss</div>
+    </div>
+    <div style="font-size:12px; color:#64748B; border-top:1px solid #1E293B; padding-top:6px;">คำนวณจาก Historical Simulation (2023-2025) — CVaR ยังคำนวณไม่ได้เนื่องจากข้อมูลราคาย้อนหลังไม่พอ</div>"""
+
         st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:225px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div style="font-size:14px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">DOWNSIDE RISK (VAR 95%, daily)</div>
-    <div style="font-size:24px; font-weight:bold; color:#EF4444; margin:auto 0;">-{safe(ctx.stock_info.get('var_95')):.2f}%<div style="font-size:12.5px; color:#64748B; font-weight:normal;">Expected 1-Day Maximum Loss</div></div>
-    <div style="font-size:12px; color:#64748B; border-top:1px solid #1E293B; padding-top:6px;">คำนวณจาก Historical Simulation (2023-2025)</div>
+    <div style="font-size:14px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">DOWNSIDE RISK (Daily)</div>
+    {downside_metrics_html}
     </div>""", unsafe_allow_html=True)
 
     with r3_c2:
         avg_ret = ctx.stock_daily['close'].pct_change().mean() * 252
         calmar = round(avg_ret * 100 / dd_val, 2) if dd_val > 0 else 0
+        rf_pct = safe(ctx.stock_info.get('risk_free_rate_annual'), 0.02) * 100
+
+        psr_val = ctx.stock_info.get('psr')
+        if psr_val is None:
+            psr_val = _fallback_psr(ctx.stock_daily)
+
+        base_cells = f"""<div style="background:#151E2F; border:1px solid #1E293B; border-radius:6px; padding:6px 2px;"><div style="font-size:12px; color:#64748B;">Sharpe</div><div style="font-size:15px; font-weight:bold; color:#F8FAFC;">{safe(ctx.stock_info.get('sharpe_ratio')):.2f}</div></div>
+    <div style="background:#151E2F; border:1px solid #1E293B; border-radius:6px; padding:6px 2px;"><div style="font-size:12px; color:#64748B;">Sortino</div><div style="font-size:15px; font-weight:bold; color:#F8FAFC;">{safe(ctx.stock_info.get('sortino_ratio')):.2f}</div></div>
+    <div style="background:#151E2F; border:1px solid #1E293B; border-radius:6px; padding:6px 2px;"><div style="font-size:12px; color:#64748B;">Calmar</div><div style="font-size:15px; font-weight:bold; color:#F8FAFC;">{calmar:.2f}</div></div>"""
+
+        if psr_val is not None:
+            # คำนวณได้ → เพิ่มช่อง PSR เป็นคอลัมน์ที่ 4 พร้อมคำอธิบายในหมายเหตุ
+            grid_cols = 4
+            ratio_cells = base_cells + f"""
+    <div style="background:#151E2F; border:1px solid #1E293B; border-radius:6px; padding:6px 2px;"><div style="font-size:12px; color:#64748B;">PSR</div><div style="font-size:15px; font-weight:bold; color:#F8FAFC;">{psr_val:.0f}%</div></div>"""
+            footnote = f"""คำนวณหัก Risk-free Rate (~{rf_pct:.1f}%/ปี, BOT Policy Rate เฉลี่ย 2023-2025) แล้ว | PSR = ความน่าจะเป็นที่ Sharpe Ratio จริง &gt; 0 เมื่อพิจารณาความเบ้/โด่งของข้อมูล (Bailey &amp; López de Prado, 2012)"""
+        else:
+            # คำนวณไม่ได้จริงๆ (ข้อมูลน้อยกว่า 30 วัน หรือผลตอบแทนนิ่งสนิท) → ไม่มีช่อง PSR เลย ไม่โชว์ N/A
+            grid_cols = 3
+            ratio_cells = base_cells
+            footnote = f"""คำนวณหัก Risk-free Rate (~{rf_pct:.1f}%/ปี, BOT Policy Rate เฉลี่ย 2023-2025) แล้ว"""
+
         st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:225px; display:flex; flex-direction:column; justify-content:space-between;">
     <div style="font-size:14px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">RISK-ADJUSTED RETURN (actual, 2023-2025)</div>
-    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; text-align:center; margin:auto 0;">
-    <div style="background:#151E2F; border:1px solid #1E293B; border-radius:6px; padding:6px 2px;"><div style="font-size:12px; color:#64748B;">Sharpe</div><div style="font-size:16.5px; font-weight:bold; color:#F8FAFC;">{safe(ctx.stock_info.get('sharpe_ratio')):.2f}</div></div>
-    <div style="background:#151E2F; border:1px solid #1E293B; border-radius:6px; padding:6px 2px;"><div style="font-size:12px; color:#64748B;">Sortino</div><div style="font-size:16.5px; font-weight:bold; color:#F8FAFC;">{safe(ctx.stock_info.get('sortino_ratio')):.2f}</div></div>
-    <div style="background:#151E2F; border:1px solid #1E293B; border-radius:6px; padding:6px 2px;"><div style="font-size:12px; color:#64748B;">Calmar</div><div style="font-size:16.5px; font-weight:bold; color:#F8FAFC;">{calmar:.2f}</div></div>
-    </div><div style="font-size:12px; color:#CBD5E1; border-top:1px solid #1E293B; padding-top:6px;">Sharpe/Sortino &gt; 0.5 สะท้อนผลตอบแทนคุ้มค่าความเสี่ยง</div>
-    </div>""", unsafe_allow_html=True)
-
-    with r3_c3:
-        crash_impact = round(beta_val * -20, 1)
-        rate_impact = round(-vol_val * 0.35, 1)
-        recession_impact = round(beta_val * -15 - dd_val * 0.1, 1)
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:225px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div style="font-size:14px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">STRESS TEST SCENARIO (Beta-implied)</div>
-    <table style="width:100%; font-size:13px; color:#CBD5E1; border-collapse:collapse; margin:auto 0;">
-    <tr style="border-bottom:1px solid #1E293B; color:#64748B; font-size:12.5px;"><th style="text-align:left; padding:3px 0;">Scenario</th><th style="text-align:right;">Est. Impact</th></tr>
-    <tr style="border-bottom:1px solid #1E293B;"><td style="padding:3px 0;">Market Crash (SET -20%)</td><td style="text-align:right; color:#EF4444; font-weight:bold;">{crash_impact:+.1f}%</td></tr>
-    <tr style="border-bottom:1px solid #1E293B;"><td style="padding:3px 0;">Volatility Shock</td><td style="text-align:right; color:#EF4444; font-weight:bold;">{rate_impact:+.1f}%</td></tr>
-    <tr><td style="padding:3px 0;">Recession Scenario</td><td style="text-align:right; color:#EF4444; font-weight:bold;">{recession_impact:+.1f}%</td></tr>
-    </table><div style="font-size:12px; color:#64748B; border-top:1px solid #1E293B; padding-top:6px;">ประมาณจาก Beta = {beta_val:.2f} คูณ shock ของตลาด</div>
+    <div style="display:grid; grid-template-columns: repeat({grid_cols}, 1fr); gap:6px; text-align:center; margin:auto 0;">
+    {ratio_cells}
+    </div><div style="font-size:11.5px; color:#CBD5E1; border-top:1px solid #1E293B; padding-top:6px;">{footnote}</div>
     </div>""", unsafe_allow_html=True)
 
     st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
@@ -209,4 +290,3 @@ def render(ctx):
     </div>""", unsafe_allow_html=True)
 
     render_nav_footer("m5", prev_page=" 🔮 AI Prediction", next_page=" 📊 Industry Benchmark")
-
