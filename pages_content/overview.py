@@ -26,18 +26,16 @@ from common import fmt_mb, fmt_ratio, safe, show_chart, render_nav_footer, COMPA
 
 
 def render(ctx):
-    st.markdown(f"""<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
-    <div>
-    <h2 style="margin:0; font-size:23px; font-weight:bold; color:#F8FAFC; letter-spacing:0.5px;">OVERVIEW DASHBOARD</h2>
-    <div style="font-size:15px; color:#94A3B8; margin-top:2px;">AI-Powered Investment Decision Support System</div>
+    st.markdown("""
+    <div style="margin-bottom:20px;">
+        <div style="font-size:23px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
+            OVERVIEW DASHBOARD
+        </div>
+        <div style="font-size:15px; color:#64748B; margin-top:4px;">
+            AI-Powered Investment Decision Support System
+        </div>
     </div>
-    <div style="display:flex; align-items:center; gap:15px;">
-    <div style="font-size:14.5px; color:#94A3B8;">Data as of: <b style="color:#CBD5E1;">{ctx.stock_info.get('latest_date','-')}</b></div>
-    <div style="background-color:#151E2F; border:1px solid #1E293B; border-radius:8px; padding:4px 12px; font-size:14.5px; color:#F8FAFC; display:flex; align-items:center; gap:6px;">
-    <span>🇹🇭</span> <b>Thai Stock Market</b>
-    </div>
-    </div>
-    </div>""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
     col_left, col_center, col_right = st.columns([1.1, 2.3, 1.2])
 
