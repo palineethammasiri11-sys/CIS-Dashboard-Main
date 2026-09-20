@@ -363,8 +363,6 @@ def render(ctx):
 
         </tr>
         """ for name, v, cv, pct in rows_cmp])
-<td><div style="display:flex; align-items:center; gap:6px;"><div style="background:#1E293B; width:60px; height:9px; border-radius:4px; overflow:hidden;"><div style="background:#10B981; width:{pct}%; height:100%;"></div></div><span style="font-size:12px; color:#10B981; font-weight:bold;">{pct}%</span></div></td>
-</tr>""" for name, v, cv, pct in rows_cmp])
 
         st.markdown(f"""
         <div style="
