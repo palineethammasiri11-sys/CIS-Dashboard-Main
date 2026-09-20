@@ -209,37 +209,33 @@ def render(ctx):
             align-items:center;
             justify-content:space-between;
         ">
-            <div>
-                <span style="
-                    font-size:16.5px;
-                    font-weight:bold;
-                    color:#94A3B8;
-                    letter-spacing:0.5px;
-                ">
-                    📈 FORECAST — PRICE HISTORY + MODEL-IMPLIED RANGE
-                </span>
+            <div style="
+                font-size:16.5px;
+                font-weight:bold;
+                color:#94A3B8;
+                letter-spacing:0.5px;
+            ">
+                📈 FORECAST — PRICE HISTORY + MODEL-IMPLIED RANGE
             </div>
 
-                <div title="เส้นทึบฟ้า = ราคาจริงที่เกิดขึ้นแล้ว | เส้นประสี = ค่ากลางที่โมเดลคาดการณ์ | แถบทึบแสง = ช่วงคาดการณ์ (~80%) จาก Volatility จริง ({volatility_display:.1f}%) — ไม่ใช่การรับประกันผลตอบแทน"
-                     style="
-                        width:22px;
-                        height:22px;
-                        border:1px solid #64748B;
-                        border-radius:50%;
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                        color:#CBD5E1;
-                        font-size:13px;
-                        font-weight:bold;
-                        cursor:help;
-                     ">
-                    i
-                </div>
+            <div style="
+                width:22px;
+                height:22px;
+                border:1px solid #64748B;
+                border-radius:50%;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:#CBD5E1;
+                font-size:13px;
+                font-weight:bold;
+            ">
+                i
             </div>
-            """,
-            unsafe_allow_html=True
-        )
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     hist_tail = ctx.stock_daily.tail(150)
     vol_annual = safe(ctx.stock_info.get('volatility'), 25.0) / 100
