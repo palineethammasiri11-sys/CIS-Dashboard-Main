@@ -362,56 +362,37 @@ def render(ctx):
         </tr>
         """ for name, v, cv, pct in rows_cmp])
 
-        html = f"""
-        <div style="background-color:#0F172A;
-                    border:1px solid #1E293B;
-                    border-radius:12px;
-                    padding:14px;
-                    min-height:360px;
-                    height:auto;
-                    overflow:hidden;">
-
-            <div style="font-size:14.5px;
-                        font-weight:bold;
-                        color:#94A3B8;
-                        letter-spacing:0.5px;">
+        st.markdown(
+            """
+            <div style="
+                margin-bottom:10px;
+                font-size:14.5px;
+                font-weight:700;
+                color:#0F172A;
+                letter-spacing:0.5px;
+            ">
                 HEAD-TO-HEAD COMPARISON
             </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-            <div style="font-size:12.5px;
-                        color:#64748B;
-                        margin-bottom:8px;">
-                {sub_label}
-            </div>
+        st.caption(sub_label)
 
-            <div style="width:100%; overflow-x:auto;">
-                <table style="width:100%;
-                              min-width:300px;
-                              table-layout:fixed;
-                              text-align:left;
-                              font-size:12.5px;
-                              color:#CBD5E1;
-                              border-collapse:collapse;">
+        comparison_df = pd.DataFrame(
+            rows_cmp,
+            columns=[
+                "Metric",
+                ctx.selected_ticker,
+                target_label,
+                f"vs {target_label}"
+            ]
+        )
 
-                    <tr style="border-bottom:1px solid #1E293B;
-                               color:#64748B;
-                               font-size:11.5px;">
-
-                        <th style="padding:4px 2px;">Metric</th>
-                        <th style="padding:4px 2px;">{ctx.selected_ticker}</th>
-                        <th style="padding:4px 2px;">{target_label}</th>
-                        <th style="padding:4px 2px;">vs {target_label}</th>
-
-                    </tr>
-
-                    {rows_html}
-
-                </table>
-            </div>
-
-        </div>
-        """
-
-        st.markdown(html, unsafe_allow_html=True)
+        st.dataframe(
+            comparison_df,
+            use_container_width=True,
+            hide_index=True
+        )
 
     render_nav_footer("m1", prev_page="Overview", next_page="Fair Value")
