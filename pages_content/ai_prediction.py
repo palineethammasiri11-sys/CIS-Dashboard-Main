@@ -196,45 +196,50 @@ def render(ctx):
     # ============================================================
     # 3) FORECAST — ตอบคำถาม "ราคาจะไปทางไหนในอนาคต"
     # ============================================================
-    st.markdown("""
-    <div style="
-        background-color:#0F172A;
-        border:1px solid #1E293B;
-        border-radius:12px 12px 0 0;
-        padding:14px 18px 10px 18px;
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-    ">
-        <div>
-            <span style="
-                font-size:16.5px;
-                font-weight:bold;
-                color:#94A3B8;
-                letter-spacing:0.5px;
-            ">
-                📈 FORECAST — PRICE HISTORY + MODEL-IMPLIED RANGE
-            </span>
-        </div>
+    volatility_display = safe(ctx.stock_info.get('volatility'), 25.0)
 
-        <div title="เส้นทึบฟ้า = ราคาจริงที่เกิดขึ้นแล้ว | เส้นประสี = ค่ากลางที่โมเดลคาดการณ์ | แถบทึบแสง = ช่วงคาดการณ์ (~80%) จาก Volatility จริง ({safe(ctx.stock_info.get('volatility')):.1f}%) — ไม่ใช่การรับประกันผลตอบแทน"
-             style="
-                width:22px;
-                height:22px;
-                border:1px solid #64748B;
-                border-radius:50%;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                color:#CBD5E1;
-                font-size:13px;
-                font-weight:bold;
-                cursor:help;
-             ">
-            i
+    st.markdown(
+        f"""
+        <div style="
+            background-color:#0F172A;
+            border:1px solid #1E293B;
+            border-radius:12px 12px 0 0;
+            padding:14px 18px 10px 18px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+        ">
+            <div>
+                <span style="
+                    font-size:16.5px;
+                    font-weight:bold;
+                    color:#94A3B8;
+                    letter-spacing:0.5px;
+                ">
+                    📈 FORECAST — PRICE HISTORY + MODEL-IMPLIED RANGE
+                </span>
+            </div>
+
+            <div title="เส้นทึบฟ้า = ราคาจริงที่เกิดขึ้นแล้ว | เส้นประสี = ค่ากลางที่โมเดลคาดการณ์ | แถบทึบแสง = ช่วงคาดการณ์ (~80%) จาก Volatility จริง ({volatility_display:.1f}%) — ไม่ใช่การรับประกันผลตอบแทน"
+                 style="
+                    width:22px;
+                    height:22px;
+                    border:1px solid #64748B;
+                    border-radius:50%;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    color:#CBD5E1;
+                    font-size:13px;
+                    font-weight:bold;
+                    cursor:help;
+                 ">
+                i
+            </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True
+    )
 
     hist_tail = ctx.stock_daily.tail(150)
     vol_annual = safe(ctx.stock_info.get('volatility'), 25.0) / 100
