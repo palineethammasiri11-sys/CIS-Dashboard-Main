@@ -111,7 +111,7 @@ def render(ctx):
     reliability_low = acc_val < baseline_val
     baseline_note = "สูงกว่า" if not reliability_low else "ต่ำกว่า"
 
-    st.markdown(f"""<div style="margin-bottom:16px;">
+    st.markdown("""
     <div style="margin-bottom:20px;">
         <div style="font-size:23px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
             AI PREDICTION
