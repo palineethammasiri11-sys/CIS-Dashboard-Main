@@ -622,12 +622,12 @@ def render_sidebar(scores_df):
 
     nav_colors = {
         " Overview": "#3B82F6",
-        " Company Health": "#10B981",
-        " Fair Value": "#8B5CF6",
-        " Entry Timing": "#F59E0B",
-        " AI Prediction": "#06B6D4",
-        " Risk Analysis": "#EF4444",
-        " Industry Benchmark": "#EAB308",
+        " Company Health": "#34D399",
+        " Fair Value": "#FBBF24",
+        " Entry Timing": "#38BDF8",
+        " AI Prediction": "#C084FC",
+        " Risk Analysis": "#FB923C",
+        " Industry Benchmark": "#2DD4BF",
     }
 
     active_color = nav_colors.get(selected_page, "#3B82F6")
