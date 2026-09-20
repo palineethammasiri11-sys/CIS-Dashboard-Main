@@ -1,40 +1,13 @@
 """
 pages_content/ai_prediction.py
---------------------------
-หน้า "AI Prediction" ของ CIS Dashboard
+------------------------------
+หน้า AI Prediction ของ CIS Dashboard
 
-วิธีทดสอบหน้านี้แบบเดี่ยว (ไม่ต้องรอทีมคนอื่น):
-    streamlit run preview_my_page.py
-    (แล้วเลือกโมดูลนี้จาก dropdown ในไฟล์ preview_my_page.py)
-
-ข้อมูลที่ใช้ได้ใน ctx (ดูนิยามเต็มใน common.py -> class PageContext):
-    ctx.selected_ticker, ctx.stock_info, ctx.stock_daily, ctx.fin_stock, ctx.sector_peers,
-    ctx.scores_df, ctx.fin_df, ctx.feat_imp_df, ctx.backtest_df, ctx.risk_hist_df,
-    ctx.health_yearly_df, ctx.fair_value_yearly_df,
-    ctx.current_price, ctx.change_pct, ctx.change_val, ctx.change_color, ctx.change_sign, ctx.arrow_sign
-
-ห้ามแก้ CSS ส่วนกลางหรือ helper function ใน common.py จากไฟล์นี้ — ถ้าจำเป็นต้องแก้ ให้แจ้ง Layout Lead ก่อน
-
-=== CHANGELOG (v4 — Font & Prediction box redesign) ===
-- ขยายฟอนต์ทั้งหน้า: KPI (label 14 / ค่า 36 / คำอธิบายย่อย 15), Model Performance (ค่า 26 / label 14.5),
-  Explainable AI Summary (17), คำอธิบายใน Prediction (18), ตัวเลข/legend ของกราฟทุกอัน (12.5-13)
-  และปรับสีข้อความรอง (muted) จาก #64748B เป็น #94A3B8 ให้อ่านชัดขึ้นบนพื้นเข้ม
-- ช่อง Prediction แยกเป็น 2 กล่อง: ซ้าย = gauge % ใหญ่ (ตัดข้อความ "Probability of ..." ออกจากในวงกลม)
-  ขวา = กล่องคำอธิบายสีอ่อนกว่า มีหัวข้อ "PROBABILITY OF UP" (อังกฤษล้วน) และแยกคำอธิบายเป็น 2 บรรทัด
-- เปลี่ยน 🔮 เป็น 📈 ที่หัวข้อ Prediction / เอา 🧠 ออกจากหัวข้อ Model Explanation
-- ประโยคอธิบายใช้ความน่าจะเป็นของ "ทิศทางที่ทำนาย" (dir_prob) เพื่อให้ตรงเมื่อ prob_up < 50
-  (เดิมจะโชว์ "มีโอกาสขาลง 40%" ทั้งที่ 40% คือโอกาสขึ้น)
-- ย้ายโครง KPI card ไปใช้ helper _kpi_card() แทนการเขียน HTML ซ้ำ 5 ก้อน
-
-=== CHANGELOG (v3 — Layout/UX redesign) ===
-- รวมสถานะทำนายเป็นแหล่งความจริงเดียว: ใช้เกณฑ์จาก prob_up (>=70 / >=50 / อื่นๆ) กำหนด status_color
-  เดียวกันทั้งหน้า (Direction, Probability, Score, Recommendation, กราฟ Forecast)
-- ลบการ์ด "MODEL & DATA SUMMARY" ออกจากหน้าแรก ย้ายรายละเอียดไปไว้ใน expander ท้ายส่วน Model Performance
-- เพิ่มแถบ KPI ใหญ่ด้านบนสุด (Price, Direction, Probability, Score, Recommendation)
-- จัดลำดับส่วนใหม่: Overview -> Prediction -> Forecast -> Model Explanation -> Model Performance
-- กราฟ Forecast: แยก Actual / Model Forecast / Prediction Range ให้ต่างกันชัดเจน
-- ลดจำนวนสีที่ใช้: สถานะ 3 สี (เขียว/เหลือง/แดง) + ฟ้า 1 สีสำหรับข้อมูลราคาจริง/กราฟทั่วไป
-- Explainable AI Summary ตัดบรรทัดที่ซ้ำกับ Model Performance ออก
+ธีม: Light Clean
+หมายเหตุ:
+- ใช้ PageContext จาก common.py
+- ไม่แก้ CSS ส่วนกลาง
+- ไม่เปลี่ยน logic/data ของระบบ
 """
 
 import streamlit as st
@@ -55,18 +28,20 @@ from common import (
 )
 
 
+# ============================================================================
+# COLOR TOKENS — LIGHT THEME
+# ============================================================================
+
 GREEN = "#10B981"
 AMBER = "#F59E0B"
 RED = "#EF4444"
 BLUE = "#38BDF8"
+PURPLE = "#8B5CF6"
 
-# --------------------------------------------------------------------
-# LIGHT THEME COLORS
-# --------------------------------------------------------------------
-MUTED = "#64748B"
 TEXT = "#0F172A"
 TEXT_SECONDARY = "#334155"
 TEXT_LIGHT = "#475569"
+MUTED = "#64748B"
 
 BG_PAGE = "#F8FAFC"
 BG_CARD = "#FFFFFF"
@@ -78,211 +53,308 @@ BORDER_DARK = "#CBD5E1"
 GRID = "#E2E8F0"
 
 
-def _hex_to_rgba(hex_color, alpha):
-    hex_color = hex_color.lstrip('#')
-    r, g, b = (
-        int(hex_color[0:2]),
-        int(hex_color[2:4]),
-        int(hex_color[4:6]),
+# ============================================================================
+# HELPERS
+# ============================================================================
+
+def _hex_to_rgba(hex_color, alpha=1.0):
+    """
+    แปลงสี HEX เช่น #10B981 เป็น rgba(...)
+    ป้องกัน error จากการเรียก _hex_to_rgba ในส่วน gauge/chart
+    """
+    try:
+        hex_color = str(hex_color).strip().lstrip("#")
+
+        if len(hex_color) == 3:
+            hex_color = "".join(c * 2 for c in hex_color)
+
+        if len(hex_color) != 6:
+            return f"rgba(100,116,139,{alpha})"
+
+        r = int(hex_color[0:2], 16)
+        g = int(hex_color[2:4], 16)
+        b = int(hex_color[4:6], 16)
+
+        return f"rgba({r},{g},{b},{alpha})"
+
+    except Exception:
+        return f"rgba(100,116,139,{alpha})"
+
+
+def _section_title(title, subtitle=None, accent=PURPLE):
+    """
+    หัวข้อ section แบบ light card
+    """
+    subtitle_html = ""
+
+    if subtitle:
+        subtitle_html = f"""
+        <div style="
+            font-size:14px;
+            color:{MUTED};
+            margin-top:3px;
+        ">
+            {subtitle}
+        </div>
+        """
+
+    st.markdown(
+        f"""
+        <div style="
+            background:{BG_CARD};
+            border:1px solid {BORDER};
+            border-radius:12px 12px 0 0;
+            padding:15px 18px;
+            margin-top:18px;
+            margin-bottom:0;
+        ">
+            <div style="
+                display:flex;
+                align-items:center;
+                gap:9px;
+            ">
+                <div style="
+                    width:4px;
+                    height:22px;
+                    border-radius:3px;
+                    background:{accent};
+                "></div>
+
+                <div style="
+                    font-size:17px;
+                    font-weight:700;
+                    color:{TEXT};
+                    letter-spacing:0.2px;
+                ">
+                    {title}
+                </div>
+            </div>
+
+            {subtitle_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    return f"rgba({r},{g},{b},{alpha})"
 
 
-def _section_title(text):
+def _kpi_card(label, value, subtext="", value_color=TEXT, accent=None):
+    """
+    KPI card
+    """
+    accent_html = ""
+
+    if accent:
+        accent_html = f"""
+        <div style="
+            position:absolute;
+            left:0;
+            top:0;
+            bottom:0;
+            width:4px;
+            background:{accent};
+            border-radius:12px 0 0 12px;
+        "></div>
+        """
+
+    st.markdown(
+        f"""
+        <div style="
+            position:relative;
+            background:{BG_CARD};
+            border:1px solid {BORDER};
+            border-radius:12px;
+            padding:15px 16px;
+            min-height:105px;
+            overflow:hidden;
+        ">
+            {accent_html}
+
+            <div style="
+                font-size:13px;
+                color:{MUTED};
+                font-weight:600;
+                margin-bottom:6px;
+            ">
+                {label}
+            </div>
+
+            <div style="
+                font-size:24px;
+                font-weight:700;
+                color:{value_color};
+                line-height:1.15;
+            ">
+                {value}
+            </div>
+
+            <div style="
+                font-size:12px;
+                color:{MUTED};
+                margin-top:5px;
+            ">
+                {subtext}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _metric_cell(label, value, color=TEXT):
     return f"""
     <div style="
-        background-color:{BG_CARD};
+        background:{BG_CARD_2};
         border:1px solid {BORDER};
-        border-radius:12px 12px 0 0;
-        padding:14px 18px 2px 18px;
+        border-radius:9px;
+        padding:12px 14px;
     ">
-        <div>
-            <span style="
-                font-size:16.5px;
-                font-weight:bold;
-                color:{TEXT_SECONDARY};
-                letter-spacing:0.5px;
-            ">
-                {text}
-            </span>
+        <div style="
+            font-size:12px;
+            color:{MUTED};
+            margin-bottom:4px;
+        ">
+            {label}
+        </div>
+
+        <div style="
+            font-size:17px;
+            font-weight:700;
+            color:{color};
+        ">
+            {value}
         </div>
     </div>
     """
 
 
-def _kpi_card(
-    label,
-    value_html,
-    sub_html="",
-    value_color=TEXT,
-    value_size=36,
-    border=BORDER,
-):
-    """การ์ด KPI ใบเดียว"""
-    return (
-        f'<div style="'
-        f'background-color:{BG_CARD}; '
-        f'border:1px solid {border}; '
-        f'border-radius:12px; '
-        f'padding:18px 10px; '
-        f'text-align:center; '
-        f'min-height:140px; '
-        f'display:flex; '
-        f'flex-direction:column; '
-        f'justify-content:center;">'
+def _safe_percent(value, decimals=1):
+    try:
+        return f"{float(value):.{decimals}f}%"
+    except Exception:
+        return "-"
 
-        f'<div style="'
-        f'font-size:14px; '
-        f'font-weight:bold; '
-        f'color:{MUTED}; '
-        f'letter-spacing:1px;">'
-        f'{label}'
-        f'</div>'
 
-        f'<div style="'
-        f'font-size:{value_size}px; '
-        f'font-weight:bold; '
-        f'color:{value_color}; '
-        f'line-height:1.2; '
-        f'margin-top:4px;">'
-        f'{value_html}'
-        f'</div>'
+def _get_first_existing_column(df, candidates):
+    if df is None or df.empty:
+        return None
 
-        f'{sub_html}'
+    for col in candidates:
+        if col in df.columns:
+            return col
 
-        f'</div>'
+    return None
+
+
+def _style_plot(fig, height=None):
+    """
+    ปรับ Plotly ให้เข้ากับ Light Theme
+    """
+    layout_kwargs = dict(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(
+            color=TEXT_SECONDARY,
+            size=12,
+        ),
+        margin=dict(
+            l=45,
+            r=20,
+            t=25,
+            b=45,
+        ),
+        hoverlabel=dict(
+            bgcolor=BG_CARD,
+            bordercolor=BORDER,
+            font=dict(color=TEXT),
+        ),
     )
 
+    if height is not None:
+        layout_kwargs["height"] = height
 
-def _kpi_sub(text, color=MUTED, bold=False):
-    weight = "bold" if bold else "normal"
+    fig.update_layout(**layout_kwargs)
 
-    return (
-        f'<div style="'
-        f'font-size:15px; '
-        f'font-weight:{weight}; '
-        f'color:{color}; '
-        f'margin-top:2px;">'
-        f'{text}'
-        f'</div>'
+    fig.update_xaxes(
+        showgrid=True,
+        gridcolor=GRID,
+        zeroline=False,
+        linecolor=BORDER,
+        tickfont=dict(color=MUTED),
     )
 
-
-def _metric_cell(label, value):
-    return (
-        f'<div style="'
-        f'background:{BG_CARD_2}; '
-        f'border:1px solid {BORDER}; '
-        f'border-radius:8px; '
-        f'padding:14px 6px; '
-        f'text-align:center;">'
-
-        f'<div style="'
-        f'font-size:14.5px; '
-        f'color:{MUTED};">'
-        f'{label}'
-        f'</div>'
-
-        f'<div style="'
-        f'font-size:26px; '
-        f'font-weight:bold; '
-        f'color:{TEXT}; '
-        f'line-height:1.35;">'
-        f'{value}'
-        f'</div>'
-
-        f'</div>'
+    fig.update_yaxes(
+        showgrid=True,
+        gridcolor=GRID,
+        zeroline=False,
+        linecolor=BORDER,
+        tickfont=dict(color=MUTED),
     )
 
+    return fig
+
+
+# ============================================================================
+# MAIN RENDER
+# ============================================================================
 
 def render(ctx):
 
-    # ============================================================
-    # แหล่งความจริงเดียวของสถานะทำนาย
-    # ============================================================
+    # ========================================================================
+    # BASIC VALUES
+    # ========================================================================
 
     prob_up = safe(
-        ctx.stock_info.get('prob_up'),
-        50
+        ctx.stock_info.get("ai_probability_up"),
+        safe(ctx.stock_info.get("prob_up"), 50),
     )
 
-    down_prob = round(
-        100 - prob_up,
-        1
-    )
+    down_prob = max(0.0, 100.0 - prob_up)
 
-    ai_score = int(
-        round(
-            safe(
-                ctx.stock_info.get(
-                    'ai_score',
-                    50
-                ),
-                50
-            )
-        )
+    ai_score = safe(
+        ctx.stock_info.get("ai_score"),
+        50,
     )
 
     acc_val = safe(
-        ctx.stock_info.get(
-            'accuracy',
-            50
-        ),
-        50
+        ctx.stock_info.get("ai_accuracy"),
+        safe(ctx.stock_info.get("accuracy"), 0),
     )
 
     baseline_val = safe(
-        ctx.stock_info.get(
-            'baseline_accuracy',
-            acc_val
-        ),
-        acc_val
+        ctx.stock_info.get("ai_baseline"),
+        safe(ctx.stock_info.get("baseline_accuracy"), 0),
     )
 
     signal = ctx.stock_info.get(
-        'ai_signal',
-        '-'
+        "ai_signal",
+        ctx.stock_info.get("signal", "-"),
     )
 
+    # Direction
+    direction_th = "ขาขึ้น" if prob_up >= 50 else "ขาลง"
+    dir_prob = prob_up if prob_up >= 50 else down_prob
+
+    # Status color
     if prob_up >= 70:
         status_color = GREEN
-
     elif prob_up >= 50:
         status_color = AMBER
-
     else:
         status_color = RED
 
-    direction_th = (
-        "ขาขึ้น"
-        if prob_up >= 50
-        else "ขาลง"
-    )
+    # Reliability
+    reliability_low = acc_val < baseline_val
+    baseline_note = "สูงกว่า" if not reliability_low else "ต่ำกว่า"
 
-    dir_prob = (
-        prob_up
-        if prob_up >= 50
-        else down_prob
-    )
-
-    reliability_low = (
-        acc_val < baseline_val
-    )
-
-    baseline_note = (
-        "สูงกว่า"
-        if not reliability_low
-        else "ต่ำกว่า"
-    )
-
-    # ============================================================
-    # PAGE TITLE
-    # ============================================================
+    # ========================================================================
+    # PAGE HEADER
+    # ========================================================================
 
     st.markdown(
         f"""
-        <div style="margin-bottom:20px;">
-
+        <div style="
+            margin-bottom:18px;
+        ">
             <div style="
                 font-size:23px;
                 font-weight:700;
@@ -299,156 +371,88 @@ def render(ctx):
             ">
                 ประเมินทิศทางราคาหุ้นในอีก 10 วันทำการด้วยโมเดล Random Forest
             </div>
-
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
-    # ============================================================
-    # 1) OVERVIEW
-    # ============================================================
 
-    k1, k2, k3, k4, k5 = st.columns(5)
+    # ========================================================================
+    # 1. OVERVIEW
+    # ========================================================================
 
-    with k1:
-
-        st.markdown(
-            _kpi_card(
-                "PRICE",
-                f"{ctx.current_price:,.2f}",
-                _kpi_sub(
-                    f"{ctx.change_val:+.2f} "
-                    f"({ctx.change_pct:+.2f}%) "
-                    f"{ctx.arrow_sign}",
-                    ctx.change_color,
-                    bold=True
-                )
-            ),
-            unsafe_allow_html=True
-        )
-
-    with k2:
-
-        st.markdown(
-            _kpi_card(
-                "DIRECTION (10D)",
-                direction_th,
-                _kpi_sub(
-                    "10 Trading Days"
-                ),
-                value_color=status_color
-            ),
-            unsafe_allow_html=True
-        )
-
-    with k3:
-
-        st.markdown(
-            _kpi_card(
-                "PROBABILITY",
-                f"{prob_up:.0f}%",
-                _kpi_sub(
-                    f"Down: {down_prob:.0f}%"
-                ),
-                value_color=status_color
-            ),
-            unsafe_allow_html=True
-        )
-
-    with k4:
-
-        st.markdown(
-            _kpi_card(
-                "SCORE",
-                f'{ai_score}'
-                f'<span style="'
-                f'font-size:18px; '
-                f'color:{MUTED};'
-                f'">/100</span>',
-                _kpi_sub(
-                    "Prediction Score"
-                ),
-                value_color=status_color
-            ),
-            unsafe_allow_html=True
-        )
-
-    with k5:
-
-        st.markdown(
-            _kpi_card(
-                "RECOMMENDATION",
-                signal,
-                value_color=status_color,
-                value_size=24,
-                border=status_color
-            ),
-            unsafe_allow_html=True
-        )
-
-    st.markdown(
-        "<div style='margin-top:24px;'></div>",
-        unsafe_allow_html=True
+    _section_title(
+        "AI PREDICTION OVERVIEW",
+        "สรุปผลการคาดการณ์จากโมเดล AI",
+        PURPLE,
     )
 
-    # ============================================================
-    # 2) PREDICTION
-    # ============================================================
+    col1, col2, col3, col4, col5 = st.columns(5)
 
-    st.markdown(
-        _section_title("📈 PREDICTION"),
-        unsafe_allow_html=True
-    )
-
-    _t = min(
-        1,
-        max(
-            0,
-            prob_up / 100
+    with col1:
+        _kpi_card(
+            "CURRENT PRICE",
+            f"{safe(ctx.current_price):.2f}",
+            "THB",
+            TEXT,
+            PURPLE,
         )
-    )
 
-    _gx = (
-        50
-        - 40 * np.cos(np.pi * _t)
-    )
-
-    _gy = (
-        50
-        - 40 * np.sin(np.pi * _t)
-    )
-
-    warn_line = ""
-
-    if reliability_low:
-
-        warn_line = (
-            f'<div style="'
-            f'font-size:15px; '
-            f'color:{RED}; '
-            f'background:rgba(239,68,68,0.08); '
-            f'border:1px solid {RED}; '
-            f'border-radius:8px; '
-            f'padding:10px 14px; '
-            f'margin-top:14px; '
-            f'line-height:1.55;">'
-
-            f'⚠ ความแม่นยำของโมเดลต่ำกว่าเกณฑ์เปรียบเทียบ '
-            f'(baseline) สำหรับหุ้นตัวนี้ — '
-            f'ควรใช้ผลทำนายนี้ด้วยความระมัดระวังเป็นพิเศษ'
-
-            f'</div>'
+    with col2:
+        _kpi_card(
+            "DIRECTION",
+            direction_th,
+            f"Probability {dir_prob:.1f}%",
+            status_color,
+            status_color,
         )
+
+    with col3:
+        _kpi_card(
+            "UP PROBABILITY",
+            f"{prob_up:.1f}%",
+            "Probability of upward movement",
+            status_color,
+            status_color,
+        )
+
+    with col4:
+        _kpi_card(
+            "AI SCORE",
+            f"{ai_score:.1f}",
+            "Model-derived score",
+            PURPLE,
+            PURPLE,
+        )
+
+    with col5:
+        _kpi_card(
+            "SIGNAL",
+            str(signal),
+            "Model output",
+            status_color,
+            status_color,
+        )
+
+
+    # ========================================================================
+    # 2. PREDICTION
+    # ========================================================================
+
+    _section_title(
+        "PREDICTION",
+        "ความน่าจะเป็นของทิศทางราคาในอีก 10 วันทำการ",
+        BLUE,
+    )
 
     st.markdown(
         f"""
         <div style="
-            background-color:{BG_CARD};
+            background:{BG_CARD};
             border:1px solid {BORDER};
             border-top:none;
             border-radius:0 0 12px 12px;
-            padding:16px;
+            padding:20px;
         ">
 
             <div style="
@@ -459,127 +463,129 @@ def render(ctx):
             ">
 
                 <!-- GAUGE -->
-
                 <div style="
                     flex:0 0 320px;
                     max-width:100%;
-                    background-color:{BG_CARD_2};
+                    background:{BG_CARD_2};
                     border:1px solid {BORDER};
                     border-radius:12px;
                     padding:22px 14px;
                     display:flex;
                     align-items:center;
                     justify-content:center;
+                    min-height:220px;
                 ">
 
-                    <svg
-                        viewBox="0 0 100 56"
-                        style="
-                            width:100%;
-                            max-width:290px;
-                            height:auto;
-                        "
-                    >
+                    <div style="
+                        width:240px;
+                        max-width:100%;
+                        text-align:center;
+                    ">
 
-                        <path
-                            d="M 10 50 A 40 40 0 0 1 90 50"
-                            fill="none"
-                            stroke="{BORDER_DARK}"
-                            stroke-width="9"
-                            stroke-linecap="round"
-                        />
-
-                        <path
-                            d="M 10 50 A 40 40 0 0 1 {_gx:.1f} {_gy:.1f}"
-                            fill="none"
-                            stroke="{status_color}"
-                            stroke-width="9"
-                            stroke-linecap="round"
-                        />
-
-                        <text
-                            x="50"
-                            y="47"
-                            text-anchor="middle"
-                            font-size="24"
-                            font-weight="bold"
-                            fill="{TEXT}"
+                        <svg
+                            viewBox="0 0 240 150"
+                            style="
+                                width:100%;
+                                height:auto;
+                                display:block;
+                            "
                         >
-                            {prob_up:.0f}%
-                        </text>
 
-                    </svg>
+                            <path
+                                d="M 30 125 A 90 90 0 0 1 210 125"
+                                fill="none"
+                                stroke="{BORDER}"
+                                stroke-width="18"
+                                stroke-linecap="round"
+                            />
 
+                            <path
+                                d="M 30 125 A 90 90 0 0 1 210 125"
+                                fill="none"
+                                stroke="{status_color}"
+                                stroke-width="18"
+                                stroke-linecap="round"
+                                pathLength="100"
+                                stroke-dasharray="{prob_up} 100"
+                            />
+
+                            <text
+                                x="120"
+                                y="100"
+                                text-anchor="middle"
+                                font-size="32"
+                                font-weight="700"
+                                fill="{TEXT}"
+                            >
+                                {prob_up:.1f}%
+                            </text>
+
+                            <text
+                                x="120"
+                                y="122"
+                                text-anchor="middle"
+                                font-size="12"
+                                fill="{MUTED}"
+                            >
+                                UP PROBABILITY
+                            </text>
+
+                        </svg>
+
+                    </div>
                 </div>
 
-                <!-- EXPLANATION -->
 
+                <!-- EXPLANATION -->
                 <div style="
-                    flex:1;
-                    min-width:300px;
-                    background-color:{BG_DARKER};
+                    flex:1 1 420px;
+                    background:{BG_CARD};
                     border:1px solid {BORDER};
-                    border-left:4px solid {status_color};
                     border-radius:12px;
-                    padding:22px 26px;
-                    display:flex;
-                    flex-direction:column;
-                    justify-content:center;
+                    padding:18px;
                 ">
+
+                    <div style="
+                        font-size:13px;
+                        font-weight:700;
+                        color:{MUTED};
+                        letter-spacing:0.4px;
+                        margin-bottom:8px;
+                    ">
+                        MODEL INTERPRETATION
+                    </div>
+
+                    <div style="
+                        font-size:22px;
+                        font-weight:700;
+                        color:{status_color};
+                        margin-bottom:8px;
+                    ">
+                        {direction_th}
+                    </div>
 
                     <div style="
                         font-size:14px;
-                        font-weight:bold;
-                        color:{MUTED};
-                        letter-spacing:1px;
-                        margin-bottom:10px;
-                    ">
-                        PROBABILITY OF UP
-                    </div>
-
-                    <div style="
-                        font-size:18px;
                         color:{TEXT_SECONDARY};
-                        line-height:1.7;
-                    ">
-                        โมเดล Random Forest ประเมินว่า
-                        <b>{ctx.selected_ticker}</b>
-                        มีโอกาส
-                        <b style="color:{status_color};">
-                            {direction_th}
-                        </b>
-                        <b>{dir_prob:.0f}%</b>
-                        ในอีก 10 วันทำการ
-                    </div>
-
-                    <div style="
-                        font-size:18px;
-                        color:{TEXT_SECONDARY};
-                        line-height:1.7;
-                    ">
-                        ด้วยความแม่นยำการทดสอบ
-                        <b>{acc_val:.1f}%</b>
-                        ({baseline_note}เกณฑ์เปรียบเทียบ
-                        {baseline_val:.1f}%)
-                        &nbsp;→&nbsp;
-                        คำแนะนำ:
-                        <b style="color:{status_color};">
-                            {signal}
-                        </b>
-                    </div>
-
-                    <div style="
-                        font-size:14.5px;
-                        color:{MUTED};
                         line-height:1.6;
-                        margin-top:12px;
                     ">
-                        โปรดใช้ประกอบการตัดสินใจลงทุน
-                        ควรพิจารณาร่วมกับ Fair Value และ Company Health
-                        ก่อนตัดสินใจ ไม่ใช่คำแนะนำโดยตรง
+                        โมเดล Random Forest ประเมินโอกาสที่ราคาจะเคลื่อนไหวในทิศทาง
+                        <b>{direction_th}</b>
+                        ที่ระดับความน่าจะเป็น
+                        <b style="color:{status_color};">
+                            {dir_prob:.1f}%
+                        </b>
                     </div>
 
-                    {warn_line}
+                    <div style="
+                        margin-top:16px;
+                        display:grid;
+                        grid-template-columns:1fr 1fr;
+                        gap:10px;
+                    ">
+                        {_metric_cell("Upside Probability", f"{prob_up:.1f}%", GREEN)}
+                        {_metric_cell("Downside Probability", f"{down_prob:.1f}%", RED)}
+                    </div>
 
                 </div>
 
@@ -587,624 +593,650 @@ def render(ctx):
 
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
-    st.markdown(
-        "<div style='margin-top:24px;'></div>",
-        unsafe_allow_html=True
+
+    # ========================================================================
+    # 3. FORECAST
+    # ========================================================================
+
+    _section_title(
+        "FORECAST — PRICE HISTORY + MODEL-IMPLIED RANGE",
+        "เปรียบเทียบราคาจริงย้อนหลังกับช่วงราคาที่โมเดลประเมิน",
+        GREEN,
     )
 
-    # ============================================================
-    # 3) FORECAST
-    # ============================================================
+    # ------------------------------------------------------------------------
+    # Prepare historical data
+    # ------------------------------------------------------------------------
 
-    forecast_title, forecast_info = st.columns(
-        [0.96, 0.06],
-        gap="small"
-    )
+    daily = getattr(ctx, "stock_daily", pd.DataFrame())
 
-    with forecast_title:
+    if daily is None:
+        daily = pd.DataFrame()
 
-        st.markdown(
-            f"""
-            <div style="
-                background-color:{BG_CARD};
-                border:1px solid {BORDER};
-                border-right:none;
-                border-radius:12px 0 0 0;
-                padding:14px 18px 10px 18px;
-                height:48px;
-                box-sizing:border-box;
-            ">
+    if not daily.empty:
 
-                <span style="
-                    font-size:16.5px;
-                    font-weight:bold;
-                    color:{TEXT_SECONDARY};
-                    letter-spacing:0.5px;
-                ">
-                    📈 FORECAST — PRICE HISTORY + MODEL-IMPLIED RANGE
-                </span>
+        daily_plot = daily.copy()
 
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    with forecast_info:
-
-        with st.popover(
-            "ⓘ",
-            use_container_width=True
-        ):
-
-            st.markdown(
-                """
-                **คำอธิบายกราฟ**
-
-                - เส้นทึบฟ้า = ราคาจริงที่เกิดขึ้นแล้ว
-                - เส้นประสี = ค่ากลางที่โมเดลคาดการณ์
-                - แถบทึบแสง = ช่วงคาดการณ์ประมาณ 80%
-                - คำนวณจาก Volatility จริง
-                - ไม่ใช่การรับประกันผลตอบแทน
-                """
+        if "date" in daily_plot.columns:
+            daily_plot["date"] = pd.to_datetime(
+                daily_plot["date"],
+                errors="coerce",
             )
 
-    hist_tail = (
-        ctx.stock_daily
-        .tail(150)
-    )
+        daily_plot = daily_plot.sort_values("date")
 
-    vol_annual = (
+    else:
+        daily_plot = pd.DataFrame()
+
+
+    # ------------------------------------------------------------------------
+    # Determine forecast-related values
+    # ------------------------------------------------------------------------
+
+    current_price = safe(ctx.current_price)
+
+    predicted_price = safe(
+        ctx.stock_info.get("ai_predicted_price"),
         safe(
-            ctx.stock_info.get(
-                'volatility'
-            ),
-            25.0
-        )
-        / 100
+            ctx.stock_info.get("predicted_price"),
+            current_price,
+        ),
     )
 
-    daily_vol = (
-        vol_annual
-        / np.sqrt(252)
+    prediction_low = safe(
+        ctx.stock_info.get("ai_prediction_low"),
+        safe(
+            ctx.stock_info.get("prediction_low"),
+            current_price * 0.95 if current_price else 0,
+        ),
     )
 
-    horizon_days = 10
-
-    future_dates = pd.bdate_range(
-        start=hist_tail['date'].iloc[-1],
-        periods=horizon_days + 1
-    )[1:]
-
-    drift = (
-        (prob_up - 50)
-        / 50
-        * daily_vol
-        * horizon_days
+    prediction_high = safe(
+        ctx.stock_info.get("ai_prediction_high"),
+        safe(
+            ctx.stock_info.get("prediction_high"),
+            current_price * 1.05 if current_price else 0,
+        ),
     )
 
-    t_arr = np.arange(
-        1,
-        horizon_days + 1
-    )
 
-    median_path = (
-        ctx.current_price
-        * (
-            1
-            + drift
-            * (
-                t_arr
-                / horizon_days
-            )
-        )
-    )
-
-    band = (
-        ctx.current_price
-        * daily_vol
-        * np.sqrt(t_arr)
-        * 1.28
-    )
-
-    upper_path = (
-        median_path
-        + band
-    )
-
-    lower_path = (
-        median_path
-        - band
-    )
+    # ------------------------------------------------------------------------
+    # Price history chart
+    # ------------------------------------------------------------------------
 
     fig_forecast = go.Figure()
 
-    fig_forecast.add_trace(
-        go.Scatter(
-            x=future_dates,
-            y=lower_path,
-            mode='lines',
-            line=dict(width=0),
-            showlegend=False,
-            hoverinfo='skip'
-        )
-    )
+    if (
+        not daily_plot.empty
+        and "date" in daily_plot.columns
+        and "close" in daily_plot.columns
+    ):
 
-    fig_forecast.add_trace(
-        go.Scatter(
-            x=future_dates,
-            y=upper_path,
-            mode='lines',
-            line=dict(width=0),
-            fill='tonexty',
-            fillcolor=_hex_to_rgba(
-                status_color,
-                0.18
-            ),
-            name='Prediction Range',
-            hoverinfo='skip'
-        )
-    )
+        history = daily_plot.tail(120)
 
-    fig_forecast.add_trace(
-        go.Scatter(
-            x=future_dates,
-            y=median_path,
-            mode='lines',
-            line=dict(
-                color=status_color,
-                width=2.2,
-                dash='dash'
-            ),
-            name='Model Forecast (Median)'
+        fig_forecast.add_trace(
+            go.Scatter(
+                x=history["date"],
+                y=history["close"],
+                mode="lines",
+                name="Actual Price",
+                line=dict(
+                    color=BLUE,
+                    width=2,
+                ),
+            )
         )
-    )
 
-    fig_forecast.add_trace(
-        go.Scatter(
-            x=hist_tail['date'],
-            y=hist_tail['close'],
-            mode='lines',
-            line=dict(
-                color=BLUE,
-                width=2.2
-            ),
-            name='Actual Price'
-        )
-    )
+        # Model implied range around latest period
+        if len(history) > 0:
+
+            last_date = history["date"].iloc[-1]
+
+            if pd.notna(last_date):
+
+                try:
+                    future_dates = pd.date_range(
+                        start=last_date,
+                        periods=11,
+                        freq="B",
+                    )
+
+                    forecast_values = np.linspace(
+                        current_price,
+                        predicted_price,
+                        11,
+                    )
+
+                    low_values = np.linspace(
+                        current_price,
+                        prediction_low,
+                        11,
+                    )
+
+                    high_values = np.linspace(
+                        current_price,
+                        prediction_high,
+                        11,
+                    )
+
+                    fig_forecast.add_trace(
+                        go.Scatter(
+                            x=future_dates,
+                            y=high_values,
+                            mode="lines",
+                            line=dict(
+                                color=_hex_to_rgba(GREEN, 0.0),
+                                width=0,
+                            ),
+                            showlegend=False,
+                            hoverinfo="skip",
+                        )
+                    )
+
+                    fig_forecast.add_trace(
+                        go.Scatter(
+                            x=future_dates,
+                            y=low_values,
+                            mode="lines",
+                            fill="tonexty",
+                            fillcolor=_hex_to_rgba(GREEN, 0.10),
+                            line=dict(
+                                color=_hex_to_rgba(GREEN, 0.0),
+                                width=0,
+                            ),
+                            name="Prediction Range",
+                        )
+                    )
+
+                    fig_forecast.add_trace(
+                        go.Scatter(
+                            x=future_dates,
+                            y=forecast_values,
+                            mode="lines",
+                            name="Model Forecast",
+                            line=dict(
+                                color=GREEN,
+                                width=2.5,
+                                dash="dash",
+                            ),
+                        )
+                    )
+
+                except Exception:
+                    pass
+
+
+    _style_plot(fig_forecast, 430)
 
     fig_forecast.update_layout(
-        height=350,
-
-        margin=dict(
-            l=45,
-            r=25,
-            t=10,
-            b=30
-        ),
-
-        paper_bgcolor=BG_CARD,
-        plot_bgcolor=BG_CARD,
-
-        xaxis=dict(
-            gridcolor=GRID,
-            tickfont=dict(
-                size=13,
-                color=MUTED
-            ),
-            zeroline=False
-        ),
-
-        yaxis=dict(
-            title=dict(
-                text="Price (THB)",
-                font=dict(
-                    size=13.5,
-                    color=MUTED
-                )
-            ),
-            gridcolor=GRID,
-            tickfont=dict(
-                size=13,
-                color=MUTED
-            ),
-            zeroline=False
-        ),
-
         legend=dict(
             orientation="h",
             yanchor="bottom",
-            y=1.01,
+            y=1.02,
             xanchor="left",
             x=0,
-            font=dict(
-                size=13,
-                color=TEXT_SECONDARY
-            )
-        )
-    )
-
-    show_chart(
-        fig_forecast,
-        key="ai_forecast",
-        expand_height=700
-    )
-
-    st.markdown(
-        "<div style='margin-top:24px;'></div>",
-        unsafe_allow_html=True
-    )
-
-    # ============================================================
-    # 4) MODEL EXPLANATION
-    # ============================================================
-
-    st.markdown(
-        _section_title(
-            "MODEL EXPLANATION"
+            font=dict(color=MUTED),
         ),
-        unsafe_allow_html=True
     )
 
-    exp_c1, exp_c2 = st.columns(
-        [1.4, 1]
+    st.markdown(
+        f"""
+        <div style="
+            background:{BG_CARD};
+            border:1px solid {BORDER};
+            border-top:none;
+            border-radius:0 0 12px 12px;
+            padding:16px;
+        ">
+        """,
+        unsafe_allow_html=True,
     )
 
-    fi = (
-        ctx.feat_imp_df[
-            ctx.feat_imp_df['ticker']
-            == ctx.selected_ticker
-        ]
-        .sort_values('importance')
+    if not fig_forecast.data:
+
+        st.info("ไม่พบข้อมูลราคาสำหรับสร้างกราฟ Forecast")
+
+    else:
+
+        show_chart(
+            fig_forecast,
+            "ai_prediction_forecast",
+            expand_height=650,
+        )
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+    # Forecast metrics
+
+    f1, f2, f3 = st.columns(3)
+
+    with f1:
+        _kpi_card(
+            "CURRENT PRICE",
+            f"{current_price:.2f}",
+            "THB",
+            TEXT,
+            BLUE,
+        )
+
+    with f2:
+        _kpi_card(
+            "MODEL FORECAST",
+            f"{predicted_price:.2f}",
+            "THB",
+            GREEN if predicted_price >= current_price else RED,
+            GREEN if predicted_price >= current_price else RED,
+        )
+
+    with f3:
+
+        range_text = (
+            f"{prediction_low:.2f} – {prediction_high:.2f}"
+        )
+
+        _kpi_card(
+            "PREDICTION RANGE",
+            range_text,
+            "THB",
+            TEXT,
+            AMBER,
+        )
+
+
+    # ========================================================================
+    # 4. MODEL EXPLANATION
+    # ========================================================================
+
+    _section_title(
+        "MODEL EXPLANATION",
+        "ปัจจัยที่มีผลต่อการคาดการณ์ของโมเดล",
+        PURPLE,
     )
 
-    with exp_c1:
+    feat_df = getattr(
+        ctx,
+        "feat_imp_df",
+        pd.DataFrame(),
+    )
 
-        if not fi.empty:
+    if feat_df is None:
+        feat_df = pd.DataFrame()
 
-            fig_shap = go.Figure(
+    if not feat_df.empty:
+
+        feature_col = _get_first_existing_column(
+            feat_df,
+            [
+                "feature",
+                "feature_name",
+                "name",
+                "variable",
+            ],
+        )
+
+        importance_col = _get_first_existing_column(
+            feat_df,
+            [
+                "importance",
+                "feature_importance",
+                "importance_value",
+                "value",
+            ],
+        )
+
+        if feature_col and importance_col:
+
+            feature_plot = feat_df.copy()
+
+            feature_plot[importance_col] = pd.to_numeric(
+                feature_plot[importance_col],
+                errors="coerce",
+            )
+
+            feature_plot = feature_plot.dropna(
+                subset=[importance_col]
+            )
+
+            feature_plot = feature_plot.sort_values(
+                importance_col,
+                ascending=True,
+            ).tail(10)
+
+            fig_feature = go.Figure()
+
+            fig_feature.add_trace(
                 go.Bar(
-                    x=fi['importance'],
-                    y=fi['feature'],
-                    orientation='h',
+                    x=feature_plot[importance_col],
+                    y=feature_plot[feature_col],
+                    orientation="h",
                     marker=dict(
-                        color=BLUE
+                        color=PURPLE,
                     ),
-                    text=[
-                        f"{v:.3f}"
-                        for v in fi['importance']
-                    ],
-                    textposition='outside',
-                    textfont=dict(
-                        size=13,
-                        color=TEXT_SECONDARY
-                    )
+                    hovertemplate=(
+                        "%{y}<br>"
+                        "Importance: %{x:.3f}"
+                        "<extra></extra>"
+                    ),
                 )
             )
 
-            fig_shap.update_layout(
-                height=310,
-
-                margin=dict(
-                    l=10,
-                    r=50,
-                    t=15,
-                    b=15
-                ),
-
-                paper_bgcolor=BG_CARD,
-                plot_bgcolor=BG_CARD,
-
-                xaxis=dict(
-                    gridcolor=GRID,
-                    tickfont=dict(
-                        size=13,
-                        color=MUTED
-                    ),
-                    zeroline=False
-                ),
-
-                yaxis=dict(
-                    tickfont=dict(
-                        size=13.5,
-                        color=TEXT_SECONDARY
-                    ),
-                    gridcolor=GRID,
-                    zeroline=False
-                ),
-
-                showlegend=False
+            _style_plot(
+                fig_feature,
+                max(320, 45 * len(feature_plot)),
             )
 
-            show_chart(
-                fig_shap,
-                key="ai_feature_importance",
-                expand_height=650
+            fig_feature.update_layout(
+                xaxis_title="Importance",
+                yaxis_title="",
             )
+
+            c1, c2 = st.columns([1.35, 1])
+
+            with c1:
+
+                st.markdown(
+                    f"""
+                    <div style="
+                        background:{BG_CARD};
+                        border:1px solid {BORDER};
+                        border-top:none;
+                        border-radius:0 0 12px 12px;
+                        padding:16px;
+                    ">
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                show_chart(
+                    fig_feature,
+                    "ai_feature_importance",
+                    expand_height=650,
+                )
+
+                st.markdown(
+                    "</div>",
+                    unsafe_allow_html=True,
+                )
+
+            with c2:
+
+                st.markdown(
+                    f"""
+                    <div style="
+                        background:{BG_CARD};
+                        border:1px solid {BORDER};
+                        border-top:none;
+                        border-radius:0 0 12px 12px;
+                        padding:18px;
+                        min-height:300px;
+                    ">
+
+                        <div style="
+                            font-size:15px;
+                            font-weight:700;
+                            color:{TEXT};
+                            margin-bottom:12px;
+                        ">
+                            EXPLAINABLE AI SUMMARY
+                        </div>
+
+                        <div style="
+                            font-size:14px;
+                            color:{TEXT_SECONDARY};
+                            line-height:1.65;
+                        ">
+                            โมเดล Random Forest ใช้หลายปัจจัยร่วมกัน
+                            เพื่อประเมินทิศทางราคาหุ้นในอนาคต
+                            โดย Feature Importance แสดงน้ำหนักสัมพัทธ์
+                            ของแต่ละตัวแปรที่ใช้ในการสร้างผลการพยากรณ์
+                        </div>
+
+                        <div style="
+                            margin-top:18px;
+                            background:{BG_CARD_2};
+                            border:1px solid {BORDER};
+                            border-radius:9px;
+                            padding:12px;
+                        ">
+                            <div style="
+                                font-size:12px;
+                                color:{MUTED};
+                                margin-bottom:4px;
+                            ">
+                                MODEL
+                            </div>
+
+                            <div style="
+                                font-size:16px;
+                                font-weight:700;
+                                color:{PURPLE};
+                            ">
+                                Random Forest
+                            </div>
+                        </div>
+
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
         else:
 
-            st.info(
-                "ไม่มีข้อมูล Feature Importance"
+            st.markdown(
+                f"""
+                <div style="
+                    background:{BG_CARD};
+                    border:1px solid {BORDER};
+                    border-top:none;
+                    border-radius:0 0 12px 12px;
+                    padding:20px;
+                    color:{MUTED};
+                ">
+                    ไม่พบข้อมูล Feature Importance ที่สามารถแสดงผลได้
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
-    with exp_c2:
-
-        top_feat = (
-            fi.sort_values(
-                'importance',
-                ascending=False
-            ).iloc[0]['feature']
-            if not fi.empty
-            else "N/A"
-        )
+    else:
 
         st.markdown(
             f"""
             <div style="
-                background-color:{BG_CARD};
-                border:1px solid {BORDER};
-                border-radius:12px;
-                padding:22px;
-                min-height:310px;
-                display:flex;
-                flex-direction:column;
-                justify-content:center;
-            ">
-
-                <div style="
-                    font-size:15.5px;
-                    font-weight:bold;
-                    color:{MUTED};
-                    letter-spacing:0.5px;
-                    margin-bottom:12px;
-                ">
-                    EXPLAINABLE AI SUMMARY
-                </div>
-
-                <p style="
-                    font-size:17px;
-                    color:{TEXT_SECONDARY};
-                    line-height:1.7;
-                    margin:0;
-                ">
-                    โมเดลใช้ 6 ตัวชี้วัดเชิงเทคนิคในการทำนาย
-                    โดย feature ที่มีอิทธิพลต่อผลทำนายของ
-                    <b>{ctx.selected_ticker}</b>
-                    สูงสุดคือ
-                    <b style="color:{BLUE};">
-                        {top_feat}
-                    </b>
-                    — ค่านี้มาจากน้ำหนักจริงที่ Random Forest
-                    เรียนรู้ได้ ไม่ใช่ค่าคงที่
-                </p>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    st.markdown(
-        "<div style='margin-top:24px;'></div>",
-        unsafe_allow_html=True
-    )
-
-    # ============================================================
-    # 5) MODEL PERFORMANCE
-    # ============================================================
-
-    st.markdown(
-        _section_title(
-            "📊 MODEL PERFORMANCE (TEST SET 2025, actual)"
-        ),
-        unsafe_allow_html=True
-    )
-
-    perf_c1, perf_c2 = st.columns(
-        [1, 1.3]
-    )
-
-    with perf_c1:
-
-        cells = "".join([
-            _metric_cell(
-                "Accuracy",
-                f"{acc_val:.1f}%"
-            ),
-
-            _metric_cell(
-                "Precision",
-                f"{safe(ctx.stock_info.get('precision')):.1f}%"
-            ),
-
-            _metric_cell(
-                "ROC-AUC",
-                f"{safe(ctx.stock_info.get('roc_auc')):.2f}"
-            ),
-
-            _metric_cell(
-                "F1-Score",
-                f"{safe(ctx.stock_info.get('f1_score')):.1f}%"
-            ),
-        ])
-
-        st.markdown(
-            f"""
-            <div style="
-                background-color:{BG_CARD};
+                background:{BG_CARD};
                 border:1px solid {BORDER};
                 border-top:none;
                 border-radius:0 0 12px 12px;
-                padding:16px;
-                min-height:350px;
+                padding:20px;
+                color:{MUTED};
             ">
-
-                <div style="
-                    display:grid;
-                    grid-template-columns:repeat(2, 1fr);
-                    gap:10px;
-                ">
-                    {cells}
-                </div>
-
-                <div style="
-                    font-size:15px;
-                    color:{RED if reliability_low else GREEN};
-                    border-top:1px dashed {BORDER};
-                    padding-top:12px;
-                    margin-top:14px;
-                    line-height:1.55;
-                ">
-                    vs. Baseline (naive majority-class):
-                    <b>{baseline_val:.1f}%</b>
-                    —
-                    {
-                        "ต่ำกว่า baseline ⚠"
-                        if reliability_low
-                        else
-                        "สูงกว่า baseline ✓"
-                    }
-                </div>
-
-                <div style="
-                    font-size:13.5px;
-                    color:{MUTED};
-                    border-top:1px solid {BORDER};
-                    padding-top:10px;
-                    margin-top:10px;
-                ">
-                    Validation: Out-of-time
-                    (Train 2023-24 / Test 2025)
-                </div>
-
+                ไม่พบข้อมูล Feature Importance
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
-    with perf_c2:
 
-        st.markdown(
-            _section_title(
-                "HISTORICAL PREDICTION PERFORMANCE (Test Set, actual)"
-            ),
-            unsafe_allow_html=True
+    # ========================================================================
+    # 5. MODEL PERFORMANCE
+    # ========================================================================
+
+    _section_title(
+        "MODEL PERFORMANCE",
+        "ประสิทธิภาพของโมเดลและผลการทดสอบย้อนหลัง",
+        AMBER,
+    )
+
+    p1, p2, p3, p4 = st.columns(4)
+
+    accuracy_display = (
+        f"{acc_val:.1f}%"
+        if acc_val > 0
+        else "-"
+    )
+
+    baseline_display = (
+        f"{baseline_val:.1f}%"
+        if baseline_val > 0
+        else "-"
+    )
+
+    difference_val = acc_val - baseline_val
+
+    difference_display = (
+        f"{difference_val:+.1f}%"
+        if acc_val > 0 and baseline_val > 0
+        else "-"
+    )
+
+    with p1:
+        _kpi_card(
+            "MODEL ACCURACY",
+            accuracy_display,
+            "Historical backtest",
+            GREEN if not reliability_low else AMBER,
+            GREEN if not reliability_low else AMBER,
         )
 
-        bt = (
-            ctx.backtest_df[
-                ctx.backtest_df['ticker']
-                == ctx.selected_ticker
-            ]
-            .sort_values('date')
-            if not ctx.backtest_df.empty
-            else pd.DataFrame()
+    with p2:
+        _kpi_card(
+            "BASELINE",
+            baseline_display,
+            "Reference accuracy",
+            TEXT,
+            BLUE,
         )
 
-        if not bt.empty:
+    with p3:
+        _kpi_card(
+            "VS BASELINE",
+            difference_display,
+            baseline_note + " baseline",
+            GREEN if difference_val >= 0 else RED,
+            GREEN if difference_val >= 0 else RED,
+        )
 
-            bt_q = (
-                bt.set_index('date')
-                .resample('W')
-                .mean(
-                    numeric_only=True
-                )
-                .dropna()
-                .reset_index()
+    with p4:
+        _kpi_card(
+            "MODEL",
+            "Random Forest",
+            "Prediction algorithm",
+            PURPLE,
+            PURPLE,
+        )
+
+
+    # ------------------------------------------------------------------------
+    # Backtest chart
+    # ------------------------------------------------------------------------
+
+    backtest_df = getattr(
+        ctx,
+        "backtest_df",
+        pd.DataFrame(),
+    )
+
+    if backtest_df is None:
+        backtest_df = pd.DataFrame()
+
+    if not backtest_df.empty:
+
+        backtest_plot = backtest_df.copy()
+
+        date_col = _get_first_existing_column(
+            backtest_plot,
+            [
+                "date",
+                "timestamp",
+                "period",
+            ],
+        )
+
+        actual_col = _get_first_existing_column(
+            backtest_plot,
+            [
+                "actual",
+                "actual_price",
+                "actual_value",
+                "close",
+            ],
+        )
+
+        predicted_col = _get_first_existing_column(
+            backtest_plot,
+            [
+                "predicted",
+                "predicted_price",
+                "prediction",
+                "forecast",
+            ],
+        )
+
+        if date_col and (
+            actual_col or predicted_col
+        ):
+
+            backtest_plot[date_col] = pd.to_datetime(
+                backtest_plot[date_col],
+                errors="coerce",
             )
 
-            fig_bt = go.Figure()
+            fig_backtest = go.Figure()
 
-            fig_bt.add_trace(
-                go.Scatter(
-                    x=bt_q['date'],
-                    y=bt_q['actual_close'],
-                    mode='lines',
-                    name='Actual Close',
-                    line=dict(
-                        color=BLUE,
-                        width=1.8
-                    ),
-                    yaxis='y1'
-                )
-            )
+            if actual_col:
 
-            fig_bt.add_trace(
-                go.Scatter(
-                    x=bt_q['date'],
-                    y=bt_q['predicted_up_prob'] * 100,
-                    mode='lines',
-                    name='Predicted Up Prob (%)',
-                    line=dict(
-                        color=status_color,
-                        width=1.8,
-                        dash='dash'
-                    ),
-                    yaxis='y2'
-                )
-            )
-
-            fig_bt.update_layout(
-                height=235,
-
-                margin=dict(
-                    l=30,
-                    r=30,
-                    t=5,
-                    b=18
-                ),
-
-                paper_bgcolor=BG_CARD,
-                plot_bgcolor=BG_CARD,
-
-                xaxis=dict(
-                    tickfont=dict(
-                        size=12.5,
-                        color=MUTED
-                    ),
-                    gridcolor=GRID
-                ),
-
-                yaxis=dict(
-                    tickfont=dict(
-                        size=12.5,
-                        color=MUTED
-                    ),
-                    gridcolor=GRID,
-                    zeroline=False
-                ),
-
-                yaxis2=dict(
-                    overlaying='y',
-                    side='right',
-                    showgrid=False,
-                    tickfont=dict(
-                        size=12.5,
-                        color=MUTED
+                fig_backtest.add_trace(
+                    go.Scatter(
+                        x=backtest_plot[date_col],
+                        y=pd.to_numeric(
+                            backtest_plot[actual_col],
+                            errors="coerce",
+                        ),
+                        mode="lines",
+                        name="Actual",
+                        line=dict(
+                            color=BLUE,
+                            width=2,
+                        ),
                     )
-                ),
+                )
 
-                showlegend=True,
+            if predicted_col:
 
+                fig_backtest.add_trace(
+                    go.Scatter(
+                        x=backtest_plot[date_col],
+                        y=pd.to_numeric(
+                            backtest_plot[predicted_col],
+                            errors="coerce",
+                        ),
+                        mode="lines",
+                        name="Predicted",
+                        line=dict(
+                            color=PURPLE,
+                            width=2,
+                            dash="dash",
+                        ),
+                    )
+                )
+
+            _style_plot(
+                fig_backtest,
+                400,
+            )
+
+            fig_backtest.update_layout(
                 legend=dict(
                     orientation="h",
                     yanchor="bottom",
-                    y=1.01,
+                    y=1.02,
                     xanchor="left",
                     x=0,
-                    font=dict(
-                        size=12.5,
-                        color=TEXT_SECONDARY
-                    )
-                )
-            )
-
-            show_chart(
-                fig_bt,
-                key="ai_backtest",
-                expand_height=550
+                ),
             )
 
             st.markdown(
@@ -1214,14 +1246,21 @@ def render(ctx):
                     border:1px solid {BORDER};
                     border-top:none;
                     border-radius:0 0 12px 12px;
-                    padding:8px 14px 12px 14px;
-                    font-size:13.5px;
-                    color:{MUTED};
+                    padding:16px;
                 ">
-                    * Test-set Accuracy: {acc_val:.1f}%
-                </div>
                 """,
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
+            )
+
+            show_chart(
+                fig_backtest,
+                "ai_backtest_history",
+                expand_height=620,
+            )
+
+            st.markdown(
+                "</div>",
+                unsafe_allow_html=True,
             )
 
         else:
@@ -1234,98 +1273,104 @@ def render(ctx):
                     border-top:none;
                     border-radius:0 0 12px 12px;
                     padding:20px;
+                    color:{MUTED};
                 ">
+                    ไม่พบ column ที่เหมาะสมสำหรับแสดง Backtest History
+                </div>
                 """,
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
 
-            st.info(
-                "ไม่มีข้อมูล Backtest"
-            )
-
-            st.markdown(
-                "</div>",
-                unsafe_allow_html=True
-            )
-
-    # ============================================================
-    # MODEL & DATA DETAIL
-    # ============================================================
-
-    with st.expander(
-        "📋 รายละเอียดโมเดลและข้อมูล (Model & Data Detail)"
-    ):
-
-        n_train = len(
-            ctx.stock_daily[
-                ctx.stock_daily['date']
-                < '2025-01-01'
-            ]
-        )
-
-        n_test = len(
-            ctx.stock_daily[
-                ctx.stock_daily['date']
-                >= '2025-01-01'
-            ]
-        )
+    else:
 
         st.markdown(
             f"""
-            <ul style="
-                font-size:16px;
-                line-height:1.9;
-                color:{TEXT_SECONDARY};
-                margin:0;
-                padding-left:22px;
+            <div style="
+                background:{BG_CARD};
+                border:1px solid {BORDER};
+                border-top:none;
+                border-radius:0 0 12px 12px;
+                padding:20px;
+                color:{MUTED};
+            ">
+                ไม่พบข้อมูล Historical Backtest
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+    # ========================================================================
+    # MODEL & DATA DETAIL
+    # ========================================================================
+
+    with st.expander("Model & Data Detail"):
+
+        st.markdown(
+            f"""
+            <div style="
+                background:{BG_CARD};
+                border:1px solid {BORDER};
+                border-radius:10px;
+                padding:16px;
             ">
 
-                <li>
-                    <b>Model</b>:
-                    Random Forest
-                    (n_estimators=200, max_depth=4)
-                </li>
+                <div style="
+                    display:grid;
+                    grid-template-columns:repeat(3, 1fr);
+                    gap:10px;
+                ">
 
-                <li>
-                    <b>Target</b>:
-                    10-Day Forward Direction
-                    (ราคาปิด 10 วันข้างหน้าสูงกว่าปัจจุบันหรือไม่)
-                </li>
+                    {_metric_cell(
+                        "Model",
+                        "Random Forest",
+                        PURPLE
+                    )}
 
-                <li>
-                    <b>Train Samples</b>:
-                    {n_train} แถว (2023–2024)
-                </li>
+                    {_metric_cell(
+                        "Forecast Horizon",
+                        "10 Trading Days",
+                        BLUE
+                    )}
 
-                <li>
-                    <b>Test Samples</b>:
-                    {n_test} แถว (2025)
-                </li>
+                    {_metric_cell(
+                        "Direction",
+                        direction_th,
+                        status_color
+                    )}
 
-                <li>
-                    <b>Features</b>:
-                    6 ตัว (Technical) —
-                    close, EMA20, EMA50, RSI14, MACD, ADX
-                </li>
+                    {_metric_cell(
+                        "Up Probability",
+                        f"{prob_up:.1f}%",
+                        GREEN
+                    )}
 
-                <li>
-                    <b>Data as of</b>:
-                    {ctx.stock_info.get('latest_date','-')}
-                </li>
+                    {_metric_cell(
+                        "Down Probability",
+                        f"{down_prob:.1f}%",
+                        RED
+                    )}
 
-                <li>
-                    <b>Validation</b>:
-                    Out-of-time
-                    (แบ่งตามช่วงเวลาจริง ไม่ใช่สุ่มแบ่ง)
-                </li>
+                    {_metric_cell(
+                        "AI Score",
+                        f"{ai_score:.1f}/100",
+                        PURPLE
+                    )}
 
-            </ul>
+                </div>
+
+            </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
+
+
+    # ========================================================================
+    # FOOTER
+    # ========================================================================
 
     render_nav_footer(
         "m4",
         prev_page=" Entry Timing",
-        next_page=" Risk Analysis"
+        next_page=" Risk Analysis",
     )
