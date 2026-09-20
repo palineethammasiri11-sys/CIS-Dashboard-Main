@@ -289,49 +289,7 @@ def setup_page_and_css():
 
     </style>
     """, unsafe_allow_html=True)
-  st.markdown("""
-<style>
-
-/* ===== Module #2 : Light Theme ===== */
-
-/* การ์ดหลัก */
-.card,
-.score-card,
-.metric-card,
-.info-card,
-.analysis-card,
-.summary-card {
-    background: #FFFFFF !important;
-    color: #0F172A !important;
-    border: 1px solid #E2E8F0 !important;
-    box-shadow: none !important;
-}
-
-/* พื้นหลังส่วนที่เคยเป็นดำ */
-.dark-card,
-.card-dark,
-.panel-dark {
-    background: #FFFFFF !important;
-    color: #0F172A !important;
-    border: 1px solid #E2E8F0 !important;
-}
-
-/* ตัวหนังสือในการ์ด */
-.card h1,
-.card h2,
-.card h3,
-.card p,
-.score-card h1,
-.score-card h2,
-.score-card h3,
-.score-card p {
-    color: #0F172A !important;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-
+  
 # ============================================================================
 # 3. Helper functions ที่ใช้ข้ามหน้า
 # ============================================================================
