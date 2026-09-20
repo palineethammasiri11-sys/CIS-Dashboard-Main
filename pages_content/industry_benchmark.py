@@ -32,106 +32,6 @@ def render(ctx):
     n_all = len(ctx.scores_df)
     pct_in_sector = round((sector_rank / max(n_sector, 1)) * 100)
 
-    # ============================================================
-    # RESPONSIVE CSS — เฉพาะหน้า Industry Benchmark
-    # ไม่เปลี่ยน font size / data / logic / layout หลัก
-    # ============================================================
-    st.markdown("""
-    <style>
-    /* ป้องกัน Streamlit column จากการถูก content ภายในดันให้กว้าง */
-    [data-testid="column"] {
-        min-width: 0 !important;
-    }
-
-    /* ทุก element ในหน้าไม่ควรสร้าง minimum width เกิน column */
-    .ib-responsive-card {
-        width: 100%;
-        max-width: 100%;
-        min-width: 0;
-        box-sizing: border-box;
-        overflow: hidden;
-    }
-
-    /* Peer comparison table */
-    .ib-peer-table-wrapper {
-        width: 100%;
-        max-width: 100%;
-        min-width: 0;
-        overflow: hidden;
-        box-sizing: border-box;
-    }
-
-    .ib-peer-table {
-        width: 100%;
-        max-width: 100%;
-        min-width: 0;
-        table-layout: fixed;
-        border-collapse: collapse;
-        box-sizing: border-box;
-    }
-
-    .ib-peer-table th,
-    .ib-peer-table td {
-        min-width: 0;
-        max-width: 100%;
-        box-sizing: border-box;
-        overflow-wrap: break-word;
-        word-break: normal;
-        white-space: normal;
-    }
-
-    /* ให้ชื่อ Company มีพื้นที่มากกว่า column อื่น */
-    .ib-peer-table th:nth-child(1),
-    .ib-peer-table td:nth-child(1) {
-        width: 12%;
-    }
-
-    .ib-peer-table th:nth-child(2),
-    .ib-peer-table td:nth-child(2) {
-        width: 12%;
-    }
-
-    .ib-peer-table th:nth-child(3),
-    .ib-peer-table td:nth-child(3) {
-        width: 15%;
-    }
-
-    .ib-peer-table th:nth-child(4),
-    .ib-peer-table td:nth-child(4) {
-        width: 15%;
-    }
-
-    .ib-peer-table th:nth-child(5),
-    .ib-peer-table td:nth-child(5) {
-        width: 17%;
-    }
-
-    .ib-peer-table th:nth-child(6),
-    .ib-peer-table td:nth-child(6) {
-        width: 12%;
-    }
-
-    .ib-peer-table th:nth-child(7),
-    .ib-peer-table td:nth-child(7) {
-        width: 17%;
-    }
-
-    /* Dimension percentile cards */
-    .ib-dimension-grid {
-        display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-        gap: 6px;
-        width: 100%;
-        min-width: 0;
-    }
-
-    .ib-dimension-item {
-        min-width: 0;
-        overflow: hidden;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
     st.markdown("""
     <div style="margin-bottom:20px;">
         <div style="font-size:23px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
@@ -154,12 +54,12 @@ def render(ctx):
             position_label = "INDUSTRY LEADER" if sector_rank == 1 else ("STRONG COMPETITOR" if sector_rank <= max(2, n_sector // 2) else "LAGGING PEER")
             pos_stars = 5 if sector_rank == 1 else (4 if sector_rank <= max(2, n_sector // 2) else 2)
 
-        st.markdown(f"""<div class="ib-responsive-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; display:flex; flex-direction:column; justify-content:space-between;">
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; display:flex; flex-direction:column; justify-content:space-between;">
     <div style="font-size:14.5px; color:#64748B; font-weight:bold; margin-bottom:8px;">STRATEGIC INVESTMENT POSITION</div>
-    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; flex-grow:1; min-width:0;">
-    <div style="background:rgba(168,85,247,0.15); border:2px solid #A855F7; border-radius:50%; width:100px; height:100px; min-width:100px; display:flex; align-items:center; justify-content:center; font-size:44px;">🏆</div>
-    <div style="text-align:center; min-width:0; max-width:100%;">
-    <div style="color:#A855F7; font-size:26px; font-weight:bold; overflow-wrap:break-word;">{position_label}</div>
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; flex-grow:1;">
+    <div style="background:rgba(168,85,247,0.15); border:2px solid #A855F7; border-radius:50%; width:100px; height:100px; display:flex; align-items:center; justify-content:center; font-size:44px;">🏆</div>
+    <div style="text-align:center;">
+    <div style="color:#A855F7; font-size:26px; font-weight:bold;">{position_label}</div>
     <div style="color:#A855F7; font-size:22px; letter-spacing:4px; margin-top:6px;">{'★'*pos_stars}{'☆'*(5-pos_stars)}</div>
     </div>
     </div>
@@ -170,15 +70,15 @@ def render(ctx):
         pct_overall = round((overall_rank / max(n_all, 1)) * 100)
         sector_block = f"""<span style="display:inline-block; margin-top:6px; background-color:rgba(100,116,139,0.10); color:#64748B; font-size:14px; font-weight:bold; padding:3px 14px; border-radius:8px;">กลุ่มมีเพียง 1 หุ้น</span>""" if single_member_sector else f"""<span style="display:inline-block; margin-top:6px; background-color:rgba(245,158,11,0.15); color:#F59E0B; font-size:14px; font-weight:bold; padding:3px 14px; border-radius:8px;">Top {pct_in_sector}%</span>"""
 
-        st.markdown(f"""<div class="ib-responsive-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; text-align:center; display:flex; flex-direction:column; justify-content:space-between;">
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; text-align:center; display:flex; flex-direction:column; justify-content:space-between;">
     <div style="font-size:14.5px; color:#64748B; font-weight:bold;">RANKING</div>
-    <div style="border-bottom:1px solid #E2E8F0; padding-bottom:10px; flex-grow:1; display:flex; flex-direction:column; justify-content:center; min-width:0;">
+    <div style="border-bottom:1px solid #E2E8F0; padding-bottom:10px; flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
     <div style="font-size:14px; color:#64748B;">ในกลุ่ม</div>
-    <div style="font-size:13px; color:#64748B; margin-bottom:4px; overflow-wrap:break-word;">{ctx.stock_info.get('sector','-')}</div>
+    <div style="font-size:13px; color:#64748B; margin-bottom:4px;">{ctx.stock_info.get('sector','-')}</div>
     <div><span style="font-size:32px; color:#0F172A; font-weight:bold;">{sector_rank}</span> <span style="font-size:14px; color:#64748B;">/ {n_sector} หุ้น</span></div>
     {sector_block}
     </div>
-    <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center; min-width:0;">
+    <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
     <div style="font-size:14px; color:#64748B;">ทั้งตลาด</div>
     <div style="font-size:13px; color:#64748B; margin-bottom:4px;">{n_all} หุ้นที่ติดตาม</div>
     <div><span style="font-size:32px; color:#0F172A; font-weight:bold;">{overall_rank}</span> <span style="font-size:14px; color:#64748B;">/ {n_all} หุ้น</span></div>
@@ -217,8 +117,8 @@ def render(ctx):
 
         def dim_pct_card(label, pct, color):
             tier = "Excellent" if pct <= 20 else ("Good" if pct <= 45 else ("Fair" if pct <= 70 else "Weak"))
-            return f"""<div class="ib-dimension-item" style="background:#F8FAFC; padding:6px 2px; border-radius:6px; border:1px solid #E2E8F0;">
-    <div style="color:#64748B; font-size:12px; overflow-wrap:break-word;">{label}</div><div style="color:{color}; font-size:15px; font-weight:bold; margin:2px 0;">Top {max(pct,1)}%</div>
+            return f"""<div style="background:#F8FAFC; padding:6px 2px; border-radius:6px; border:1px solid #E2E8F0;">
+    <div style="color:#64748B; font-size:12px;">{label}</div><div style="color:{color}; font-size:15px; font-weight:bold; margin:2px 0;">Top {max(pct,1)}%</div>
     <div style="color:{color}; font-size:12px;">{tier}</div></div>"""
 
         if single_member_sector:
@@ -228,19 +128,19 @@ def render(ctx):
         else:
             dims_sector = build_dims(ctx.sector_peers)
             sector_section = f"""<div style="font-size:12.5px; color:#475569; margin-bottom:6px;">เปรียบเทียบกับกลุ่มอุตสาหกรรม {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
-    <div class="ib-dimension-grid" style="text-align:center; margin-bottom:16px;">
+    <div style="display:grid; grid-template-columns: repeat(6, 1fr); gap:6px; text-align:center; margin-bottom:16px;">
     {''.join([dim_pct_card(l, p, c) for l, p, c in dims_sector])}
     </div>"""
 
-        st.markdown(f"""<div class="ib-responsive-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div style="min-width:0;">
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div>
     <div style="font-size:14.5px; color:#64748B; font-weight:bold; margin-bottom:10px;">DIMENSION PERCENTILE RANK</div>
     {sector_section}
     </div>
     <div style="border-top:1px dashed #CBD5E1; margin-bottom:12px;"></div>
-    <div style="min-width:0;">
+    <div>
     <div style="font-size:12.5px; color:#475569; margin-bottom:6px;">เปรียบเทียบกับหุ้นทั้ง {n_all} ตัว</div>
-    <div class="ib-dimension-grid" style="text-align:center;">
+    <div style="display:grid; grid-template-columns: repeat(6, 1fr); gap:6px; text-align:center;">
     {''.join([dim_pct_card(l, p, c) for l, p, c in dims_market])}
     </div>
     </div>
@@ -249,7 +149,7 @@ def render(ctx):
     st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
     r2_c1, r2_c2, r2_c3 = st.columns([2.0, 1.0, 1.1])
 
-        with r2_c1:
+    with r2_c1:
         peers_sorted = ctx.sector_peers.sort_values('overall_score', ascending=False)
 
         def badge(val, thresholds, labels, colors):
@@ -259,177 +159,34 @@ def render(ctx):
             return f'<span style="color:{colors[-1]};">{labels[-1]}</span>'
 
         rows_html = ""
-
         for _, p in peers_sorted.iterrows():
             is_sel = p['ticker'] == ctx.selected_ticker
             row_bg = "background:rgba(168,85,247,0.08);" if is_sel else ""
-
             star_n = min(5, max(1, round(safe(p['overall_score']) / 20)))
-
-            health_b = badge(
-                p['health_score'],
-                [70, 45, 0],
-                ["Excellent", "Good", "Weak"],
-                ["#10B981", "#3B82F6", "#EF4444"]
-            )
-
-            val_b = (
-                "Undervalued"
-                if p['margin_of_safety'] > 10
-                else ("Overvalued" if p['margin_of_safety'] < -10 else "Fair Value")
-            )
-
-            val_c = (
-                "#10B981"
-                if p['margin_of_safety'] > 10
-                else ("#EF4444" if p['margin_of_safety'] < -10 else "#64748B")
-            )
-
-            timing_b = badge(
-                p['timing_score'],
-                [65, 45, 0],
-                ["Good Entry", "Neutral", "Bad Entry"],
-                ["#10B981", "#F59E0B", "#EF4444"]
-            )
-
-            ai_b = badge(
-                p['ai_score'],
-                [65, 45, 0],
-                ["Bullish", "Neutral", "Bearish"],
-                ["#10B981", "#64748B", "#EF4444"]
-            )
-
-            risk_b = (
-                "Low"
-                if p['risk_score'] >= 65
-                else ("Medium" if p['risk_score'] >= 40 else "High")
-            )
-
-            risk_c = (
-                "#10B981"
-                if p['risk_score'] >= 65
-                else ("#F59E0B" if p['risk_score'] >= 40 else "#EF4444")
-            )
-
+            health_b = badge(p['health_score'], [70, 45, 0], ["Excellent", "Good", "Weak"], ["#10B981", "#3B82F6", "#EF4444"])
+            val_b = "Undervalued" if p['margin_of_safety'] > 10 else ("Overvalued" if p['margin_of_safety'] < -10 else "Fair Value")
+            val_c = "#10B981" if p['margin_of_safety'] > 10 else ("#EF4444" if p['margin_of_safety'] < -10 else "#64748B")
+            timing_b = badge(p['timing_score'], [65, 45, 0], ["Good Entry", "Neutral", "Bad Entry"], ["#10B981", "#F59E0B", "#EF4444"])
+            ai_b = badge(p['ai_score'], [65, 45, 0], ["Bullish", "Neutral", "Bearish"], ["#10B981", "#64748B", "#EF4444"])
+            risk_b = "Low" if p['risk_score'] >= 65 else ("Medium" if p['risk_score'] >= 40 else "High")
+            risk_c = "#10B981" if p['risk_score'] >= 65 else ("#F59E0B" if p['risk_score'] >= 40 else "#EF4444")
             name_disp = f"⭐ {p['ticker']}" if is_sel else p['ticker']
             name_c = "#A855F7" if is_sel else "#0F172A"
 
-            rows_html += f"""
-            <tr style="border-bottom:1px solid #E2E8F0; {row_bg}">
-                <td style="text-align:left; padding:6px 4px; color:{name_c}; font-weight:bold; white-space:nowrap;">
-                    {name_disp}
-                </td>
-                <td style="padding:6px 4px; white-space:nowrap;">
-                    {health_b}
-                </td>
-                <td style="padding:6px 4px; white-space:nowrap;">
-                    <span style="color:{val_c};">{val_b}</span>
-                </td>
-                <td style="padding:6px 4px; white-space:nowrap;">
-                    {timing_b}
-                </td>
-                <td style="padding:6px 4px; white-space:nowrap;">
-                    {ai_b}
-                </td>
-                <td style="padding:6px 4px; white-space:nowrap;">
-                    <span style="color:{risk_c};">{risk_b}</span>
-                </td>
-                <td style="padding:6px 4px; color:#A855F7; letter-spacing:1px; white-space:nowrap;">
-                    {'★' * star_n}{'☆' * (5 - star_n)}
-                </td>
-            </tr>
-            """
+            rows_html += f"""<tr style="border-bottom:1px solid #E2E8F0; {row_bg}">
+    <td style="text-align:left; padding:6px 0; color:{name_c}; font-weight:bold;">{name_disp}</td>
+    <td>{health_b}</td><td><span style="color:{val_c};">{val_b}</span></td><td>{timing_b}</td><td>{ai_b}</td>
+    <td><span style="color:{risk_c};">{risk_b}</span></td><td style="color:#A855F7; letter-spacing:1px;">{'★'*star_n}{'☆'*(5-star_n)}</td></tr>"""
 
-        st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:8px;
-                padding:14px;
-                height:350px;
-                overflow:hidden;
-            ">
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:350px;">
+    <div style="font-size:14.5px; color:#64748B; font-weight:bold; margin-bottom:6px;">PEER COMPARISON — {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
+    <table style="width:100%; text-align:center; font-size:14px; color:#475569; border-collapse:collapse;">
+    <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:13px;"><th style="text-align:left; padding:5px 0;">Company</th><th>Health</th><th>Fair Value</th><th>Entry Timing</th><th>AI Prediction</th><th>Risk</th><th>Overall</th></tr>
+    {rows_html}
+    </table>
+    <div style="font-size:12.5px; color:#64748B; margin-top:6px;">*จัดอันดับจาก Overall Score ที่คำนวณจริงจากข้อมูลใน cis_summary_scores</div>
+    </div>""", unsafe_allow_html=True)
 
-                <div style="
-                    font-size:14.5px;
-                    color:#64748B;
-                    font-weight:bold;
-                    margin-bottom:6px;
-                ">
-                    PEER COMPARISON — {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)
-                </div>
-
-                <div style="
-                    width:100%;
-                    overflow-x:auto;
-                    overflow-y:hidden;
-                ">
-
-                    <table style="
-                        width:100%;
-                        min-width:620px;
-                        text-align:center;
-                        font-size:14px;
-                        color:#475569;
-                        border-collapse:collapse;
-                        table-layout:auto;
-                    ">
-
-                        <tr style="
-                            border-bottom:1px solid #E2E8F0;
-                            color:#64748B;
-                            font-size:13px;
-                        ">
-                            <th style="
-                                text-align:left;
-                                padding:5px 4px;
-                                white-space:nowrap;
-                            ">Company</th>
-
-                            <th style="padding:5px 4px; white-space:nowrap;">
-                                Health
-                            </th>
-
-                            <th style="padding:5px 4px; white-space:nowrap;">
-                                Fair Value
-                            </th>
-
-                            <th style="padding:5px 4px; white-space:nowrap;">
-                                Entry Timing
-                            </th>
-
-                            <th style="padding:5px 4px; white-space:nowrap;">
-                                AI Prediction
-                            </th>
-
-                            <th style="padding:5px 4px; white-space:nowrap;">
-                                Risk
-                            </th>
-
-                            <th style="padding:5px 4px; white-space:nowrap;">
-                                Overall
-                            </th>
-                        </tr>
-
-                        {rows_html}
-
-                    </table>
-
-                </div>
-
-                <div style="
-                    font-size:12.5px;
-                    color:#64748B;
-                    margin-top:6px;
-                ">
-                    *จัดอันดับจาก Overall Score ที่คำนวณจริงจากข้อมูลใน cis_summary_scores
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
     with r2_c2:
         cats = ['Health', 'Valuation', 'Timing', 'AI Pred.', 'Risk', 'Industry']
         stock_vals = [
@@ -488,7 +245,6 @@ def render(ctx):
             paper_bgcolor="#FFFFFF",
             plot_bgcolor="#FFFFFF",
             height=310,
-            autosize=True,
             margin=dict(l=25, r=25, t=30, b=15),
             title=dict(
                 text="RADAR: STOCK vs SECTOR AVG",
@@ -581,7 +337,6 @@ def render(ctx):
             paper_bgcolor="#FFFFFF",
             plot_bgcolor="#F8FAFC",
             height=310,
-            autosize=True,
             margin=dict(l=15, r=15, t=30, b=15),
             title=dict(
                 text="STRATEGIC MATRIX (All 8 Stocks)",
@@ -648,7 +403,7 @@ def render(ctx):
         if not weaknesses_ib:
             weaknesses_ib.append("ไม่พบจุดอ่อนเชิงเปรียบเทียบที่ชัดเจน")
 
-        st.markdown(f"""<div class="ib-responsive-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:275px;">
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:275px;">
     <div style="font-size:14.5px; color:#64748B; font-weight:bold; margin-bottom:6px;">COMPETITIVE ADVANTAGE</div>
     <div style="font-size:13px; color:#10B981; font-weight:bold; margin-bottom:2px;">STRENGTHS</div>
     <ul style="color:#475569; font-size:13.5px; line-height:1.4; padding-left:14px; margin:0 0 6px 0;">{''.join([f'<li>{s}</li>' for s in strengths_ib])}</ul>
@@ -665,7 +420,7 @@ def render(ctx):
 
         avg_label = "Overall avg" if single_member_sector else "Sector avg"
 
-        st.markdown(f"""<div class="ib-responsive-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:275px;">
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:275px;">
     <div style="font-size:14.5px; color:#64748B; font-weight:bold; margin-bottom:6px;">EXPLAINABLE AI SUMMARY</div>
     <p style="color:#475569; font-size:14px; line-height:1.4; margin:0 0 8px 0;">
     <b>{ctx.selected_ticker}</b> อยู่อันดับที่ <b>{sector_rank}</b> จาก {n_sector} บริษัทในกลุ่ม {ctx.stock_info.get('sector','-')} (Overall Score {safe(ctx.stock_info.get('overall_score')):.1f}/100) {compare_desc}:</p>
@@ -692,7 +447,7 @@ def render(ctx):
             else "Medium"
         )
 
-        st.markdown(f"""<div class="ib-responsive-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:275px; text-align:center;">
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:275px; text-align:center;">
     <div style="font-size:14.5px; color:#64748B; font-weight:bold; margin-bottom:4px; text-align:left;">FINAL RECOMMENDATION</div>
     <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin:4px 0;">
     <div><h1 style="color:{rec_color2}; margin:0; font-size:24px; line-height:1.1;">{rec}</h1></div></div>
@@ -714,9 +469,9 @@ def render(ctx):
 
     download_link = f'data:file/csv;base64,{b64_csv}'
 
-    st.markdown(f"""<div class="ib-responsive-card" style="display:flex; justify-content:space-between; align-items:center; background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:10px 14px; margin-top:12px;">
-    <div style="font-size:14px; color:#475569; min-width:0;"><b>EXPORT & INDUSTRY DATA</b><br><span style="color:#64748B; font-size:13px;">ดาวน์โหลดคะแนนวิเคราะห์ทั้งหมดของ {ctx.selected_ticker} (ข้อมูลจริงจาก cis_summary_scores)</span></div>
-    <a href="{download_link}" download="{ctx.selected_ticker}_CIS_Analysis.csv" style="background:#3B82F6; color:white; border:none; padding:6px 14px; border-radius:6px; font-size:13px; text-decoration:none; display:inline-block; font-weight:bold; cursor:pointer; flex-shrink:0;">📥 Export Data (CSV)</a>
+    st.markdown(f"""<div style="display:flex; justify-content:space-between; align-items:center; background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:10px 14px; margin-top:12px;">
+    <div style="font-size:14px; color:#475569;"><b>EXPORT & INDUSTRY DATA</b><br><span style="color:#64748B; font-size:13px;">ดาวน์โหลดคะแนนวิเคราะห์ทั้งหมดของ {ctx.selected_ticker} (ข้อมูลจริงจาก cis_summary_scores)</span></div>
+    <a href="{download_link}" download="{ctx.selected_ticker}_CIS_Analysis.csv" style="background:#3B82F6; color:white; border:none; padding:6px 14px; border-radius:6px; font-size:13px; text-decoration:none; display:inline-block; font-weight:bold; cursor:pointer;">📥 Export Data (CSV)</a>
     </div>""", unsafe_allow_html=True)
 
     render_nav_footer("m6", prev_page=" Risk Analysis", next_page=None)
