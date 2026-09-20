@@ -32,18 +32,16 @@ def render(ctx):
     n_all = len(ctx.scores_df)
     pct_in_sector = round((sector_rank / max(n_sector, 1)) * 100)
 
-    st.markdown(f"""
-    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px; border-bottom:1px solid #1E293B; padding-bottom:10px;">
-        <div><div style="font-size:14.5px; color:#64748B; margin-bottom:2px;">Home / Module 6 / Industry Benchmark</div>
-        <div style="display:flex; align-items:baseline; gap:10px;"><h2 style="margin:0; color:#F8FAFC; font-size:23px;">INDUSTRY BENCHMARK</h2>
-        <span style="font-size:18.5px; color:#A855F7; font-weight:bold;">{ctx.selected_ticker} ⭐</span>
-        <span style="font-size:15px; color:#64748B;">{ctx.stock_info.get('sector','-')}</span></div></div>
-        <div style="text-align:right; display:flex; gap:20px;">
-        <div><span style="font-size:13.5px; color:#64748B;">Current Price</span><br><b style="color:{ctx.change_color}; font-size:16.5px;">{ctx.current_price:.2f} THB</b> <span style="color:{ctx.change_color}; font-size:13.5px;">({ctx.change_sign}{ctx.change_pct:.2f}%) {ctx.arrow_sign}</span></div>
-        <div><span style="font-size:13.5px; color:#64748B;">Sector</span><br><b style="color:#CBD5E1; font-size:15px;">{ctx.stock_info.get('sector','-')}</b></div>
-        <div><span style="font-size:13.5px; color:#64748B;">Universe</span><br><b style="color:#CBD5E1; font-size:15px;">{n_all} หุ้นที่ติดตาม (2023-2025)</b></div>
+    st.markdown("""
+    <div style="margin-bottom:20px;">
+        <div style="font-size:23px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
+            INDUSTRY BENCHMARK
         </div>
-    </div>""", unsafe_allow_html=True)
+        <div style="font-size:15px; color:#64748B; margin-top:4px;">
+            เปรียบเทียบศักยภาพของหุ้นกับบริษัทในกลุ่มอุตสาหกรรมและหุ้นที่ติดตาม
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     r1_c1, r1_c2, r1_c3 = st.columns([1.1, 0.8, 2.1])
 
@@ -287,4 +285,4 @@ def render(ctx):
     <a href="{download_link}" download="{ctx.selected_ticker}_CIS_Analysis.csv" style="background:#3B82F6; color:white; border:none; padding:6px 14px; border-radius:6px; font-size:13px; text-decoration:none; display:inline-block; font-weight:bold; cursor:pointer;">📥 Export Data (CSV)</a>
     </div>""", unsafe_allow_html=True)
 
-    render_nav_footer("m6", prev_page=" 🛡️ Risk Analysis", next_page=None)
+    render_nav_footer("m6", prev_page="Risk Analysis", next_page=None)
