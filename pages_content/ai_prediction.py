@@ -112,9 +112,15 @@ def render(ctx):
     baseline_note = "สูงกว่า" if not reliability_low else "ต่ำกว่า"
 
     st.markdown(f"""<div style="margin-bottom:16px;">
-<div style="font-size:15px; color:{MUTED}; margin-bottom:2px;">Home / Module 4 / AI Prediction</div>
-<h2 style="margin:0; font-size:26px; font-weight:bold; color:#F8FAFC; letter-spacing:0.5px;">AI PREDICTION</h2>
-</div>""", unsafe_allow_html=True)
+    <div style="margin-bottom:20px;">
+        <div style="font-size:23px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
+            AI PREDICTION
+        </div>
+        <div style="font-size:15px; color:#64748B; margin-top:4px;">
+            ประเมินทิศทางราคาหุ้นในอีก 10 วันทำการด้วยโมเดล Random Forest
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # ============================================================
     # 1) OVERVIEW — แถบ KPI ใหญ่ ตอบคำถาม "สรุปแล้วตัวเลขคืออะไร"
