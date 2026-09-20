@@ -107,7 +107,7 @@ def render(ctx):
     st.markdown("""
     <div style="margin-bottom:20px;">
         <div style="font-size:23px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
-            ENTRY TIMING ANALYSIS
+            ENTRY TIMING
         </div>
         <div style="font-size:15px; color:#64748B; margin-top:4px;">
             วิเคราะห์จังหวะการเข้าลงทุนจากแนวโน้ม โมเมนตัม และ Risk/Reward
