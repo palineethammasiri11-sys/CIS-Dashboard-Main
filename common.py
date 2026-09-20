@@ -441,12 +441,46 @@ def render_sidebar(scores_df):
 
     st.sidebar.markdown("---")
 
+    selected_page = st.sidebar.radio(
+        "Navigation",
+        PAGES,
+        key="nav_page"
+    )
 
-    # =========================
-    # NAVIGATION
-    # =========================
+    nav_colors = {
+        " 🏠 Overview": "#3B82F6",
+        " 💚 Company Health": "#10B981",
+        " ⚖️ Fair Value": "#8B5CF6",
+        " ⏱️ Entry Timing": "#F59E0B",
+        " 🔮 AI Prediction": "#06B6D4",
+        " 🛡️ Risk Analysis": "#EF4444",
+        " 📊 Industry Benchmark": "#F59E0B",
+    }
 
-    st.sidebar.radio("Navigation", PAGES, key="nav_page")
+    active_color = nav_colors.get(selected_page, "#3B82F6")
+
+    st.markdown(
+        f"""
+        <style>
+        section[data-testid="stSidebar"]
+        div[role="radiogroup"]
+        label[data-baseweb="radio"]:has(input:checked) {{
+            background-color: {active_color} !important;
+            color: white !important;
+            border-radius: 8px !important;
+        }}
+
+        section[data-testid="stSidebar"]
+        div[role="radiogroup"]
+        label[data-baseweb="radio"]:has(input:checked) p {{
+            color: white !important;
+            font-weight: 700 !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
     nav_page = st.session_state["nav_page"]
 
 
