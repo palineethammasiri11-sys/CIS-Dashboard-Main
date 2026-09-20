@@ -221,29 +221,6 @@ def render(ctx):
         if roe_pct not in (None, "") else ""
     )
 
-    # --- TOP HEADER BAR ---
-    _render_html(
-        f"""
-        <div style="{_card_style('display:flex;justify-content:space-between;align-items:center;padding:12px 20px;margin-bottom:12px;')}">
-            <div style="font-size:18px;font-weight:900;color:{TEXT_WHITE};letter-spacing:.5px;">
-                {ticker_safe} <span style="font-size:11.5px;font-weight:500;color:{TEXT_MUTED};">{sector_label}</span>
-            </div>
-            <div style="display:flex;gap:20px;font-size:11.5px;align-items:center;">
-                <div>
-                    <span style="color:{TEXT_MUTED};">Price:</span>
-                    <b style="color:{TEXT_WHITE};font-size:14px;">{c_p:.2f} THB</b>
-                    <span style="color:{chg_color};font-weight:700;">({price_chg_pct:+.2f}%) {chg_arrow}</span>
-                </div>
-                {pe_html} {roe_html}
-                <div>
-                    <span style="color:{TEXT_MUTED};">Data as of:</span>
-                    <b style="color:{ACCENT};">{data_as_of}</b>
-                </div>
-            </div>
-        </div>
-        """
-    )
-
     readiness_color = GREEN if readiness == "READY" else AMBER
     confidence_dots = "".join([
         f'<span style="height:7px; width:7px; background-color:{"#10B981" if i < bullish_count else "#334155"}; '
@@ -549,4 +526,4 @@ def render(ctx):
             """
         )
 
-    render_nav_footer("m3", prev_page=" ⚖️ Fair Value", next_page=" 🔮 AI Prediction")
+    render_nav_footer("m3", prev_page="Fair Value", next_page="AI Prediction")
