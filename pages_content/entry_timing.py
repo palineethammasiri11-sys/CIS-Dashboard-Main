@@ -526,4 +526,4 @@ def render(ctx):
             """
         )
 
-    render_nav_footer("m3", prev_page="Fair Value", next_page="AI Prediction")
+    render_nav_footer("m3", prev_page=" Fair Value", next_page=" AI Prediction")
