@@ -29,6 +29,155 @@ from common import fmt_mb, fmt_ratio, safe, show_chart, render_nav_footer, COMPA
 
 def render(ctx):
 
+    # ============================================================
+    # LIGHT THEME - COMPANY HEALTH
+    # เปลี่ยนเฉพาะสีของ Streamlit widgets
+    # ไม่เปลี่ยนข้อมูล / logic / layout
+    # ============================================================
+    st.markdown("""
+    <style>
+
+    /* =========================================================
+       SELECTBOX : เทียบกับคู่แข่ง
+       ========================================================= */
+
+    /* กล่องหลัก */
+    [data-testid="stSelectbox"] [data-baseweb="select"] {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+        border-radius: 10px !important;
+    }
+
+    [data-testid="stSelectbox"] [data-baseweb="select"] > div {
+        background-color: #FFFFFF !important;
+        border: 1px solid #CBD5E1 !important;
+        border-radius: 10px !important;
+        color: #0F172A !important;
+        box-shadow: none !important;
+    }
+
+    /* ตัวหนังสือในช่อง */
+    [data-testid="stSelectbox"] [data-baseweb="select"] div {
+        color: #0F172A !important;
+    }
+
+    [data-testid="stSelectbox"] [data-baseweb="select"] span {
+        color: #0F172A !important;
+    }
+
+    /* ลูกศร */
+    [data-testid="stSelectbox"] [data-baseweb="select"] svg {
+        fill: #0F172A !important;
+        color: #0F172A !important;
+    }
+
+    /* =========================================================
+       SELECTBOX DROPDOWN
+       ========================================================= */
+
+    [data-baseweb="popover"] {
+        background-color: #FFFFFF !important;
+    }
+
+    [data-baseweb="popover"] [role="listbox"] {
+        background-color: #FFFFFF !important;
+        border: 1px solid #CBD5E1 !important;
+    }
+
+    [data-baseweb="popover"] [role="option"] {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+    }
+
+    [data-baseweb="popover"] [role="option"] * {
+        color: #0F172A !important;
+    }
+
+    [data-baseweb="popover"] [role="option"]:hover {
+        background-color: #F1F5F9 !important;
+    }
+
+    /* =========================================================
+       DATE INPUT : ข้อมูล ณ วันที่
+       ========================================================= */
+
+    [data-testid="stDateInput"] {
+        color: #0F172A !important;
+    }
+
+    /* กล่องด้านนอก */
+    [data-testid="stDateInput"] > div {
+        color: #0F172A !important;
+    }
+
+    /* กล่อง input ของ BaseWeb */
+    [data-testid="stDateInput"] [data-baseweb="input"] {
+        background-color: #FFFFFF !important;
+        border: 1px solid #CBD5E1 !important;
+        border-radius: 10px !important;
+        box-shadow: none !important;
+    }
+
+    [data-testid="stDateInput"] [data-baseweb="input"] > div {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+    }
+
+    /* input จริง */
+    [data-testid="stDateInput"] input {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    [data-testid="stDateInput"] input::placeholder {
+        color: #64748B !important;
+    }
+
+    /* icon ปฏิทิน */
+    [data-testid="stDateInput"] svg {
+        fill: #0F172A !important;
+        color: #0F172A !important;
+    }
+
+    /* label */
+    [data-testid="stDateInput"] label {
+        color: #0F172A !important;
+    }
+
+    [data-testid="stDateInput"] label p {
+        color: #0F172A !important;
+    }
+
+    /* =========================================================
+       DATE PICKER ที่เด้งออกมา
+       ========================================================= */
+
+    [data-baseweb="calendar"] {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+        border: 1px solid #CBD5E1 !important;
+    }
+
+    [data-baseweb="calendar"] * {
+        color: #0F172A !important;
+    }
+
+    [data-baseweb="calendar"] button {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+    }
+
+    [data-baseweb="calendar"] button:hover {
+        background-color: #F1F5F9 !important;
+    }
+
+    </style>
+    """, unsafe_allow_html=True)
+
+    # ฟังก์ชันดึงค่างบการเงิน
+
     # ฟังก์ชันดึงค่างบการเงิน
     def get_fin_val(target_yr, col_name, default="-", fmt="{:.1f}"):
         match = ctx.fin_stock[ctx.fin_stock['year'] == target_yr]
