@@ -137,7 +137,7 @@ def render(ctx):
         ])
         st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:16px; min-height:900px;">
     <div style="font-size:15px; font-weight:bold; color:#F1F5F9; letter-spacing:0.5px; margin-bottom:12px;">INVESTMENT DECISION OVERVIEW ({ctx.selected_ticker})</div>
-    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px;">{cards_html}</div>
+    <div class="overview-module-grid" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:12px;">{cards_html}</div>
     </div>""", unsafe_allow_html=True)
 
     with col_right:
