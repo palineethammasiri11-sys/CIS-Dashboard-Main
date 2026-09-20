@@ -66,9 +66,9 @@ def setup_page_and_css():
     <style>
         html, body, [class*="css"] { font-size: 16px; }
         .stApp { background-color: #FFFFFF; }
-        .metric-card { background-color: #151E2F; padding: 16px; border-radius: 12px; border: 1px solid #1E293B; text-align: center; height: 100%; }
-        .hero-card { background-color: #0F172A; padding: 20px; border-radius: 16px; border: 1px solid #1E293B; }
-        .dim-card { background-color: #151E2F; border: 1px solid #1E293B; border-radius: 10px; padding: 12px; text-align: center; }
+        .metric-card { background-color: #FFFFFF; padding: 16px; border-radius: 12px; border: 1px solid #E2E8F0; text-align: center; height: 100%; }
+        .hero-card { background-color: #FFFFFF; padding: 20px; border-radius: 16px; border: 1px solid #E2E8F0; }
+        .dim-card { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; text-align: center; }
 
         /* ปุ่มทั้งหมดในแอป (Previous/Home/Next) ให้เข้ากับธีมมืด อ่านง่าย กดง่าย */
         .stButton > button {
@@ -393,7 +393,7 @@ def render_sidebar(scores_df):
     <div style="padding: 8px 0 14px 0;">
         <div style="display: flex; align-items: flex-start; gap: 10px; min-width: 0;">
             <span style="font-size: 26px; flex-shrink: 0; line-height:1.3;">🧠</span>
-            <span style="font-size: 15px; font-weight: 800; color: #F8FAFC; letter-spacing: -0.1px; line-height: 1.3; min-width: 0; word-break: break-word; overflow-wrap: break-word;">
+            <span style="font-size: 15px; font-weight: 800; color: #0F172A; letter-spacing: -0.1px; line-height: 1.3; min-width: 0; word-break: break-word; overflow-wrap: break-word;">
                 Comprehensive Investment System
             </span>
         </div>
@@ -432,9 +432,9 @@ def render_header_bar(ctx):
     <div style="display:flex; justify-content:space-between; align-items:center; background-color:#0F172A; padding:14px 24px; border-radius:12px; border:1px solid #1E293B; margin-bottom:20px;">
         <div>
             <span style="font-size:24px; font-weight:bold; color:white;">{ctx.selected_ticker}</span>
-            <span style="color:#94A3B8; font-size:16px; margin-left:8px;">{ctx.stock_info.get('sector','-')} (SET) ☆</span>
+            <span style="color:#64748B; font-size:16px; margin-left:8px;">{ctx.stock_info.get('sector','-')} (SET) ☆</span>
         </div>
-        <div style="font-size:16.5px; color:#94A3B8;">
+        <div style="font-size:16.5px; color:#64748B;">
             Price: <b style="color:white; font-size:19px;">{ctx.current_price:.2f}</b> THB
             <span style="color:{ctx.change_color}; font-weight:bold; margin-left:6px;">({ctx.change_sign}{ctx.change_pct:.2f}%) {ctx.arrow_sign}</span>
             <span style="margin: 0 12px; color:#334155;">|</span>
