@@ -412,18 +412,60 @@ def render_sidebar(scores_df):
     # ของ key ที่ widget ใช้อยู่ หลังจาก widget ถูกสร้างไปแล้วในรอบเดียวกัน
     # *** ห้ามลบ/ย้ายกลไกนี้โดยไม่ปรึกษาทีมก่อน — เคยเป็นบั๊กที่ sidebar ไม่ sync กับปุ่มนำทางมาแล้ว ***
     if "pending_nav" in st.session_state:
-        st.session_state["nav_page"] = st.session_state.pop("pending_nav")
+    st.session_state["nav_page"] = st.session_state.pop("pending_nav")
 
-    st.sidebar.radio("Navigation", PAGES, key="nav_page")
-    nav_page = st.session_state["nav_page"]
+st.sidebar.radio("Navigation", PAGES, key="nav_page")
+nav_page = st.session_state["nav_page"]
 
-    st.sidebar.markdown("---")
-    selected_ticker = st.sidebar.selectbox("Search Company...", scores_df['ticker'].unique())
-    st.sidebar.caption(
-        f"📅 ข้อมูล ณ วันที่ล่าสุดในชุดข้อมูล: **{scores_df['latest_date'].max()}**\n\n"
-        f"(ราคาทั้งหมดอ้างอิงจากไฟล์ Dataset ไม่ใช่ราคาตลาดสด)"
-    )
-    return nav_page, selected_ticker
+st.sidebar.markdown("---")
+selected_ticker = st.sidebar.selectbox("Search Company...", scores_df['ticker'].unique())
+st.sidebar.caption(
+    f"📅 ข้อมูล ณ วันที่ล่าสุดในชุดข้อมูล: **{scores_df['latest_date'].max()}**\n\n"
+    f"(ราคาทั้งหมดอ้างอิงจากไฟล์ Dataset ไม่ใช่ราคาตลาดสด)"
+)
+return nav_page, selected_ticker
+2. ให้แทนที่โค้ดเดิมทั้งหมดด้วยโค้ดนี้
+if "pending_nav" in st.session_state:
+    st.session_state["nav_page"] = st.session_state.pop("pending_nav")
+
+
+# =========================
+# COMPANY SELECTOR
+# =========================
+
+st.sidebar.markdown(
+    "<div style='font-size:13px; font-weight:700; color:#64748B; "
+    "margin-bottom:6px;'>SELECT COMPANY</div>",
+    unsafe_allow_html=True
+)
+
+selected_ticker = st.sidebar.selectbox(
+    "Choose a company",
+    scores_df['ticker'].unique(),
+    label_visibility="collapsed"
+)
+
+st.sidebar.markdown("---")
+
+
+# =========================
+# NAVIGATION
+# =========================
+
+st.sidebar.radio("Navigation", PAGES, key="nav_page")
+nav_page = st.session_state["nav_page"]
+
+
+# =========================
+# DATA INFORMATION
+# =========================
+
+st.sidebar.caption(
+    f"📅 ข้อมูล ณ วันที่ล่าสุดในชุดข้อมูล: **{scores_df['latest_date'].max()}**\n\n"
+    f"(ราคาทั้งหมดอ้างอิงจากไฟล์ Dataset ไม่ใช่ราคาตลาดสด)"
+)
+
+return nav_page, selected_ticker
 
 
 def render_header_bar(ctx):
