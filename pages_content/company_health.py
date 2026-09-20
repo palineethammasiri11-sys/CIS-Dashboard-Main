@@ -110,30 +110,75 @@ def render(ctx):
         st.markdown("""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px 12px 0 0; padding:12px 16px 0 16px;">
     <div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">COMPANY HEALTH SCORE TREND (Actual, 2023-2025)</div></div>""", unsafe_allow_html=True)
 
-        hy = ctx.health_yearly_df[
-            ctx.health_yearly_df['ticker'] == ctx.selected_ticker
-        ].sort_values('year') if not ctx.health_yearly_df.empty else pd.DataFrame()
+        hy = (
+            ctx.health_yearly_df[
+                ctx.health_yearly_df['ticker'] == ctx.selected_ticker
+            ].sort_values('year')
+            if not ctx.health_yearly_df.empty
+            else pd.DataFrame()
+        )
 
-        trend_x = hy['year'].astype(int).tolist() if not hy.empty else [2023, 2024, 2025]
-        trend_y = hy['health_score'].tolist() if not hy.empty else [h_score, h_score, h_score]
+        trend_x = (
+            [int(x) for x in hy['year'].tolist()]
+            if not hy.empty
+            else [2023, 2024, 2025]
+        )
+
+        trend_y = (
+            hy['health_score'].tolist()
+            if not hy.empty
+            else [h_score, h_score, h_score]
+        )
 
         fig_health_trend = go.Figure()
+
         fig_health_trend.add_trace(go.Scatter(
-            x=trend_x, y=trend_y, mode='lines+markers+text', text=trend_y, textposition='top center',
-            textfont=dict(size=12.5, color='#F8FAFC'), line=dict(color='#10B981', width=2),
-            marker=dict(size=10, color='#10B981', line=dict(width=1.5, color='#FFFFFF'))
-        ))
-        fig_health_trend.update_layout(
-            height=168, margin=dict(l=25, r=15, t=10, b=20), paper_bgcolor="#0F172A", plot_bgcolor="#0F172A",
-            yaxis=dict(range=[0, 110], tickvals=[0, 25, 50, 75, 100], tickfont=dict(size=11.5, color="#64748B"), gridcolor="#1E293B", zeroline=False),
-            xaxis=dict(
-                tickmode="linear",
-                dtick=1,
-                tickformat="d",
-                tickfont=dict(size=12, color="#94A3B8"),
-                gridcolor="#1E293B"
+            x=trend_x,
+            y=trend_y,
+            mode='lines+markers+text',
+            text=trend_y,
+            textposition='top center',
+            textfont=dict(size=12.5, color='#F8FAFC'),
+            line=dict(color='#10B981', width=2),
+            marker=dict(
+                size=10,
+                color='#10B981',
+                line=dict(width=1.5, color='#FFFFFF')
             )
-        show_chart(fig_health_trend, key="health_trend", expand_height=650)
+        ))
+
+        fig_health_trend.update_layout(
+            height=168,
+            margin=dict(l=25, r=15, t=10, b=20),
+            paper_bgcolor="#0F172A",
+            plot_bgcolor="#0F172A",
+
+            yaxis=dict(
+                range=[0, 110],
+                tickvals=[0, 25, 50, 75, 100],
+                tickfont=dict(size=11.5, color="#64748B"),
+                gridcolor="#1E293B",
+                zeroline=False
+            ),
+
+            xaxis=dict(
+                type="linear",
+                tickmode="array",
+                tickvals=trend_x,
+                ticktext=[str(int(year)) for year in trend_x],
+                tickfont=dict(size=12, color="#94A3B8"),
+                gridcolor="#1E293B",
+                zeroline=False
+            ),
+
+            showlegend=False
+        )
+
+        show_chart(
+            fig_health_trend,
+            key="health_trend",
+            expand_height=650
+        )
 
     st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
     st.markdown("""<div style="font-size:15px; font-weight:bold; color:#F8FAFC; letter-spacing:0.5px; margin-bottom:8px;">
