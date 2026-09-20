@@ -110,32 +110,12 @@ def render(ctx):
         st.markdown("""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px 12px 0 0; padding:12px 16px 0 16px;">
     <div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">COMPANY HEALTH SCORE TREND (Actual, 2023-2025)</div></div>""", unsafe_allow_html=True)
 
-        selected_year = st.selectbox(
-            "Select Year",
-            options=[2023, 2024, 2025],
-            index=2,
-            key="health_trend_year"
-        )
-        
-        hy = (
-            ctx.health_yearly_df[
-                ctx.health_yearly_df['ticker'] == ctx.selected_ticker
-            ].sort_values('year')
-            if not ctx.health_yearly_df.empty
-            else pd.DataFrame()
-        )
+        hy = ctx.health_yearly_df[
+            ctx.health_yearly_df['ticker'] == ctx.selected_ticker
+        ].sort_values('year') if not ctx.health_yearly_df.empty else pd.DataFrame()
 
-        trend_x = (
-            [int(x) for x in hy['year'].tolist()]
-            if not hy.empty
-            else [2023, 2024, 2025]
-        )
-
-        trend_y = (
-            hy['health_score'].tolist()
-            if not hy.empty
-            else [h_score, h_score, h_score]
-        )
+        trend_x = hy['year'].astype(int).tolist() if not hy.empty else [2023, 2024, 2025]
+        trend_y = hy['health_score'].tolist() if not hy.empty else [h_score, h_score, h_score]
 
         fig_health_trend = go.Figure()
 
@@ -170,9 +150,6 @@ def render(ctx):
 
             xaxis=dict(
                 type="linear",
-                tickmode="array",
-                tickvals=trend_x,
-                ticktext=[str(int(year)) for year in trend_x],
                 tickfont=dict(size=12, color="#94A3B8"),
                 gridcolor="#1E293B",
                 zeroline=False
@@ -181,11 +158,7 @@ def render(ctx):
             showlegend=False
         )
 
-        show_chart(
-            fig_health_trend,
-            key="health_trend",
-            expand_height=650
-        )
+        show_chart(fig_health_trend, key="health_trend", expand_height=650)
 
     st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
     st.markdown("""<div style="font-size:15px; font-weight:bold; color:#F8FAFC; letter-spacing:0.5px; margin-bottom:8px;">
