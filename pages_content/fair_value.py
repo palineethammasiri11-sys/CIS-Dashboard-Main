@@ -42,7 +42,7 @@ def render(ctx):
     val_bear, val_bull = lo, hi
 
     st.markdown("""<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
-    <div><div style="display:flex; align-items:center; gap:8px;"><h2 style="margin:0; font-size:23px; font-weight:bold; color:#F8FAFC; letter-spacing:0.5px;">FAIR VALUE ASSESSMENT</h2></div>
+    <div><div style="display:flex; align-items:center; gap:8px;"><h2 style="margin:0; font-size:23px; font-weight:bold; color:#F8FAFC; letter-spacing:0.5px;">FAIR VALUE</h2></div>
     <div style="font-size:15px; color:#94A3B8; margin-top:2px;">ประเมินมูลค่าที่เหมาะสมของหุ้นโดยใช้แบบจำลอง DCF ผสาน P/E Relative</div></div>
     </div>""", unsafe_allow_html=True)
 
