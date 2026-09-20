@@ -104,6 +104,17 @@ def render(ctx):
     c_p = float(ctx.current_price)
     ticker_safe = html.escape(str(ctx.selected_ticker))
 
+    st.markdown("""
+    <div style="margin-bottom:20px;">
+        <div style="font-size:23px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
+            ENTRY TIMING ANALYSIS
+        </div>
+        <div style="font-size:15px; color:#64748B; margin-top:4px;">
+            วิเคราะห์จังหวะการเข้าลงทุนจากแนวโน้ม โมเมนตัม และ Risk/Reward
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
     adx_val = float(safe(info.get("adx"), 0.0))
 
     r1 = float(safe(info.get("resistance_60d"), c_p * 1.05))
