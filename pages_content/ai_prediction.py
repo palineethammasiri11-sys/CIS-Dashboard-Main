@@ -198,33 +198,38 @@ def render(ctx):
     # ============================================================
     forecast_title, forecast_info = st.columns([0.96, 0.04], gap="small")
 
-    with forecast_title:
+    with forecast_info:
         st.markdown(
             """
-            <div style="
-                background-color:#0F172A;
-                border:1px solid #1E293B;
-                border-right:none;
-                border-radius:12px 0 0 0;
-                padding:14px 18px 10px 18px;
-                height:48px;
-                box-sizing:border-box;
-            ">
-                <span style="
-                    font-size:16.5px;
-                    font-weight:bold;
-                    color:#94A3B8;
-                    letter-spacing:0.5px;
-                ">
-                    📈 FORECAST — PRICE HISTORY + MODEL-IMPLIED RANGE
-                </span>
-            </div>
+            <style>
+            div[data-testid="stPopover"] > button {
+                font-size: 0 !important;
+                width: 30px !important;
+                height: 30px !important;
+                min-height: 30px !important;
+                padding: 0 !important;
+                border-radius: 50% !important;
+                border: 1px solid #64748B !important;
+                background: #0F172A !important;
+                color: #CBD5E1 !important;
+            }
+
+            div[data-testid="stPopover"] > button::before {
+                content: "i";
+                font-size: 13px;
+                font-weight: bold;
+                color: #CBD5E1;
+            }
+
+            div[data-testid="stPopover"] > button svg {
+                display: none !important;
+            }
+            </style>
             """,
             unsafe_allow_html=True
         )
 
-    with forecast_info:
-        with st.popover("ⓘ"):
+        with st.popover("i"):
             st.markdown(
                 """
                 **คำอธิบายกราฟ**
