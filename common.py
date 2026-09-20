@@ -178,8 +178,7 @@ def _open_chart_dialog(fig, expand_height):
         big_fig,
         use_container_width=True,
         config={
-            'displayModeBar': True,
-            'editable': True
+            'displayModeBar': True
         },
         key=f"dlg_{id(fig)}"
     )
