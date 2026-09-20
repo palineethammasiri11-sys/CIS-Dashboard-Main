@@ -249,7 +249,7 @@ def render(ctx):
     st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
     r2_c1, r2_c2, r2_c3 = st.columns([2.0, 1.0, 1.1])
 
-    with r2_c1:
+        with r2_c1:
         peers_sorted = ctx.sector_peers.sort_values('overall_score', ascending=False)
 
         def badge(val, thresholds, labels, colors):
@@ -259,50 +259,177 @@ def render(ctx):
             return f'<span style="color:{colors[-1]};">{labels[-1]}</span>'
 
         rows_html = ""
+
         for _, p in peers_sorted.iterrows():
             is_sel = p['ticker'] == ctx.selected_ticker
             row_bg = "background:rgba(168,85,247,0.08);" if is_sel else ""
+
             star_n = min(5, max(1, round(safe(p['overall_score']) / 20)))
-            health_b = badge(p['health_score'], [70, 45, 0], ["Excellent", "Good", "Weak"], ["#10B981", "#3B82F6", "#EF4444"])
-            val_b = "Undervalued" if p['margin_of_safety'] > 10 else ("Overvalued" if p['margin_of_safety'] < -10 else "Fair Value")
-            val_c = "#10B981" if p['margin_of_safety'] > 10 else ("#EF4444" if p['margin_of_safety'] < -10 else "#64748B")
-            timing_b = badge(p['timing_score'], [65, 45, 0], ["Good Entry", "Neutral", "Bad Entry"], ["#10B981", "#F59E0B", "#EF4444"])
-            ai_b = badge(p['ai_score'], [65, 45, 0], ["Bullish", "Neutral", "Bearish"], ["#10B981", "#64748B", "#EF4444"])
-            risk_b = "Low" if p['risk_score'] >= 65 else ("Medium" if p['risk_score'] >= 40 else "High")
-            risk_c = "#10B981" if p['risk_score'] >= 65 else ("#F59E0B" if p['risk_score'] >= 40 else "#EF4444")
+
+            health_b = badge(
+                p['health_score'],
+                [70, 45, 0],
+                ["Excellent", "Good", "Weak"],
+                ["#10B981", "#3B82F6", "#EF4444"]
+            )
+
+            val_b = (
+                "Undervalued"
+                if p['margin_of_safety'] > 10
+                else ("Overvalued" if p['margin_of_safety'] < -10 else "Fair Value")
+            )
+
+            val_c = (
+                "#10B981"
+                if p['margin_of_safety'] > 10
+                else ("#EF4444" if p['margin_of_safety'] < -10 else "#64748B")
+            )
+
+            timing_b = badge(
+                p['timing_score'],
+                [65, 45, 0],
+                ["Good Entry", "Neutral", "Bad Entry"],
+                ["#10B981", "#F59E0B", "#EF4444"]
+            )
+
+            ai_b = badge(
+                p['ai_score'],
+                [65, 45, 0],
+                ["Bullish", "Neutral", "Bearish"],
+                ["#10B981", "#64748B", "#EF4444"]
+            )
+
+            risk_b = (
+                "Low"
+                if p['risk_score'] >= 65
+                else ("Medium" if p['risk_score'] >= 40 else "High")
+            )
+
+            risk_c = (
+                "#10B981"
+                if p['risk_score'] >= 65
+                else ("#F59E0B" if p['risk_score'] >= 40 else "#EF4444")
+            )
+
             name_disp = f"⭐ {p['ticker']}" if is_sel else p['ticker']
             name_c = "#A855F7" if is_sel else "#0F172A"
 
-            rows_html += f"""<tr style="border-bottom:1px solid #E2E8F0; {row_bg}">
-    <td style="text-align:left; padding:6px 4px; color:{name_c}; font-weight:bold;">{name_disp}</td>
-    <td style="padding:6px 4px;">{health_b}</td>
-    <td style="padding:6px 4px;"><span style="color:{val_c};">{val_b}</span></td>
-    <td style="padding:6px 4px;">{timing_b}</td>
-    <td style="padding:6px 4px;">{ai_b}</td>
-    <td style="padding:6px 4px;"><span style="color:{risk_c};">{risk_b}</span></td>
-    <td style="padding:6px 4px; color:#A855F7; letter-spacing:1px;">{'★'*star_n}{'☆'*(5-star_n)}</td></tr>"""
+            rows_html += f"""
+            <tr style="border-bottom:1px solid #E2E8F0; {row_bg}">
+                <td style="text-align:left; padding:6px 4px; color:{name_c}; font-weight:bold; white-space:nowrap;">
+                    {name_disp}
+                </td>
+                <td style="padding:6px 4px; white-space:nowrap;">
+                    {health_b}
+                </td>
+                <td style="padding:6px 4px; white-space:nowrap;">
+                    <span style="color:{val_c};">{val_b}</span>
+                </td>
+                <td style="padding:6px 4px; white-space:nowrap;">
+                    {timing_b}
+                </td>
+                <td style="padding:6px 4px; white-space:nowrap;">
+                    {ai_b}
+                </td>
+                <td style="padding:6px 4px; white-space:nowrap;">
+                    <span style="color:{risk_c};">{risk_b}</span>
+                </td>
+                <td style="padding:6px 4px; color:#A855F7; letter-spacing:1px; white-space:nowrap;">
+                    {'★' * star_n}{'☆' * (5 - star_n)}
+                </td>
+            </tr>
+            """
 
-        st.markdown(f"""<div class="ib-responsive-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:350px;">
-    <div style="font-size:14.5px; color:#64748B; font-weight:bold; margin-bottom:6px;">PEER COMPARISON — {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
+        st.markdown(
+            f"""
+            <div style="
+                background-color:#FFFFFF;
+                border:1px solid #E2E8F0;
+                border-radius:8px;
+                padding:14px;
+                height:350px;
+                overflow:hidden;
+            ">
 
-    <div class="ib-peer-table-wrapper">
-    <table class="ib-peer-table" style="text-align:center; font-size:14px; color:#475569;">
-    <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:13px;">
-        <th style="text-align:left; padding:5px 4px;">Company</th>
-        <th style="padding:5px 4px;">Health</th>
-        <th style="padding:5px 4px;">Fair Value</th>
-        <th style="padding:5px 4px;">Entry Timing</th>
-        <th style="padding:5px 4px;">AI Prediction</th>
-        <th style="padding:5px 4px;">Risk</th>
-        <th style="padding:5px 4px;">Overall</th>
-    </tr>
-    {rows_html}
-    </table>
-    </div>
+                <div style="
+                    font-size:14.5px;
+                    color:#64748B;
+                    font-weight:bold;
+                    margin-bottom:6px;
+                ">
+                    PEER COMPARISON — {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)
+                </div>
 
-    <div style="font-size:12.5px; color:#64748B; margin-top:6px;">*จัดอันดับจาก Overall Score ที่คำนวณจริงจากข้อมูลใน cis_summary_scores</div>
-    </div>""", unsafe_allow_html=True)
+                <div style="
+                    width:100%;
+                    overflow-x:auto;
+                    overflow-y:hidden;
+                ">
 
+                    <table style="
+                        width:100%;
+                        min-width:620px;
+                        text-align:center;
+                        font-size:14px;
+                        color:#475569;
+                        border-collapse:collapse;
+                        table-layout:auto;
+                    ">
+
+                        <tr style="
+                            border-bottom:1px solid #E2E8F0;
+                            color:#64748B;
+                            font-size:13px;
+                        ">
+                            <th style="
+                                text-align:left;
+                                padding:5px 4px;
+                                white-space:nowrap;
+                            ">Company</th>
+
+                            <th style="padding:5px 4px; white-space:nowrap;">
+                                Health
+                            </th>
+
+                            <th style="padding:5px 4px; white-space:nowrap;">
+                                Fair Value
+                            </th>
+
+                            <th style="padding:5px 4px; white-space:nowrap;">
+                                Entry Timing
+                            </th>
+
+                            <th style="padding:5px 4px; white-space:nowrap;">
+                                AI Prediction
+                            </th>
+
+                            <th style="padding:5px 4px; white-space:nowrap;">
+                                Risk
+                            </th>
+
+                            <th style="padding:5px 4px; white-space:nowrap;">
+                                Overall
+                            </th>
+                        </tr>
+
+                        {rows_html}
+
+                    </table>
+
+                </div>
+
+                <div style="
+                    font-size:12.5px;
+                    color:#64748B;
+                    margin-top:6px;
+                ">
+                    *จัดอันดับจาก Overall Score ที่คำนวณจริงจากข้อมูลใน cis_summary_scores
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     with r2_c2:
         cats = ['Health', 'Valuation', 'Timing', 'AI Pred.', 'Risk', 'Industry']
         stock_vals = [
