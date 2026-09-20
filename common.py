@@ -679,20 +679,20 @@ def render_sidebar(scores_df):
 def render_header_bar(ctx):
     """แถบหัวข้อบนสุดของทุกหน้า (ticker, ราคา, P/E, ROE, วันที่ข้อมูล) — เหมือนกันทุกหน้า ไม่ต้องเขียนซ้ำ"""
     st.markdown(f"""
-    <div style="display:flex; justify-content:space-between; align-items:center; background-color:#0F172A; padding:14px 24px; border-radius:12px; border:1px solid #1E293B; margin-bottom:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; background:#FFFFFF; padding:14px 24px; border-radius:12px; border:1px solid #E2E8F0; margin-bottom:20px;">
         <div>
-            <span style="font-size:24px; font-weight:bold; color:white;">{ctx.selected_ticker}</span>
-            <span style="color:#64748B; font-size:16px; margin-left:8px;">{ctx.stock_info.get('sector','-')} (SET) ☆</span>
+            <span style="font-size:24px; font-weight:bold; color:#0F172A;">{ctx.selected_ticker}</span>
+            <span style="color:#64748B; font-size:15px; margin-left:8px;">{ctx.stock_info.get('sector','-')} (SET)</span>
         </div>
         <div style="font-size:16.5px; color:#64748B;">
-            Price: <b style="color:white; font-size:19px;">{ctx.current_price:.2f}</b> THB
+            Price: <b style="color:#0F172A; font-size:19px;">{ctx.current_price:.2f}</b> THB
             <span style="color:{ctx.change_color}; font-weight:bold; margin-left:6px;">({ctx.change_sign}{ctx.change_pct:.2f}%) {ctx.arrow_sign}</span>
-            <span style="margin: 0 12px; color:#334155;">|</span>
-            P/E: <b style="color:white;">{fmt_ratio(ctx.stock_info.get('pe_ratio'))}</b>
-            <span style="margin: 0 12px; color:#334155;">|</span>
-            ROE: <b style="color:white;">{ctx.stock_info.get('roe','-')}%</b>
-            <span style="margin: 0 12px; color:#334155;">|</span>
-            Data as of: <b style="color:#F59E0B;">{ctx.stock_info.get('latest_date','-')}</b>
+            <span style="margin: 0 12px; color:#CBD5E1;">|</span>
+            P/E: <b style="color:#0F172A;">{fmt_ratio(ctx.stock_info.get('pe_ratio'))}</b>
+            <span style="margin: 0 12px; color:#CBD5E1;">|</span>
+            ROE: <b style="color:#0F172A;">{ctx.stock_info.get('roe','-')}%</b>
+            <span style="margin: 0 12px; color:#CBD5E1;">|</span>
+            Data as of: <b style="color:#475569;">{ctx.stock_info.get('latest_date','-')}</b>
         </div>
     </div>
     """, unsafe_allow_html=True)
