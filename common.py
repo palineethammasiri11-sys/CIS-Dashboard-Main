@@ -174,7 +174,15 @@ def _open_chart_dialog(fig, expand_height):
         big_fig.update_yaxes(tickfont=dict(size=13))
     except Exception:
         pass
-    st.plotly_chart(big_fig, use_container_width=True, config={'displayModeBar': True}, key=f"dlg_{id(fig)}")
+    st.plotly_chart(
+        big_fig,
+        use_container_width=True,
+        config={
+            'displayModeBar': True,
+            'editable': True
+        },
+        key=f"dlg_{id(fig)}"
+    )
 
 
 def show_chart(fig, key, expand_height=680):
