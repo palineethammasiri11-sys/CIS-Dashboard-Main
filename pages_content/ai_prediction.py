@@ -196,40 +196,46 @@ def render(ctx):
     # ============================================================
     # 3) FORECAST — ตอบคำถาม "ราคาจะไปทางไหนในอนาคต"
     # ============================================================
-    st.markdown(
-        """
-        <div style="
-            background-color:#0F172A;
-            border:1px solid #1E293B;
-            border-radius:12px 12px 0 0;
-            padding:14px 18px 10px 18px;
-        ">
-            <span style="
-                font-size:16.5px;
-                font-weight:bold;
-                color:#94A3B8;
-                letter-spacing:0.5px;
-            ">
-                📈 FORECAST — PRICE HISTORY + MODEL-IMPLIED RANGE
-            </span>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    forecast_title, forecast_info = st.columns([0.96, 0.04], gap="small")
 
-    # คำอธิบาย
-    with st.popover("ⓘ"):
+    with forecast_title:
         st.markdown(
             """
-            **คำอธิบายกราฟ**
-
-            - เส้นทึบฟ้า = ราคาจริงที่เกิดขึ้นแล้ว
-            - เส้นประสี = ค่ากลางที่โมเดลคาดการณ์
-            - แถบทึบแสง = ช่วงคาดการณ์ประมาณ 80%
-            - ช่วงคาดการณ์คำนวณจาก Volatility จริง
-            - ไม่ใช่การรับประกันผลตอบแทน
-            """
+            <div style="
+                background-color:#0F172A;
+                border:1px solid #1E293B;
+                border-right:none;
+                border-radius:12px 0 0 0;
+                padding:14px 18px 10px 18px;
+                height:48px;
+                box-sizing:border-box;
+            ">
+                <span style="
+                    font-size:16.5px;
+                    font-weight:bold;
+                    color:#94A3B8;
+                    letter-spacing:0.5px;
+                ">
+                    📈 FORECAST — PRICE HISTORY + MODEL-IMPLIED RANGE
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
+
+    with forecast_info:
+        with st.popover("ⓘ"):
+            st.markdown(
+                """
+                **คำอธิบายกราฟ**
+
+                - เส้นทึบฟ้า = ราคาจริงที่เกิดขึ้นแล้ว
+                - เส้นประสี = ค่ากลางที่โมเดลคาดการณ์
+                - แถบทึบแสง = ช่วงคาดการณ์ประมาณ 80%
+                - คำนวณจาก Volatility จริง
+                - ไม่ใช่การรับประกันผลตอบแทน
+                """
+            )
 
     hist_tail = ctx.stock_daily.tail(150)
     vol_annual = safe(ctx.stock_info.get('volatility'), 25.0) / 100
