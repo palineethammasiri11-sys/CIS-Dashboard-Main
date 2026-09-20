@@ -413,7 +413,7 @@ def render_sidebar(scores_df):
     # *** ห้ามลบ/ย้ายกลไกนี้โดยไม่ปรึกษาทีมก่อน — เคยเป็นบั๊กที่ sidebar ไม่ sync กับปุ่มนำทางมาแล้ว ***
     
     if "pending_nav" in st.session_state:
-    st.session_state["nav_page"] = st.session_state.pop("pending_nav")
+        st.session_state["nav_page"] = st.session_state.pop("pending_nav")
 
 
     # =========================
