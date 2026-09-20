@@ -643,21 +643,23 @@ def render_sidebar(scores_df):
     st.markdown(
         f"""
         <style>
-        [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) {{
-            background: {active_color} !important;
-            background-color: {active_color} !important;
-            border: 1.5px solid {active_color} !important;
-            box-shadow: 0 0 10px {active_color} !important;
+        [data-testid="stSidebar"]
+        [data-testid="stRadio"]
+        div[role="radiogroup"]
+        label:has(input:checked) {{
+            background-color: {active_color}12 !important;
+            border: 1px solid {active_color}30 !important;
+            box-shadow: none !important;
         }}
 
-        [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) p {{
-            color: #FFFFFF !important;
-            font-weight: 800 !important;
+        [data-testid="stSidebar"]
+        [data-testid="stRadio"]
+        div[role="radiogroup"]
+        label:has(input:checked) p {{
+            color: {active_color} !important;
+            font-weight: 700 !important;
         }}
 
-        [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) span {{
-            color: #FFFFFF !important;
-        }}
         </style>
         """,
         unsafe_allow_html=True
