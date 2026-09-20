@@ -459,21 +459,20 @@ def render_sidebar(scores_df):
 
     active_color = nav_colors.get(selected_page, "#3B82F6")
 
-    st.markdown(
+     st.markdown(
         f"""
         <style>
-        section[data-testid="stSidebar"]
-        div[role="radiogroup"]
-        label[data-baseweb="radio"]:has(input:checked) {{
-            background-color: {active_color} !important;
-            color: white !important;
+        section[data-testid="stSidebar"] div[role="radiogroup"] label {{
             border-radius: 8px !important;
+            padding: 8px 10px !important;
         }}
 
-        section[data-testid="stSidebar"]
-        div[role="radiogroup"]
-        label[data-baseweb="radio"]:has(input:checked) p {{
-            color: white !important;
+        section[data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) {{
+            background-color: {active_color} !important;
+        }}
+
+        section[data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) p {{
+            color: #FFFFFF !important;
             font-weight: 700 !important;
         }}
         </style>
