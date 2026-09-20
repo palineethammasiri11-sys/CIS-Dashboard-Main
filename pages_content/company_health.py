@@ -110,8 +110,11 @@ def render(ctx):
         st.markdown("""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px 12px 0 0; padding:12px 16px 0 16px;">
     <div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">COMPANY HEALTH SCORE TREND (Actual, 2023-2025)</div></div>""", unsafe_allow_html=True)
 
-        hy = ctx.health_yearly_df[ctx.health_yearly_df['ticker'] == ctx.selected_ticker].sort_values('year') if not ctx.health_yearly_df.empty else pd.DataFrame()
-        trend_x = hy['year'].astype(str).tolist() if not hy.empty else ['2023', '2024', '2025']
+        hy = ctx.health_yearly_df[
+            ctx.health_yearly_df['ticker'] == ctx.selected_ticker
+        ].sort_values('year') if not ctx.health_yearly_df.empty else pd.DataFrame()
+
+        trend_x = hy['year'].astype(int).tolist() if not hy.empty else [2023, 2024, 2025]
         trend_y = hy['health_score'].tolist() if not hy.empty else [h_score, h_score, h_score]
 
         fig_health_trend = go.Figure()
@@ -123,8 +126,13 @@ def render(ctx):
         fig_health_trend.update_layout(
             height=168, margin=dict(l=25, r=15, t=10, b=20), paper_bgcolor="#0F172A", plot_bgcolor="#0F172A",
             yaxis=dict(range=[0, 110], tickvals=[0, 25, 50, 75, 100], tickfont=dict(size=11.5, color="#64748B"), gridcolor="#1E293B", zeroline=False),
-            xaxis=dict(tickfont=dict(size=12, color="#94A3B8"), gridcolor="#1E293B"), showlegend=False
-        )
+            xaxis=dict(
+                tickmode="linear",
+                dtick=1,
+                tickformat="d",
+                tickfont=dict(size=12, color="#94A3B8"),
+                gridcolor="#1E293B"
+            )
         show_chart(fig_health_trend, key="health_trend", expand_height=650)
 
     st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
