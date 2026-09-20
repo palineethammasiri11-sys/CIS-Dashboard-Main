@@ -224,7 +224,7 @@ def render(ctx):
         )
 
     with forecast_info:
-        with st.popover("ⓘ", use_container_width=True):
+        with st.popover("i"):
             st.markdown(
                 """
                 **คำอธิบายกราฟ**
