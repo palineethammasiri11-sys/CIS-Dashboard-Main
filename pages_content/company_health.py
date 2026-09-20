@@ -362,21 +362,6 @@ def render(ctx):
         </tr>
         """ for name, v, cv, pct in rows_cmp])
 
-        st.markdown(
-            """
-            <div style="
-                margin-bottom:10px;
-                font-size:14.5px;
-                font-weight:700;
-                color:#0F172A;
-                letter-spacing:0.5px;
-            ">
-                HEAD-TO-HEAD COMPARISON
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
         st.caption(sub_label)
 
         comparison_df = pd.DataFrame(
