@@ -292,4 +292,4 @@ def render(ctx):
     <b>ข้อสังเกต:</b> ควรติดตามความผันผวนของตลาดโลกและนโยบายอัตราดอกเบี้ยอย่างต่อเนื่อง</div>
     </div>""", unsafe_allow_html=True)
 
-    render_nav_footer("m5", prev_page="AI Prediction", next_page="Industry Benchmark")
+    render_nav_footer("m5", prev_page=" AI Prediction", next_page=" Industry Benchmark")
