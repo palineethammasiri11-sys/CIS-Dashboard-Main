@@ -64,52 +64,237 @@ def setup_page_and_css():
 
     st.markdown("""
     <style>
-        html, body, [class*="css"] { font-size: 16px; }
-        .stApp { background-color: #FFFFFF; }
-        .metric-card { background-color: #FFFFFF; padding: 16px; border-radius: 12px; border: 1px solid #E2E8F0; text-align: center; height: 100%; }
-        .hero-card { background-color: #FFFFFF; padding: 20px; border-radius: 16px; border: 1px solid #E2E8F0; }
-        .dim-card { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; text-align: center; }
 
-        /* ปุ่มทั้งหมดในแอป (Previous/Home/Next) ให้เข้ากับธีมมืด อ่านง่าย กดง่าย */
+        /* =========================================================
+           GLOBAL — Clean Financial Platform
+           ========================================================= */
+
+        html, body, [class*="css"] {
+            font-size: 16px;
+        }
+
+        .stApp {
+            background-color: #F8FAFC;
+        }
+
+        .main .block-container {
+            max-width: 1400px;
+            padding-top: 2rem;
+            padding-bottom: 3rem;
+            padding-left: 3rem;
+            padding-right: 3rem;
+        }
+
+
+        /* =========================================================
+           CARDS — Clean / Soft / Minimal
+           ========================================================= */
+
+        .metric-card {
+            background: #FFFFFF;
+            padding: 20px;
+            border-radius: 14px;
+            border: 1px solid #E2E8F0;
+            text-align: center;
+            height: 100%;
+            box-shadow: none;
+        }
+
+        .hero-card {
+            background: #FFFFFF;
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid #E2E8F0;
+            box-shadow: none;
+        }
+
+        .dim-card {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: none;
+        }
+
+
+        /* =========================================================
+           BUTTONS — Minimal
+           ========================================================= */
+
         .stButton > button {
-            background-color: #151E2F !important;
-            border: 1px solid #2A3A55 !important;
-            color: #F1F5F9 !important;
+            background-color: #FFFFFF !important;
+            border: 1px solid #E2E8F0 !important;
+            color: #334155 !important;
             border-radius: 8px !important;
             font-weight: 600 !important;
-            font-size: 14.5px !important;
-            padding: 10px 18px !important;
+            font-size: 14px !important;
+            padding: 9px 16px !important;
             transition: all 0.2s ease-in-out !important;
+            box-shadow: none !important;
         }
-        .stButton > button:hover {
-            border-color: #10B981 !important;
-            color: #10B981 !important;
-            background-color: rgba(16,185,129,0.10) !important;
-        }
-        .stButton > button p { font-size: 14.5px !important; font-weight: 600 !important; }
 
-        /* --- Sidebar: พื้นหลังเข้ม ตัวหนังสือต้องสว่างพอให้อ่านออก --- */
-        [data-testid="stSidebar"] { background-color: #0F172A; }
-        [data-testid="stSidebar"] * { font-size: 15px; }
-        [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label > div:first-child,
-        [data-testid="stSidebar"] [data-testid="stRadio"] input[type="radio"],
-        [data-testid="stSidebar"] [data-testid="stRadio"] svg { display: none !important; width: 0 !important; height: 0 !important; margin: 0 !important; }
-        [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] { gap: 7px !important; }
-        [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label {
-            background-color: #151E2F !important; border: 1px solid #1E293B !important; border-radius: 8px !important;
-            padding: 11px 14px !important; margin: 0 !important; cursor: pointer !important; width: 100% !important;
-            display: flex !important; align-items: center !important; transition: all 0.2s ease-in-out !important;
+        .stButton > button:hover {
+            background-color: #F8FAFC !important;
+            border-color: #CBD5E1 !important;
+            color: #0F172A !important;
         }
-        [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:hover {
-            background-color: rgba(45, 212, 191, 0.10) !important; border-color: rgba(45, 212, 191, 0.35) !important;
+
+        .stButton > button p {
+            font-size: 14px !important;
+            font-weight: 600 !important;
         }
-        [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label p {
-            font-size: 15px !important; color: #E2E8F0 !important; font-weight: 600 !important; margin: 0 !important; line-height: 1.4 !important;
+
+
+        /* =========================================================
+           SIDEBAR — Clean White
+           ========================================================= */
+
+        [data-testid="stSidebar"] {
+            background-color: #FFFFFF;
+            border-right: 1px solid #E2E8F0;
         }
-        [data-testid="stSidebar"] label, [data-testid="stSidebar"] .stCaption, [data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
-            color: #CBD5E1 !important;
+
+        [data-testid="stSidebar"] * {
+            font-size: 15px;
         }
-        [data-testid="stSidebar"] [data-testid="stSelectbox"] label p { color: #CBD5E1 !important; font-size: 14px !important; font-weight: 600 !important; }
+
+
+        /* Hide radio circles */
+
+        [data-testid="stSidebar"]
+        [data-testid="stRadio"]
+        div[role="radiogroup"]
+        label > div:first-child,
+
+        [data-testid="stSidebar"]
+        [data-testid="stRadio"]
+        input[type="radio"],
+
+        [data-testid="stSidebar"]
+        [data-testid="stRadio"]
+        svg {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            margin: 0 !important;
+        }
+
+
+        /* Navigation spacing */
+
+        [data-testid="stSidebar"]
+        [data-testid="stRadio"]
+        div[role="radiogroup"] {
+            gap: 4px !important;
+        }
+
+
+        /* Navigation item */
+
+        [data-testid="stSidebar"]
+        [data-testid="stRadio"]
+        div[role="radiogroup"]
+        label {
+            background-color: transparent !important;
+            border: 1px solid transparent !important;
+            border-radius: 8px !important;
+            padding: 10px 12px !important;
+            margin: 0 !important;
+            cursor: pointer !important;
+            width: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            transition: all 0.15s ease-in-out !important;
+        }
+
+
+        /* Hover */
+
+        [data-testid="stSidebar"]
+        [data-testid="stRadio"]
+        div[role="radiogroup"]
+        label:hover {
+            background-color: #F8FAFC !important;
+            border-color: #F1F5F9 !important;
+        }
+
+
+        /* Navigation text */
+
+        [data-testid="stSidebar"]
+        [data-testid="stRadio"]
+        div[role="radiogroup"]
+        label p {
+            font-size: 14px !important;
+            color: #475569 !important;
+            font-weight: 500 !important;
+            margin: 0 !important;
+            line-height: 1.4 !important;
+        }
+
+
+        /* Active navigation
+           สีจริงจะถูกกำหนด dynamic ตามแต่ละ Module
+        */
+
+        [data-testid="stSidebar"]
+        [data-testid="stRadio"]
+        div[role="radiogroup"]
+        label:has(input:checked) {
+            background-color: #F1F5F9 !important;
+            border-color: #E2E8F0 !important;
+            box-shadow: none !important;
+        }
+
+        [data-testid="stSidebar"]
+        [data-testid="stRadio"]
+        div[role="radiogroup"]
+        label:has(input:checked) p {
+            color: #0F172A !important;
+            font-weight: 700 !important;
+        }
+
+
+        /* Sidebar labels */
+
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] .stCaption,
+        [data-testid="stSidebar"]
+        [data-testid="stCaptionContainer"] {
+            color: #64748B !important;
+        }
+  
+        [data-testid="stSidebar"]
+        [data-testid="stSelectbox"]
+        label p {
+            color: #64748B !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+        }
+
+
+        /* Selectbox */
+
+        [data-testid="stSidebar"]
+        [data-testid="stSelectbox"] > div {
+            background-color: #F8FAFC !important;
+            border-radius: 8px !important;
+        }
+
+
+        /* =========================================================
+           SECTION HEADINGS
+           ========================================================= */
+
+        h1, h2, h3 {
+            color: #0F172A !important;
+        }
+
+        p {
+            color: #475569;
+        }
+
     </style>
     """, unsafe_allow_html=True)
 
