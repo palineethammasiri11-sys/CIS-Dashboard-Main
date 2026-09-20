@@ -87,13 +87,16 @@ def render(ctx):
     de_val_r = safe(ctx.stock_info.get('de_ratio'), 1.0)
     cr_val_r = safe(ctx.stock_info.get('current_ratio'), 1.2)
 
-    st.markdown(f"""<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
-    <div><div style="font-size:14.5px; color:#64748B; margin-bottom:2px;">Home / Module 5 / Risk Analysis</div>
-    <div style="display:flex; align-items:baseline; gap:8px;"><h2 style="margin:0; font-size:23px; font-weight:bold; color:#F8FAFC; letter-spacing:0.5px;">RISK ANALYSIS</h2></div></div>
-    <div style="text-align:right; display:flex; align-items:center; gap:16px;">
-    <div><span style="font-size:13px; color:#64748B;">Analysis Date</span><br><b style="color:#CBD5E1; font-size:15px;">{ctx.stock_info.get('latest_date','-')}</b></div>
-    <div><span style="font-size:13px; color:#64748B;">Data Period</span><br><b style="color:#CBD5E1; font-size:15px;">2023-2025 (3Y)</b></div>
-    </div></div>""", unsafe_allow_html=True)
+    st.markdown("""
+    <div style="margin-bottom:20px;">
+        <div style="font-size:23px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
+            RISK ANALYSIS
+        </div>
+        <div style="font-size:15px; color:#64748B; margin-top:4px;">
+            วิเคราะห์ความเสี่ยงของหุ้นจาก Beta, Volatility, Drawdown และ Risk-adjusted Return
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     r1_c1, r1_c2 = st.columns([1.15, 2.85])
 
@@ -289,4 +292,4 @@ def render(ctx):
     <b>ข้อสังเกต:</b> ควรติดตามความผันผวนของตลาดโลกและนโยบายอัตราดอกเบี้ยอย่างต่อเนื่อง</div>
     </div>""", unsafe_allow_html=True)
 
-    render_nav_footer("m5", prev_page=" 🔮 AI Prediction", next_page=" 📊 Industry Benchmark")
+    render_nav_footer("m5", prev_page="AI Prediction", next_page="Industry Benchmark")
