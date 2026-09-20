@@ -187,93 +187,90 @@ def render(ctx):
     <div style="font-size:12.5px; color:#64748B; margin-top:6px;">*จัดอันดับจาก Overall Score ที่คำนวณจริงจากข้อมูลใน cis_summary_scores</div>
     </div>""", unsafe_allow_html=True)
 
-    with r2_c2:
-        cats = ['Health', 'Valuation', 'Timing', 'AI Pred.', 'Risk', 'Industry']
-        stock_vals = [
-            safe(ctx.stock_info.get('health_score')),
-            safe(ctx.stock_info.get('valuation_score')),
-            safe(ctx.stock_info.get('timing_score')),
-            safe(ctx.stock_info.get('ai_score')),
-            safe(ctx.stock_info.get('risk_score')),
-            safe(ctx.stock_info.get('industry_score'))
-        ]
+        with r2_c2:
+        with st.container(border=True):
+            cats = ['Health', 'Valuation', 'Timing', 'AI Pred.', 'Risk', 'Industry']
 
-        sector_avg_vals = [
-            ctx.sector_peers['health_score'].mean(),
-            ctx.sector_peers['valuation_score'].mean(),
-            ctx.sector_peers['timing_score'].mean(),
-            ctx.sector_peers['ai_score'].mean(),
-            ctx.sector_peers['risk_score'].mean(),
-            ctx.sector_peers['industry_score'].mean()
-        ]
+            stock_vals = [
+                safe(ctx.stock_info.get('health_score')),
+                safe(ctx.stock_info.get('valuation_score')),
+                safe(ctx.stock_info.get('timing_score')),
+                safe(ctx.stock_info.get('ai_score')),
+                safe(ctx.stock_info.get('risk_score')),
+                safe(ctx.stock_info.get('industry_score'))
+            ]
 
-        fig_radar = go.Figure()
-        fig_radar.add_trace(
-            go.Scatterpolar(
-                r=stock_vals,
-                theta=cats,
-                fill='toself',
-                fillcolor='rgba(168,85,247,0.3)',
-                line=dict(color='#A855F7', width=2),
-                name=ctx.selected_ticker
-            )
-        )
-        fig_radar.add_trace(
-            go.Scatterpolar(
-                r=sector_avg_vals,
-                theta=cats,
-                line=dict(color='#64748B', width=1.5, dash='dash'),
-                name='Sector Avg'
-            )
-        )
+            sector_avg_vals = [
+                ctx.sector_peers['health_score'].mean(),
+                ctx.sector_peers['valuation_score'].mean(),
+                ctx.sector_peers['timing_score'].mean(),
+                ctx.sector_peers['ai_score'].mean(),
+                ctx.sector_peers['risk_score'].mean(),
+                ctx.sector_peers['industry_score'].mean()
+            ]
 
-        fig_radar.update_layout(
-            polar=dict(
-                radialaxis=dict(
-                    visible=True,
-                    range=[0, 100],
-                    showticklabels=False,
-                    linecolor="#CBD5E1",
-                    gridcolor="#E2E8F0"
-                ),
-                angularaxis=dict(
-                    linecolor="#CBD5E1",
-                    gridcolor="#E2E8F0",
-                    tickfont=dict(size=11.5, color="#64748B")
+            fig_radar = go.Figure()
+
+            fig_radar.add_trace(
+                go.Scatterpolar(
+                    r=stock_vals,
+                    theta=cats,
+                    fill='toself',
+                    fillcolor='rgba(168,85,247,0.3)',
+                    line=dict(color='#A855F7', width=2),
+                    name=ctx.selected_ticker
                 )
-            ),
-            paper_bgcolor="#FFFFFF",
-            plot_bgcolor="#FFFFFF",
-            height=310,
-            margin=dict(l=25, r=25, t=30, b=15),
-            title=dict(
-                text="RADAR: STOCK vs SECTOR AVG",
-                font=dict(size=13.5, color="#64748B"),
-                x=0.05,
-                y=0.98
-            ),
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="right",
-                x=1,
-                font=dict(size=11.5, color="#475569")
             )
-        )
 
-        st.markdown("""
-<div style="
-    background:#FFFFFF;
-    border:1px solid #E2E8F0;
-    border-radius:8px;
-    padding:14px;
-    overflow:hidden;
-">
-""", unsafe_allow_html=True)
+            fig_radar.add_trace(
+                go.Scatterpolar(
+                    r=sector_avg_vals,
+                    theta=cats,
+                    line=dict(color='#64748B', width=1.5, dash='dash'),
+                    name='Sector Avg'
+                )
+            )
 
-show_chart(fig_radar, key="industry_radar", expand_height=650)
+            fig_radar.update_layout(
+                polar=dict(
+                    radialaxis=dict(
+                        visible=True,
+                        range=[0, 100],
+                        showticklabels=False,
+                        linecolor="#CBD5E1",
+                        gridcolor="#E2E8F0"
+                    ),
+                    angularaxis=dict(
+                        linecolor="#CBD5E1",
+                        gridcolor="#E2E8F0",
+                        tickfont=dict(size=11.5, color="#64748B")
+                    )
+                ),
+                paper_bgcolor="#FFFFFF",
+                plot_bgcolor="#FFFFFF",
+                height=310,
+                margin=dict(l=25, r=25, t=30, b=15),
+                title=dict(
+                    text="RADAR: STOCK vs SECTOR AVG",
+                    font=dict(size=13.5, color="#64748B"),
+                    x=0.05,
+                    y=0.98
+                ),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1,
+                    font=dict(size=11.5, color="#475569")
+                )
+            )
 
+            show_chart(
+                fig_radar,
+                key="industry_radar",
+                expand_height=650
+            )
 st.markdown("</div>", unsafe_allow_html=True)
 
     with r2_c3:
