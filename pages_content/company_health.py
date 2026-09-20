@@ -299,8 +299,70 @@ def render(ctx):
             ("Debt to Equity (x)", de_25, f"{comp_de:.2f}", pct_bar(safe(de_25 if de_25 != '-' else 0), comp_de, higher_better=False)),
             ("Current Ratio (x)", cr_25, f"{comp_cr:.2f}", pct_bar(safe(cr_25 if cr_25 != '-' else 0), comp_cr)),
         ]
-        rows_html = "".join([f"""<tr style="border-bottom:1px solid #1E293B;">
-<td style="padding:4px 0;">{name}</td><td style="font-weight:bold; color:#F8FAFC;">{v}</td><td style="color:#64748B;">{cv}</td>
+        rows_html = "".join([f"""
+        <tr style="border-bottom:1px solid #1E293B;">
+
+            <td style="
+                padding:5px 2px;
+                white-space:nowrap;
+                font-size:12px;
+            ">
+                {name}
+            </td>
+
+            <td style="
+                padding:5px 2px;
+                font-weight:bold;
+                color:#F8FAFC;
+                white-space:nowrap;
+                font-size:12px;
+            ">
+                {v}
+            </td>
+
+            <td style="
+                padding:5px 2px;
+                color:#64748B;
+                white-space:nowrap;
+                font-size:12px;
+            ">
+                {cv}
+            </td>
+
+            <td style="padding:5px 2px;">
+                <div style="
+                    display:flex;
+                    align-items:center;
+                    gap:4px;
+                    white-space:nowrap;
+                ">
+                    <div style="
+                        background:#1E293B;
+                        width:45px;
+                        height:7px;
+                        border-radius:4px;
+                        overflow:hidden;
+                        flex-shrink:0;
+                    ">
+                        <div style="
+                            background:#10B981;
+                            width:{pct}%;
+                            height:100%;
+                        "></div>
+                    </div>
+
+                    <span style="
+                        font-size:11px;
+                        color:#10B981;
+                        font-weight:bold;
+                    ">
+                        {pct}%
+                    </span>
+                </div>
+            </td>
+
+        </tr>
+        """ for name, v, cv, pct in rows_cmp])
 <td><div style="display:flex; align-items:center; gap:6px;"><div style="background:#1E293B; width:60px; height:9px; border-radius:4px; overflow:hidden;"><div style="background:#10B981; width:{pct}%; height:100%;"></div></div><span style="font-size:12px; color:#10B981; font-weight:bold;">{pct}%</span></div></td>
 </tr>""" for name, v, cv, pct in rows_cmp])
 
