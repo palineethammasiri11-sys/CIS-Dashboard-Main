@@ -285,4 +285,4 @@ def render(ctx):
     <a href="{download_link}" download="{ctx.selected_ticker}_CIS_Analysis.csv" style="background:#3B82F6; color:white; border:none; padding:6px 14px; border-radius:6px; font-size:13px; text-decoration:none; display:inline-block; font-weight:bold; cursor:pointer;">📥 Export Data (CSV)</a>
     </div>""", unsafe_allow_html=True)
 
-    render_nav_footer("m6", prev_page="Risk Analysis", next_page=None)
+    render_nav_footer("m6", prev_page=" Risk Analysis", next_page=None)
