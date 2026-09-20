@@ -578,7 +578,9 @@ def render_sidebar(scores_df):
     st.sidebar.markdown("""
     <div style="padding: 8px 0 14px 0;">
         <div style="display: flex; align-items: flex-start; gap: 10px; min-width: 0;">
-            <span style="font-size: 26px; flex-shrink: 0; line-height:1.3;">🧠</span>
+            <div style="width: 26px; height: 26px; flex-shrink: 0; border-radius: 7px; background:#0F172A; display:flex; align-items:center; justify-content:center;">
+                <span style="font-size: 13px; font-weight:800; color:#FFFFFF;">CI</span>
+            </div>
             <span style="font-size: 15px; font-weight: 800; color: #0F172A; letter-spacing: -0.1px; line-height: 1.3; min-width: 0; word-break: break-word; overflow-wrap: break-word;">
                 Comprehensive Investment System
             </span>
