@@ -113,11 +113,11 @@ def render(ctx):
         elif m6_s >= 45: m6_badge, m6_desc = "PARITY", "Performing on par with sectoral median"
         else: m6_badge, m6_desc = "LAGGING", "Trailing behind sectoral benchmark"
 
-        def module_card(num, icon, label, score, color, badge, desc, badge_bg):
+        def module_card(num, label, score, color, badge, desc, badge_bg):
             return f"""<div style="background-color:#151E2F; border:1px solid #1E293B; border-radius:10px; padding:16px 14px; text-align:center; position:relative;">
     <div style="position:absolute; top:10px; left:10px; background:{badge_bg}; color:{color}; font-size:14px; font-weight:bold; padding:3px 7px; border-radius:5px;">{num}</div>
-    <div style="display:flex; justify-content:center; align-items:center; gap:6px; margin-bottom:10px;">
-    <span style="font-size:18px;">{icon}</span><span style="font-size:15px; font-weight:bold; color:#F8FAFC;">{label}</span>
+    <div style="display:flex; justify-content:center; align-items:center; margin-bottom:10px;">
+        <span style="font-size:15px; font-weight:bold; color:#F8FAFC;">{label}</span>
     </div>
     <div style="margin:0 auto 10px auto; width:88px; height:88px; border-radius:50%; background:conic-gradient({color} 0% {score}%, #1E293B {score}% 100%); display:flex; align-items:center; justify-content:center;">
     <div style="width:72px; height:72px; border-radius:50%; background-color:#151E2F; display:flex; flex-direction:column; align-items:center; justify-content:center;">
