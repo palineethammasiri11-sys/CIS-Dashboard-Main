@@ -312,4 +312,4 @@ vs. Baseline (naive majority-class): <b>{baseline_val:.1f}%</b> — {"ต่ำ�
 <li><b>Validation</b>: Out-of-time (แบ่งตามช่วงเวลาจริง ไม่ใช่สุ่มแบ่ง)</li>
 </ul>""", unsafe_allow_html=True)
 
-    render_nav_footer("m4", prev_page=" ⏱️ Entry Timing", next_page=" 🛡️ Risk Analysis")
+    render_nav_footer("m4", prev_page="Entry Timing", next_page="Risk Analysis")
