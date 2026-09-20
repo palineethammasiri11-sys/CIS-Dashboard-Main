@@ -65,7 +65,7 @@ def setup_page_and_css():
     st.markdown("""
     <style>
         html, body, [class*="css"] { font-size: 16px; }
-        .stApp { background-color: #0B1120; }
+        .stApp { background-color: #FFFFFF; }
         .metric-card { background-color: #151E2F; padding: 16px; border-radius: 12px; border: 1px solid #1E293B; text-align: center; height: 100%; }
         .hero-card { background-color: #0F172A; padding: 20px; border-radius: 16px; border: 1px solid #1E293B; }
         .dim-card { background-color: #151E2F; border: 1px solid #1E293B; border-radius: 10px; padding: 12px; text-align: center; }
