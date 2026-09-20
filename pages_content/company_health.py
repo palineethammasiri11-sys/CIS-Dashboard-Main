@@ -304,12 +304,79 @@ def render(ctx):
 <td><div style="display:flex; align-items:center; gap:6px;"><div style="background:#1E293B; width:60px; height:9px; border-radius:4px; overflow:hidden;"><div style="background:#10B981; width:{pct}%; height:100%;"></div></div><span style="font-size:12px; color:#10B981; font-weight:bold;">{pct}%</span></div></td>
 </tr>""" for name, v, cv, pct in rows_cmp])
 
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; height:360px;">
-<div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">HEAD-TO-HEAD COMPARISON</div>
-<div style="font-size:12.5px; color:#64748B; margin-bottom:8px;">{sub_label}</div>
-<table style="width:100%; text-align:left; font-size:13.5px; color:#CBD5E1; border-collapse:collapse;">
-<tr style="border-bottom:1px solid #1E293B; color:#64748B; font-size:12.5px;"><th style="padding:3px 0;">Metric</th><th>{ctx.selected_ticker}</th><th>{target_label}</th><th>vs {target_label}</th></tr>
-{rows_html}
-</table></div>""", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="
+            background-color:#0F172A;
+            border:1px solid #1E293B;
+            border-radius:12px;
+            padding:14px;
+            height:360px;
+            overflow:hidden;
+        ">
+
+            <div style="
+                font-size:14.5px;
+                font-weight:bold;
+                color:#94A3B8;
+                letter-spacing:0.5px;
+            ">
+                HEAD-TO-HEAD COMPARISON
+            </div>
+
+            <div style="
+                font-size:12.5px;
+                color:#64748B;
+                margin-bottom:8px;
+            ">
+                {sub_label}
+            </div>
+
+            <div style="width:100%; overflow-x:auto;">
+                <table style="
+                    width:100%;
+                    min-width:300px;
+                    table-layout:fixed;
+                    text-align:left;
+                    font-size:12.5px;
+                    color:#CBD5E1;
+                    border-collapse:collapse;
+                ">
+
+                    <colgroup>
+                        <col style="width:34%;">
+                        <col style="width:18%;">
+                        <col style="width:18%;">
+                        <col style="width:30%;">
+                    </colgroup>
+
+                    <tr style="
+                        border-bottom:1px solid #1E293B;
+                        color:#64748B;
+                        font-size:11.5px;
+                    ">
+                        <th style="padding:4px 2px; white-space:nowrap;">
+                            Metric
+                        </th>
+
+                        <th style="padding:4px 2px; white-space:nowrap;">
+                            {ctx.selected_ticker}
+                        </th>
+
+                        <th style="padding:4px 2px; white-space:nowrap;">
+                            {target_label}
+                        </th>
+
+                        <th style="padding:4px 2px; white-space:nowrap;">
+                            vs {target_label}
+                        </th>
+                    </tr>
+
+                    {rows_html}
+
+                </table>
+            </div>
+
+        </div>
+        """, unsafe_allow_html=True)
 
     render_nav_footer("m1", prev_page="Overview", next_page="Fair Value")
