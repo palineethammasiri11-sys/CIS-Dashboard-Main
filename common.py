@@ -278,8 +278,23 @@ def setup_page_and_css():
 
         [data-testid="stSidebar"]
         [data-testid="stSelectbox"] > div {
-            background-color: #F8FAFC !important;
+            background-color: #FFFFFF !important;
+            border: 1px solid #E2E8F0 !important;
             border-radius: 8px !important;
+            box-shadow: none !important;
+        }
+
+        [data-testid="stSidebar"]
+        [data-testid="stSelectbox"] [data-baseweb="select"] > div {
+            background-color: #FFFFFF !important;
+            border-color: #E2E8F0 !important;
+            border-radius: 8px !important;
+            color: #0F172A !important;
+        }
+
+        [data-testid="stSidebar"]
+        [data-testid="stSelectbox"] [data-baseweb="select"] span {
+            color: #0F172A !important;
         }
 
 
@@ -609,8 +624,8 @@ def render_sidebar(scores_df):
     # =========================
 
     st.sidebar.markdown(
-        "<div style='font-size:13px; font-weight:700; color:#64748B; "
-        "margin-bottom:6px;'>SELECT COMPANY</div>",
+        "<div style='font-size:12px; font-weight:700; color:#64748B; "
+        "margin-bottom:6px; letter-spacing:0.5px;'>COMPANY</div>",
         unsafe_allow_html=True
     )
 
