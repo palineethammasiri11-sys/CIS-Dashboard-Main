@@ -220,5 +220,5 @@ def render(ctx):
         else:
             st.info("ไม่มีข้อมูลย้อนหลังเพียงพอ")
 
-    render_nav_footer("m2", prev_page=" 💚 Company Health", next_page=" ⏱️ Entry Timing")
+    render_nav_footer("m2", prev_page="Company Health", next_page="Entry Timing")
 
