@@ -329,11 +329,14 @@ def render(ctx):
                 {cv}
             </td>
 
-            <td style="padding:5px 2px;">
+            <td style="
+                padding:5px 2px;
+                width:30%;
+            ">
                 <div style="
                     display:flex;
                     align-items:center;
-                    gap:4px;
+                    gap:5px;
                     white-space:nowrap;
                 ">
                     <div style="
