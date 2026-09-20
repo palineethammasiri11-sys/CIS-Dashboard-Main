@@ -32,7 +32,7 @@ def render(ctx):
             OVERVIEW DASHBOARD
         </div>
         <div style="font-size:15px; color:#64748B; margin-top:4px;">
-            AI-Powered Investment Decision Support System
+            ภาพรวมข้อมูลและการวิเคราะห์เพื่อสนับสนุนการตัดสินใจลงทุน
         </div>
     </div>
     """, unsafe_allow_html=True)
