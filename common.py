@@ -57,7 +57,6 @@ def setup_page_and_css():
     """เรียกครั้งเดียวตอนเริ่ม app.py เท่านั้น ห้ามเรียกซ้ำในไฟล์หน้าโมดูล"""
     st.set_page_config(
         page_title="CIS - Comprehensive Investment System",
-        page_icon="🧠",
         layout="wide",
         initial_sidebar_state="expanded"
     )
@@ -231,28 +230,6 @@ def setup_page_and_css():
             font-weight: 500 !important;
             margin: 0 !important;
             line-height: 1.4 !important;
-        }
-
-
-        /* Active navigation
-           สีจริงจะถูกกำหนด dynamic ตามแต่ละ Module
-        */
-
-        [data-testid="stSidebar"]
-        [data-testid="stRadio"]
-        div[role="radiogroup"]
-        label:has(input:checked) {
-            background-color: #F1F5F9 !important;
-            border-color: #E2E8F0 !important;
-            box-shadow: none !important;
-        }
-
-        [data-testid="stSidebar"]
-        [data-testid="stRadio"]
-        div[role="radiogroup"]
-        label:has(input:checked) p {
-            color: #0F172A !important;
-            font-weight: 700 !important;
         }
 
 
