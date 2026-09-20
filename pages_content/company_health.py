@@ -362,74 +362,46 @@ def render(ctx):
         </tr>
         """ for name, v, cv, pct in rows_cmp])
 
-        st.markdown(f"""
-        <div style="
-            background-color:#0F172A;
-            border:1px solid #1E293B;
-            border-radius:12px;
-            padding:14px;
-            min-height:360px;
-            height:auto;
-            overflow:hidden;
-        ">
+        html = f"""
+        <div style="background-color:#0F172A;
+                    border:1px solid #1E293B;
+                    border-radius:12px;
+                    padding:14px;
+                    min-height:360px;
+                    height:auto;
+                    overflow:hidden;">
 
-            <div style="
-                font-size:14.5px;
-                font-weight:bold;
-                color:#94A3B8;
-                letter-spacing:0.5px;
-            ">
+            <div style="font-size:14.5px;
+                        font-weight:bold;
+                        color:#94A3B8;
+                        letter-spacing:0.5px;">
                 HEAD-TO-HEAD COMPARISON
             </div>
 
-            <div style="
-                font-size:12.5px;
-                color:#64748B;
-                margin-bottom:8px;
-            ">
+            <div style="font-size:12.5px;
+                        color:#64748B;
+                        margin-bottom:8px;">
                 {sub_label}
             </div>
 
-            <div style="
-                width:100%;
-                overflow-x:auto;
-            ">
-                <table style="
-                    width:100%;
-                    min-width:300px;
-                    table-layout:fixed;
-                    text-align:left;
-                    font-size:12.5px;
-                    color:#CBD5E1;
-                    border-collapse:collapse;
-                ">
-                    <colgroup>
-                        <col style="width:34%;">
-                        <col style="width:18%;">
-                        <col style="width:18%;">
-                        <col style="width:30%;">
-                    </colgroup>
+            <div style="width:100%; overflow-x:auto;">
+                <table style="width:100%;
+                              min-width:300px;
+                              table-layout:fixed;
+                              text-align:left;
+                              font-size:12.5px;
+                              color:#CBD5E1;
+                              border-collapse:collapse;">
 
-                    <tr style="
-                        border-bottom:1px solid #1E293B;
-                        color:#64748B;
-                        font-size:11.5px;
-                    ">
-                        <th style="padding:4px 2px; white-space:nowrap;">
-                            Metric
-                        </th>
+                    <tr style="border-bottom:1px solid #1E293B;
+                               color:#64748B;
+                               font-size:11.5px;">
 
-                        <th style="padding:4px 2px; white-space:nowrap;">
-                            {ctx.selected_ticker}
-                        </th>
+                        <th style="padding:4px 2px;">Metric</th>
+                        <th style="padding:4px 2px;">{ctx.selected_ticker}</th>
+                        <th style="padding:4px 2px;">{target_label}</th>
+                        <th style="padding:4px 2px;">vs {target_label}</th>
 
-                        <th style="padding:4px 2px; white-space:nowrap;">
-                            {target_label}
-                        </th>
-
-                        <th style="padding:4px 2px; white-space:nowrap;">
-                            vs {target_label}
-                        </th>
                     </tr>
 
                     {rows_html}
@@ -438,6 +410,8 @@ def render(ctx):
             </div>
 
         </div>
-        """, unsafe_allow_html=True)
+        """
+
+        st.markdown(html, unsafe_allow_html=True)
 
     render_nav_footer("m1", prev_page="Overview", next_page="Fair Value")
