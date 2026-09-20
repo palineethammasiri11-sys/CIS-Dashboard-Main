@@ -51,7 +51,7 @@ PAGES = [
 
 
 # ============================================================================
-# 2. CSS / ธีม Dark Navy ของทั้งแอป
+# 2. CSS / ธีม Light Clean ของทั้งแอป
 # ============================================================================
 def setup_page_and_css():
     """เรียกครั้งเดียวตอนเริ่ม app.py เท่านั้น ห้ามเรียกซ้ำในไฟล์หน้าโมดูล"""
@@ -367,7 +367,7 @@ def render_nav_footer(key_prefix, prev_page=None, next_page=None):
     """แถบปุ่มนำทาง (หน้าก่อนหน้า / หน้าหลัก / หน้าถัดไป) แสดงท้ายทุกหน้าโมดูล (ยกเว้น Overview)
     key_prefix ต้องไม่ซ้ำกันข้ามหน้า (แนะนำ: m1=Health, m2=FairValue, m3=Timing, m4=AI, m5=Risk, m6=Industry)"""
     st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
-    st.markdown("""<div style="border-top:1px solid #1E293B; padding-top:16px; margin-bottom:6px;"></div>""", unsafe_allow_html=True)
+    st.markdown("""<div style="border-top:1px solid #E2E8F0; padding-top:16px; margin-bottom:6px;"></div>""", unsafe_allow_html=True)
     col_prev, col_home, col_next, col_disc = st.columns([1.3, 1.3, 1.3, 3.3])
     with col_prev:
         if prev_page:
@@ -385,7 +385,7 @@ def render_nav_footer(key_prefix, prev_page=None, next_page=None):
                 st.rerun()
     with col_disc:
         st.markdown(
-            '<div style="font-size:15.5px; color:#94A3B8; text-align:right; padding-top:11px; line-height:1.5;">'
+            '<div style="font-size:15.5px; color:#64748B; text-align:right; padding-top:11px; line-height:1.5;">'
             'หมายเหตุ: การประเมินนี้ไม่ใช่คำแนะนำในการลงทุน ผู้ลงทุนควรศึกษาข้อมูลเพิ่มเติม</div>',
             unsafe_allow_html=True
         )
