@@ -45,8 +45,8 @@ COMPANY_NAMES = {
 
 # ลำดับหน้า + emoji ประจำแต่ละโมดูล (ห้ามเปลี่ยน emoji ให้ซ้ำกันข้ามโมดูล — ดูตารางสี/emoji ในเอกสารแบ่งงาน)
 PAGES = [
-    " 🏠 Overview", " 💚 Company Health", " ⚖️ Fair Value",
-    " ⏱️ Entry Timing", " 🔮 AI Prediction", " 🛡️ Risk Analysis", " 📊 Industry Benchmark"
+    " Overview", " Company Health", " Fair Value",
+    " Entry Timing", " AI Prediction", " Risk Analysis", " Industry Benchmark"
 ]
 
 
@@ -442,13 +442,13 @@ def render_sidebar(scores_df):
     )
 
     nav_colors = {
-        " 🏠 Overview": "#3B82F6",
-        " 💚 Company Health": "#10B981",
-        " ⚖️ Fair Value": "#8B5CF6",
-        " ⏱️ Entry Timing": "#F59E0B",
-        " 🔮 AI Prediction": "#06B6D4",
-        " 🛡️ Risk Analysis": "#EF4444",
-        " 📊 Industry Benchmark": "#F59E0B",
+        " Overview": "#3B82F6",
+        " Company Health": "#10B981",
+        " Fair Value": "#8B5CF6",
+        " Entry Timing": "#F59E0B",
+        " AI Prediction": "#06B6D4",
+        " Risk Analysis": "#EF4444",
+        " Industry Benchmark": "#EAB308",
     }
 
     active_color = nav_colors.get(selected_page, "#3B82F6")
