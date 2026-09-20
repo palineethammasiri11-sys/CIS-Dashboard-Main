@@ -312,4 +312,4 @@ def render(ctx):
 {rows_html}
 </table></div>""", unsafe_allow_html=True)
 
-    render_nav_footer("m1", prev_page=" 🏠 Overview", next_page=" ⚖️ Fair Value")
+    render_nav_footer("m1", prev_page="Overview", next_page="Fair Value")
