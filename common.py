@@ -656,99 +656,99 @@ def render_sidebar(scores_df):
          RESPONSIVE / MOBILE
          ========================================================= */
 
-        @media (max-width: 768px) {
+        @media (max-width: 768px) {{
 
             /* ---------- Main content ---------- */
-            .main .block-container {
+            .main .block-container {{
                 padding: 1rem 0.85rem 2rem 0.85rem !important;
                 max-width: 100% !important;
-            }
+            }}
 
             /* ---------- Streamlit columns ---------- */
-            [data-testid="stHorizontalBlock"] {
+            [data-testid="stHorizontalBlock"] {{
                 flex-wrap: wrap !important;
                 gap: 0.75rem !important;
-            }
+            }}
 
-            [data-testid="column"] {
+            [data-testid="column"] {{
                 width: 100% !important;
                 flex: 1 1 100% !important;
                 min-width: 100% !important;
-            }
-
+            }}
+        
             /* ---------- Shared Header ---------- */
-            .cis-header {
+            .cis-header {{
                 flex-direction: column !important;
                 align-items: flex-start !important;
                 gap: 10px !important;
                 padding: 14px 16px !important;
-            }
+            }}
   
-            .cis-header-info {
+            .cis-header-info {{
                 width: 100% !important;
                 display: flex !important;
                 flex-wrap: wrap !important;
                 gap: 6px 10px !important;
                 font-size: 13px !important;
-            }
+            }}
 
-            .cis-header-divider {
+            .cis-header-divider {{
                 display: none !important;
-            }
+            }}
 
             /* ---------- Titles ---------- */
-            .module-title {
+            .module-title {{
                 font-size: 21px !important;
                 line-height: 1.25 !important;
-            }
+            }}
 
-            .module-subtitle {
+            .module-subtitle {{
                 font-size: 14px !important;
                 line-height: 1.5 !important;
-            }
+            }}
 
             /* ---------- Tables ---------- */
-            [data-testid="stDataFrame"] {
+            [data-testid="stDataFrame"] {{
                 width: 100% !important;
                 overflow-x: auto !important;
-            }
+            }}
 
             /* ---------- Plotly charts ---------- */
             .js-plotly-plot,
-            .plot-container {
+            .plot-container {{
                 width: 100% !important;
                 max-width: 100% !important;
-            }
+            }}
 
              /* ---------- Buttons ---------- */
-            .stButton > button {
+            .stButton > button {{
                 width: 100% !important;
-            }
-        }
+            }}
+        }}
 
 
         /* =========================================================
            VERY SMALL MOBILE
            ========================================================= */
 
-        @media (max-width: 480px) {
+        @media (max-width: 480px) {{
 
-            .main .block-container {
+            .main .block-container {{
                 padding: 0.75rem 0.65rem 1.5rem 0.65rem !important;
-            }
+            }}
 
-            .module-title {
+            .module-title {{
                 font-size: 19px !important;
-            }
+            }}
 
-            .module-subtitle {
+            .module-subtitle {{
                 font-size: 13.5px !important;
-            }
+            }}
 
-            [data-testid="stHorizontalBlock"] {
+            [data-testid="stHorizontalBlock"] {{
                 gap: 0.6rem !important;
-            }
-        }
+            }}
+        }}
 
         </style>
          """,
