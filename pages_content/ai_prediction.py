@@ -224,18 +224,18 @@ def render(ctx):
         )
 
     with forecast_info:
-        st.button(
-            "ⓘ",
-            key="forecast_info_button",
-            help=(
-                "คำอธิบายกราฟ\n\n"
-                "เส้นทึบฟ้า = ราคาจริงที่เกิดขึ้นแล้ว\n"
-                "เส้นประสี = ค่ากลางที่โมเดลคาดการณ์\n"
-                "แถบทึบแสง = ช่วงคาดการณ์ประมาณ 80%\n"
-                "คำนวณจาก Volatility จริง\n"
-                "ไม่ใช่การรับประกันผลตอบแทน"
+        with st.popover("ⓘ", use_container_width=True):
+            st.markdown(
+                """
+                **คำอธิบายกราฟ**
+
+                - เส้นทึบฟ้า = ราคาจริงที่เกิดขึ้นแล้ว
+                - เส้นประสี = ค่ากลางที่โมเดลคาดการณ์
+                - แถบทึบแสง = ช่วงคาดการณ์ประมาณ 80%
+                - คำนวณจาก Volatility จริง
+                - ไม่ใช่การรับประกันผลตอบแทน
+                """
             )
-        )
 
     hist_tail = ctx.stock_daily.tail(150)
     vol_annual = safe(ctx.stock_info.get('volatility'), 25.0) / 100
