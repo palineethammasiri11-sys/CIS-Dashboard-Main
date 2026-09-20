@@ -262,7 +262,19 @@ def render(ctx):
             )
         )
 
-        show_chart(fig_radar, key="industry_radar", expand_height=650)
+        st.markdown("""
+<div style="
+    background:#FFFFFF;
+    border:1px solid #E2E8F0;
+    border-radius:8px;
+    padding:14px;
+    overflow:hidden;
+">
+""", unsafe_allow_html=True)
+
+show_chart(fig_radar, key="industry_radar", expand_height=650)
+
+st.markdown("</div>", unsafe_allow_html=True)
 
     with r2_c3:
         matrix_df = ctx.scores_df[['ticker', 'health_score', 'overall_score']].copy()
