@@ -196,7 +196,7 @@ def render(ctx):
     # ============================================================
     # 3) FORECAST — ตอบคำถาม "ราคาจะไปทางไหนในอนาคต"
     # ============================================================
-    forecast_title, forecast_info = st.columns([0.96, 0.04], gap="small")
+    forecast_title, forecast_info = st.columns([0.96, 0.06], gap="small")
 
     with forecast_title:
         st.markdown(
@@ -228,11 +228,12 @@ def render(ctx):
             "ⓘ",
             key="forecast_info_button",
             help=(
-                "เส้นทึบฟ้า = ราคาจริงที่เกิดขึ้นแล้ว | "
-                "เส้นประ = ค่ากลางที่โมเดลคาดการณ์ | "
-                "แถบทึบแสง = ช่วงคาดการณ์ประมาณ 80% จาก Volatility จริง | "
+                "เส้นทึบฟ้า = ราคาจริง | "
+                "เส้นประ = ราคาที่โมเดลคาดการณ์ | "
+                "แถบทึบแสง = ช่วงคาดการณ์ประมาณ 80% | "
                 "ไม่ใช่การรับประกันผลตอบแทน"
-            )
+            ),
+            use_container_width=True
         )
 
     hist_tail = ctx.stock_daily.tail(150)
