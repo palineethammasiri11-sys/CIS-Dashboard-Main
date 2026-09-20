@@ -286,43 +286,6 @@ def setup_page_and_css():
         p {
             color: #475569;
         }
-        
-        /* =========================================================
-           CARD THEME — LIGHT
-           ========================================================= */
-
-        .score-card,
-        .info-card,
-        .analysis-card,
-        .summary-card {
-            background-color: #FFFFFF !important;
-            color: #0F172A !important;
-            border: 1px solid #E2E8F0 !important;
-            box-shadow: none !important;
-        }
-
-        .score-card h1,
-        .score-card h2,
-        .score-card h3,
-        .info-card h1,
-        .info-card h2,
-        .info-card h3,
-        .analysis-card h1,
-        .analysis-card h2,
-        .analysis-card h3,
-        .summary-card h1,
-        .summary-card h2,
-        .summary-card h3 {
-            color: #0F172A !important;
-        }
-
-        .score-card p,
-        .info-card p,
-        .analysis-card p,
-        .summary-card p {
-            color: #475569 !important;
-        }
- 
 
     </style>
     """, unsafe_allow_html=True)
