@@ -196,46 +196,40 @@ def render(ctx):
     # ============================================================
     # 3) FORECAST — ตอบคำถาม "ราคาจะไปทางไหนในอนาคต"
     # ============================================================
-    volatility_display = safe(ctx.stock_info.get('volatility'), 25.0)
-
     st.markdown(
-        f"""
+        """
         <div style="
             background-color:#0F172A;
             border:1px solid #1E293B;
             border-radius:12px 12px 0 0;
             padding:14px 18px 10px 18px;
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
         ">
-            <div style="
+            <span style="
                 font-size:16.5px;
                 font-weight:bold;
                 color:#94A3B8;
                 letter-spacing:0.5px;
             ">
                 📈 FORECAST — PRICE HISTORY + MODEL-IMPLIED RANGE
-            </div>
-
-            <div style="
-                width:22px;
-                height:22px;
-                border:1px solid #64748B;
-                border-radius:50%;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                color:#CBD5E1;
-                font-size:13px;
-                font-weight:bold;
-            ">
-                i
-            </div>
+            </span>
         </div>
         """,
         unsafe_allow_html=True
     )
+
+    # คำอธิบาย
+    with st.popover("ⓘ"):
+        st.markdown(
+            """
+            **คำอธิบายกราฟ**
+
+            - เส้นทึบฟ้า = ราคาจริงที่เกิดขึ้นแล้ว
+            - เส้นประสี = ค่ากลางที่โมเดลคาดการณ์
+            - แถบทึบแสง = ช่วงคาดการณ์ประมาณ 80%
+            - ช่วงคาดการณ์คำนวณจาก Volatility จริง
+            - ไม่ใช่การรับประกันผลตอบแทน
+            """
+        )
 
     hist_tail = ctx.stock_daily.tail(150)
     vol_annual = safe(ctx.stock_info.get('volatility'), 25.0) / 100
