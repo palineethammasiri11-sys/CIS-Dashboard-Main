@@ -128,12 +128,12 @@ def render(ctx):
     </div>"""
 
         cards_html = "".join([
-            module_card("01", "💚", "COMPANY HEALTH", m1_s, "#34D399", m1_badge, m1_desc, "rgba(16,185,129,0.2)"),
-            module_card("02", "⚖️", "FAIR VALUE", m2_s, "#FBBF24", m2_badge, m2_desc, "rgba(245,158,11,0.2)"),
-            module_card("03", "⏱️", "ENTRY TIMING", m3_s, "#38BDF8", m3_badge, m3_desc, "rgba(56,189,248,0.2)"),
-            module_card("04", "🔮", "AI PREDICTION", m4_s, "#C084FC", m4_badge, m4_desc, "rgba(168,85,247,0.2)"),
-            module_card("05", "🛡️", "RISK ANALYSIS", m5_s, "#FB923C", m5_badge, m5_desc, "rgba(249,115,22,0.2)"),
-            module_card("06", "📊", "INDUSTRY BENCHMARK", m6_s, "#2DD4BF", m6_badge, m6_desc, "rgba(20,184,166,0.2)"),
+            module_card("01", "COMPANY HEALTH", m1_s, "#34D399", m1_badge, m1_desc, "rgba(16,185,129,0.2)"),
+            module_card("02", "FAIR VALUE", m2_s, "#FBBF24", m2_badge, m2_desc, "rgba(245,158,11,0.2)"),
+            module_card("03", "ENTRY TIMING", m3_s, "#38BDF8", m3_badge, m3_desc, "rgba(56,189,248,0.2)"),
+            module_card("04", "AI PREDICTION", m4_s, "#C084FC", m4_badge, m4_desc, "rgba(168,85,247,0.2)"),
+            module_card("05", "RISK ANALYSIS", m5_s, "#FB923C", m5_badge, m5_desc, "rgba(249,115,22,0.2)"),
+            module_card("06", "INDUSTRY BENCHMARK", m6_s, "#2DD4BF", m6_badge, m6_desc, "rgba(20,184,166,0.2)"),
         ])
         st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:16px; min-height:900px;">
     <div style="font-size:15px; font-weight:bold; color:#F1F5F9; letter-spacing:0.5px; margin-bottom:12px;">INVESTMENT DECISION OVERVIEW ({ctx.selected_ticker})</div>
