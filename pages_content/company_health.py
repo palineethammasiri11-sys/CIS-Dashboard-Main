@@ -110,6 +110,13 @@ def render(ctx):
         st.markdown("""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px 12px 0 0; padding:12px 16px 0 16px;">
     <div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">COMPANY HEALTH SCORE TREND (Actual, 2023-2025)</div></div>""", unsafe_allow_html=True)
 
+        selected_year = st.selectbox(
+            "Select Year",
+            options=[2023, 2024, 2025],
+            index=2,
+            key="health_trend_year"
+        )
+        
         hy = (
             ctx.health_yearly_df[
                 ctx.health_yearly_df['ticker'] == ctx.selected_ticker
