@@ -301,7 +301,6 @@ def render(ctx):
         ]
         rows_html = "".join([f"""
         <tr style="border-bottom:1px solid #1E293B;">
-
             <td style="
                 padding:5px 2px;
                 white-space:nowrap;
@@ -329,10 +328,7 @@ def render(ctx):
                 {cv}
             </td>
 
-            <td style="
-                padding:5px 2px;
-                width:30%;
-            ">
+            <td style="padding:5px 2px;">
                 <div style="
                     display:flex;
                     align-items:center;
@@ -363,7 +359,6 @@ def render(ctx):
                     </span>
                 </div>
             </td>
-
         </tr>
         """ for name, v, cv, pct in rows_cmp])
 
@@ -373,7 +368,8 @@ def render(ctx):
             border:1px solid #1E293B;
             border-radius:12px;
             padding:14px;
-            height:360px;
+            min-height:360px;
+            height:auto;
             overflow:hidden;
         ">
 
@@ -394,7 +390,10 @@ def render(ctx):
                 {sub_label}
             </div>
 
-            <div style="width:100%; overflow-x:auto;">
+            <div style="
+                width:100%;
+                overflow-x:auto;
+            ">
                 <table style="
                     width:100%;
                     min-width:300px;
@@ -404,7 +403,6 @@ def render(ctx):
                     color:#CBD5E1;
                     border-collapse:collapse;
                 ">
-
                     <colgroup>
                         <col style="width:34%;">
                         <col style="width:18%;">
