@@ -103,14 +103,8 @@ def setup_page_and_css():
         [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:hover {
             background-color: rgba(45, 212, 191, 0.10) !important; border-color: rgba(45, 212, 191, 0.35) !important;
         }
-        [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) {
-            background: rgba(16, 185, 129, 0.22) !important; border: 1.5px solid #10B981 !important; box-shadow: 0 0 10px rgba(16, 185, 129, 0.18) !important;
-        }
         [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label p {
             font-size: 15px !important; color: #E2E8F0 !important; font-weight: 600 !important; margin: 0 !important; line-height: 1.4 !important;
-        }
-        [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) p {
-            color: #10B981 !important; font-weight: 800 !important;
         }
         [data-testid="stSidebar"] label, [data-testid="stSidebar"] .stCaption, [data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
             color: #CBD5E1 !important;
@@ -462,18 +456,20 @@ def render_sidebar(scores_df):
     st.markdown(
         f"""
         <style>
-        section[data-testid="stSidebar"] div[role="radiogroup"] label {{
-            border-radius: 8px !important;
-            padding: 8px 10px !important;
-        }}
-
-        section[data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) {{
+        [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) {{
+            background: {active_color} !important;
             background-color: {active_color} !important;
+            border: 1.5px solid {active_color} !important;
+            box-shadow: 0 0 10px {active_color} !important;
         }}
 
-        section[data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) p {{
+        [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) p {{
             color: #FFFFFF !important;
-            font-weight: 700 !important;
+            font-weight: 800 !important;
+        }}
+
+        [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) span {{
+            color: #FFFFFF !important;
         }}
         </style>
         """,
