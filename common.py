@@ -459,7 +459,7 @@ def render_sidebar(scores_df):
 
     active_color = nav_colors.get(selected_page, "#3B82F6")
 
-     st.markdown(
+    st.markdown(
         f"""
         <style>
         section[data-testid="stSidebar"] div[role="radiogroup"] label {{
