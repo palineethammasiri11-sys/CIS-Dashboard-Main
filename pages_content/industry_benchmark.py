@@ -57,7 +57,7 @@ def render(ctx):
         star_color = "#10B981" if pos_stars == 5 else ("#F59E0B" if pos_stars >= 4 else "#EF4444")
         cup_bg = "rgba(16,185,129,0.12)" if pos_stars == 5 else ("rgba(245,158,11,0.12)" if pos_stars >= 4 else "rgba(239,68,68,0.12)")
 
-        st.markdown(f"""<div style="background:#FFFFFF; border:1px solid {star_color}; border-radius:10px; padding:14px; height:360px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between;">
+        st.markdown(f"""<div style="background:#FFFFFF; border:2px solid {star_color}; border-radius:10px; padding:14px; height:360px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between;">
     <div style="font-size:14.5px; color:#64748B; font-weight:bold; margin-bottom:8px;">STRATEGIC INVESTMENT POSITION</div>
     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; flex-grow:1;">
     <div style="background:{cup_bg}; border:2px solid {star_color}; border-radius:50%; width:100px; height:100px; display:flex; align-items:center; justify-content:center; font-size:44px;">🏆</div>
