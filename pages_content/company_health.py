@@ -669,130 +669,31 @@ def render(ctx):
     # ============================================================
 
     with r1_c3:
+        st.html("""<div style="background-color:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px 12px 0 0;padding:12px 16px 0 16px;">
+        <div style="font-size:14.5px;font-weight:bold;color:#64748B;letter-spacing:0.5px;">COMPANY HEALTH SCORE TREND (Actual, 2023-2025)</div>
+        </div>""")
 
-        st.html("""
-        <div style="
-            background-color:#FFFFFF;
-            border:1px solid #E2E8F0;
-            border-radius:12px 12px 0 0;
-            padding:12px 16px 0 16px;
-        ">
-
-            <div style="
-                font-size:14.5px;
-                font-weight:bold;
-                color:#64748B;
-                letter-spacing:0.5px;
-            ">
-                COMPANY HEALTH SCORE TREND (Actual, 2023-2025)
-            </div>
-
-        </div>
-        """)
-
-
-        hy = (
-            ctx.health_yearly_df[
-                ctx.health_yearly_df['ticker']
-                == ctx.selected_ticker
-            ]
-            .sort_values('year')
-            if not ctx.health_yearly_df.empty
-            else pd.DataFrame()
-        )
-
-
-        trend_x = (
-            hy['year'].astype(int).tolist()
-            if not hy.empty
-            else [2023, 2024, 2025]
-        )
-
-        trend_y = (
-            hy['health_score'].tolist()
-            if not hy.empty
-            else [h_score, h_score, h_score]
-        )
-
+        hy = ctx.health_yearly_df[ctx.health_yearly_df['ticker'] == ctx.selected_ticker].sort_values('year') if not ctx.health_yearly_df.empty else pd.DataFrame()
+        trend_x = hy['year'].astype(int).tolist() if not hy.empty else [2023, 2024, 2025]
+        trend_y = hy['health_score'].tolist() if not hy.empty else [h_score, h_score, h_score]
 
         fig_health_trend = go.Figure()
-
-
-        fig_health_trend.add_trace(
-            go.Scatter(
-                x=trend_x,
-                y=trend_y,
-                mode='lines+markers+text',
-                text=trend_y,
-                textposition='top center',
-                textfont=dict(
-                    size=12.5,
-                    color='#0F172A'
-                ),
-                line=dict(
-                    color='#10B981',
-                    width=2
-                ),
-                marker=dict(
-                    size=10,
-                    color='#10B981',
-                    line=dict(
-                        width=1.5,
-                        color='#FFFFFF'
-                    )
-                )
-            )
-        )
-
+        fig_health_trend.add_trace(go.Scatter(
+            x=trend_x, y=trend_y, mode='lines+markers+text', text=trend_y,
+            textposition='top center', textfont=dict(size=12.5, color='#0F172A'),
+            line=dict(color=h_color, width=2),
+            marker=dict(size=10, color=h_color, line=dict(width=1.5, color='#FFFFFF'))
+        ))
 
         fig_health_trend.update_layout(
-            height=168,
-            margin=dict(
-                l=25,
-                r=15,
-                t=10,
-                b=20
-            ),
-
-            paper_bgcolor="#FFFFFF",
-            plot_bgcolor="#FFFFFF",
-
-            yaxis=dict(
-                range=[0, 110],
-                tickvals=[
-                    0,
-                    25,
-                    50,
-                    75,
-                    100
-                ],
-                tickfont=dict(
-                    size=11.5,
-                    color="#64748B"
-                ),
-                gridcolor="#E2E8F0",
-                zeroline=False
-            ),
-
-            xaxis=dict(
-                type="linear",
-                tickfont=dict(
-                    size=12,
-                    color="#64748B"
-                ),
-                gridcolor="#E2E8F0",
-                zeroline=False
-            ),
-
+            height=168, margin=dict(l=25, r=15, t=10, b=20),
+            paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF",
+            yaxis=dict(range=[0,110], tickvals=[0,25,50,75,100], tickfont=dict(size=11.5,color="#64748B"), gridcolor="#E2E8F0", zeroline=False),
+            xaxis=dict(type="linear", tickfont=dict(size=12,color="#64748B"), gridcolor="#E2E8F0", zeroline=False),
             showlegend=False
         )
 
-
-        show_chart(
-            fig_health_trend,
-            key="health_trend",
-            expand_height=650
-        )
+        show_chart(fig_health_trend, key="health_trend", expand_height=650)
 
 
     # ============================================================
