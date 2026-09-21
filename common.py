@@ -3,25 +3,32 @@ common.py
 ---------
 โค้ดส่วนกลางที่ทุกหน้าของ CIS Dashboard ใช้ร่วมกัน
 
-แก้ไข:
-- ปรับ Global card layout ให้ Overview ต่อเนื่องมากขึ้น
-- ลดช่องว่างระหว่าง summary / chart / metrics
-- ปรับ Plotly chart ไม่ให้เกิดพื้นที่ว่างผิดสัดส่วน
-- รองรับ desktop + mobile
-- คง database / PageContext / navigation logic เดิม
+⚠️ กติกาสำคัญสำหรับทีม (9 คน):
+- ไฟล์นี้เป็น "ของกลาง" ที่ทุกโมดูลอิงใช้ ถ้าจะแก้ (CSS, สี, ธีม, helper function,
+  โครงสร้าง PageContext) ต้องแจ้ง/ขอความเห็นชอบจาก Layout Lead หรือ QA Lead ก่อนเสมอ
+  ไม่งั้นจะกระทบทุกหน้าพร้อมกัน
+- ห้าม copy โค้ดจากไฟล์นี้ไปแปะซ้ำในไฟล์หน้าโมดูลของตัวเอง — ให้ import มาใช้แทน
+- ถ้ามีจุดที่คิดว่าควรเพิ่ม helper ใหม่ที่ "ทุกหน้า" น่าจะได้ใช้ ให้เพิ่มที่นี่ที่เดียว
+
+โครงสร้างไฟล์:
+1. ค่าคงที่
+2. CSS/ธีมของทั้งแอป
+3. Helper functions
+4. การเชื่อมต่อฐานข้อมูล + auto-healing
+5. PageContext
+6. render_sidebar() / render_header_bar()
 """
 
 import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-
 from sqlalchemy import create_engine, text
 from dataclasses import dataclass
 
 
 # ============================================================================
-# 1. ค่าคงที่
+# 1. ค่าคงที่ที่ใช้ร่วมกันทั้งแอป
 # ============================================================================
 
 TARGET_STOCKS = [
@@ -60,6 +67,7 @@ COMPANY_NAMES = {
 }
 
 
+# ลำดับหน้า + emoji ประจำแต่ละโมดูล
 PAGES = [
     " Overview",
     " Company Health",
@@ -72,12 +80,13 @@ PAGES = [
 
 
 # ============================================================================
-# 2. CSS / THEME
+# 2. CSS / ธีม Light Clean ของทั้งแอป
 # ============================================================================
 
 def setup_page_and_css():
     """
-    เรียกครั้งเดียวจาก app.py ตอนเริ่ม application
+    เรียกครั้งเดียวตอนเริ่ม app.py เท่านั้น
+    ห้ามเรียกซ้ำในไฟล์หน้าโมดูล
     """
 
     st.set_page_config(
@@ -91,7 +100,7 @@ def setup_page_and_css():
         <style>
 
         /* =========================================================
-           GLOBAL
+           GLOBAL — Clean Financial Platform
            ========================================================= */
 
         html,
@@ -114,7 +123,7 @@ def setup_page_and_css():
 
 
         /* =========================================================
-           STANDARD CARDS
+           CARDS
            ========================================================= */
 
         .metric-card {
@@ -125,7 +134,6 @@ def setup_page_and_css():
             text-align: center;
             height: 100%;
             box-shadow: none;
-            box-sizing: border-box;
         }
 
         .hero-card {
@@ -134,7 +142,6 @@ def setup_page_and_css():
             border-radius: 16px;
             border: 1px solid #E2E8F0;
             box-shadow: none;
-            box-sizing: border-box;
         }
 
         .dim-card {
@@ -144,106 +151,6 @@ def setup_page_and_css():
             padding: 16px;
             text-align: center;
             box-shadow: none;
-            box-sizing: border-box;
-        }
-
-
-        /* =========================================================
-           OVERVIEW STOCK CARD
-           
-           สำคัญ:
-           ทำให้ card ที่มี chart ไม่ดูเหมือนกล่องโดด ๆ
-           และลด vertical gap รอบ Plotly
-           ========================================================= */
-
-        .stock-overview-card {
-            background: #FFFFFF;
-            border: 1px solid #E2E8F0;
-            border-radius: 16px;
-            overflow: hidden;
-            box-sizing: border-box;
-        }
-
-        .stock-overview-top {
-            padding: 24px 28px 16px 28px;
-            background: #FFFFFF;
-        }
-
-        .stock-overview-chart {
-            padding: 0 22px 0 22px;
-            background: #FFFFFF;
-        }
-
-        .stock-overview-metrics {
-            padding: 20px 22px 24px 22px;
-            background: #FFFFFF;
-        }
-
-
-        /* =========================================================
-           PLOTLY
-           ========================================================= */
-
-        .js-plotly-plot {
-            width: 100% !important;
-            max-width: 100% !important;
-        }
-
-        .plot-container {
-            width: 100% !important;
-            max-width: 100% !important;
-        }
-
-        /*
-         * Streamlit ใส่ margin รอบ element ของ plot
-         * ลดลงเพื่อไม่ให้เกิดช่องว่างขนาดใหญ่
-         */
-
-        [data-testid="stPlotlyChart"] {
-            width: 100% !important;
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
-        }
-
-        [data-testid="stPlotlyChart"] > div {
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-        }
-
-
-        /* =========================================================
-           FIX OVERVIEW BORDERED CONTAINERS
-           
-           ถ้า Overview ใช้ st.container(border=True)
-           ให้ลดช่องว่างระหว่าง card ที่ติดกัน
-           ========================================================= */
-
-        [data-testid="stVerticalBlockBorderWrapper"] {
-            box-sizing: border-box;
-        }
-
-        /*
-         * Container ที่มี Plotly อยู่ข้างใน
-         * ไม่ให้มี padding ด้านบนมากเกินไป
-         */
-
-        [data-testid="stVerticalBlockBorderWrapper"]:has(
-            [data-testid="stPlotlyChart"]
-        ) {
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
-        }
-
-        /*
-         * Chart container
-         */
-
-        [data-testid="stVerticalBlockBorderWrapper"]:has(
-            .js-plotly-plot
-        ) {
-            overflow: hidden !important;
         }
 
 
@@ -393,7 +300,8 @@ def setup_page_and_css():
         }
 
         [data-testid="stSidebar"]
-        [data-testid="stSelectbox"] [data-baseweb="select"] > div {
+        [data-testid="stSelectbox"]
+        [data-baseweb="select"] > div {
             background-color: #FFFFFF !important;
             border-color: #E2E8F0 !important;
             border-radius: 8px !important;
@@ -401,13 +309,14 @@ def setup_page_and_css():
         }
 
         [data-testid="stSidebar"]
-        [data-testid="stSelectbox"] [data-baseweb="select"] span {
+        [data-testid="stSelectbox"]
+        [data-baseweb="select"] span {
             color: #0F172A !important;
         }
 
 
         /* =========================================================
-           HEADINGS
+           SECTION HEADINGS
            ========================================================= */
 
         h1,
@@ -426,12 +335,13 @@ def setup_page_and_css():
            ========================================================= */
 
         .cis-header {
+            width: 100%;
             box-sizing: border-box;
         }
 
 
         /* =========================================================
-           MOBILE
+           RESPONSIVE / MOBILE
            ========================================================= */
 
         @media (max-width: 768px) {
@@ -440,9 +350,6 @@ def setup_page_and_css():
                 padding: 1rem 0.85rem 2rem 0.85rem !important;
                 max-width: 100% !important;
             }
-
-
-            /* Streamlit columns */
 
             [data-testid="stHorizontalBlock"] {
                 flex-wrap: wrap !important;
@@ -454,9 +361,6 @@ def setup_page_and_css():
                 flex: 1 1 100% !important;
                 min-width: 100% !important;
             }
-
-
-            /* Header */
 
             .cis-header {
                 flex-direction: column !important;
@@ -471,14 +375,13 @@ def setup_page_and_css():
                 flex-wrap: wrap !important;
                 gap: 6px 10px !important;
                 font-size: 13px !important;
+                white-space: normal !important;
+                text-align: left !important;
             }
 
             .cis-header-divider {
                 display: none !important;
             }
-
-
-            /* Titles */
 
             .module-title {
                 font-size: 21px !important;
@@ -490,16 +393,10 @@ def setup_page_and_css():
                 line-height: 1.5 !important;
             }
 
-
-            /* Tables */
-
             [data-testid="stDataFrame"] {
                 width: 100% !important;
                 overflow-x: auto !important;
             }
-
-
-            /* Plotly */
 
             .js-plotly-plot,
             .plot-container {
@@ -507,32 +404,8 @@ def setup_page_and_css():
                 max-width: 100% !important;
             }
 
-
-            [data-testid="stPlotlyChart"] {
-                width: 100% !important;
-                overflow: hidden !important;
-            }
-
-
-            /* Buttons */
-
             .stButton > button {
                 width: 100% !important;
-            }
-
-
-            /* Overview card */
-
-            .stock-overview-top {
-                padding: 18px 16px 12px 16px;
-            }
-
-            .stock-overview-chart {
-                padding: 0 10px;
-            }
-
-            .stock-overview-metrics {
-                padding: 16px 10px 18px 10px;
             }
         }
 
@@ -567,24 +440,25 @@ def setup_page_and_css():
 
 
 # ============================================================================
-# 3. HELPERS
+# 3. Helper functions
 # ============================================================================
 
 def fmt_mb(x, unit="MB"):
-    """แปลงตัวเลขบาทดิบเป็นหน่วยล้านบาท"""
-
+    """
+    แปลงตัวเลขบาทดิบให้เป็นหน่วยล้านบาท พร้อม comma
+    """
     try:
         return f"{float(x) / 1e6:,.1f} {unit}"
     except Exception:
         return "-"
 
 
-
 def fmt_ratio(v, suffix="x", decimals=2):
     """
-    แสดง ratio เช่น P/E, P/B
-    """
+    แสดงอัตราส่วน (P/E, P/B ฯลฯ) อย่างปลอดภัย
 
+    คืน '-' ถ้าเป็น None/NaN
+    """
     try:
         if v is None:
             return "-"
@@ -598,12 +472,11 @@ def fmt_ratio(v, suffix="x", decimals=2):
         return "-"
 
 
-
 def safe(v, default=0.0):
     """
     แปลงค่าเป็น float อย่างปลอดภัย
+    กัน None/NaN/string แปลก ๆ ทำแอปพัง
     """
-
     try:
         if v is None:
             return default
@@ -617,22 +490,23 @@ def safe(v, default=0.0):
         return default
 
 
-
 def create_gauge(score, title, color_hex):
     """
-    Plotly gauge สำหรับ module ที่ต้องการใช้
+    Plotly Gauge
     """
 
     fig = go.Figure(
         go.Indicator(
             mode="gauge+number",
             value=score,
+
             number={
                 "font": {
                     "size": 38,
                     "color": "white",
                 }
             },
+
             title={
                 "text": (
                     f"<br>"
@@ -644,15 +518,18 @@ def create_gauge(score, title, color_hex):
                     "size": 14,
                 },
             },
+
             gauge={
                 "axis": {
                     "range": [None, 100],
                     "visible": False,
                 },
+
                 "bar": {
                     "color": color_hex,
                     "thickness": 0.85,
                 },
+
                 "bgcolor": "rgba(255,255,255,0.05)",
                 "borderwidth": 0,
             },
@@ -674,7 +551,7 @@ def create_gauge(score, title, color_hex):
 
 
 # ============================================================================
-# 4. CHART DIALOG
+# Plotly expanded dialog
 # ============================================================================
 
 @st.dialog("ขยายกราฟ", width="large")
@@ -683,7 +560,7 @@ def _open_chart_dialog(fig, expand_height):
     big_fig = go.Figure(fig)
 
     big_fig.update_layout(
-        height=expand_height,
+        height=expand_height
     )
 
     try:
@@ -702,41 +579,22 @@ def _open_chart_dialog(fig, expand_height):
         big_fig,
         use_container_width=True,
         config={
-            "displayModeBar": True,
+            "displayModeBar": True
         },
         key=f"dlg_{id(fig)}",
     )
 
 
-
 def show_chart(fig, key, expand_height=680):
     """
-    แสดง Plotly chart
+    แสดงกราฟ Plotly พร้อมปุ่มขยายกราฟ
     """
 
-    # ------------------------------------------------------------------
-    # ปรับ default layout ของกราฟให้ไม่เกิดพื้นที่ว่างเกินจำเป็น
-    # โดยไม่ไปแก้ data ของกราฟ
-    # ------------------------------------------------------------------
-
-    display_fig = go.Figure(fig)
-
-    display_fig.update_layout(
-        autosize=True,
-        margin=dict(
-            l=10,
-            r=10,
-            t=8,
-            b=8,
-        ),
-    )
-
     st.plotly_chart(
-        display_fig,
+        fig,
         use_container_width=True,
         config={
-            "displayModeBar": False,
-            "responsive": True,
+            "displayModeBar": False
         },
         key=f"{key}_small",
     )
@@ -747,13 +605,13 @@ def show_chart(fig, key, expand_height=680):
         use_container_width=True,
     ):
         _open_chart_dialog(
-            display_fig,
-            expand_height,
+            fig,
+            expand_height
         )
 
 
 # ============================================================================
-# 5. NAVIGATION FOOTER
+# Navigation footer
 # ============================================================================
 
 def render_nav_footer(
@@ -762,7 +620,7 @@ def render_nav_footer(
     next_page=None,
 ):
     """
-    แถบ navigation ด้านล่าง
+    แถบปุ่มนำทางท้ายทุกหน้าโมดูล
     """
 
     st.markdown(
@@ -846,7 +704,7 @@ def render_nav_footer(
 
 
 # ============================================================================
-# 6. DATABASE
+# 4. เชื่อมต่อฐานข้อมูล SQLite + ระบบซ่อมตัวเอง
 # ============================================================================
 
 @st.cache_resource
@@ -856,8 +714,10 @@ def get_connection():
     )
 
 
-
 def database_is_ready():
+    """
+    เช็คว่าฐานข้อมูลมีตารางผลลัพธ์พร้อมใช้งานหรือไม่
+    """
 
     try:
 
@@ -867,11 +727,9 @@ def database_is_ready():
 
             conn.execute(
                 text(
-                    """
-                    SELECT ticker
-                    FROM cis_summary_scores
-                    LIMIT 1
-                    """
+                    "SELECT ticker "
+                    "FROM cis_summary_scores "
+                    "LIMIT 1"
                 )
             )
 
@@ -882,8 +740,11 @@ def database_is_ready():
         return False
 
 
-
 def build_database():
+    """
+    รัน import_data.py + calculate_scores.py อัตโนมัติ
+    กรณีฐานข้อมูลหาย/ว่างเปล่า
+    """
 
     import os
     import import_data
@@ -899,7 +760,6 @@ def build_database():
             "*financials_train*.csv"
         )
     ):
-
         missing.append(
             "งบการเงิน "
             "(master_all_8_stocks_financials*.csv "
@@ -909,7 +769,6 @@ def build_database():
     if not import_data.find_file(
         "*stock_cleaned*.csv"
     ):
-
         missing.append(
             "ราคาหุ้นรายวัน "
             "(stock_cleaned_data*.csv)"
@@ -918,7 +777,6 @@ def build_database():
     if not import_data.find_file(
         "*stock_risk_metrics*.csv"
     ):
-
         missing.append(
             "ความเสี่ยง "
             "(stock_risk_metrics*.csv)"
@@ -938,9 +796,7 @@ def build_database():
         ds_listing = (
             "\n".join(
                 f"  - {f}"
-                for f in sorted(
-                    os.listdir("Dataset")
-                )
+                for f in sorted(os.listdir("Dataset"))
             )
             if os.path.isdir("Dataset")
             else "  (ไม่พบโฟลเดอร์ Dataset/ เลย)"
@@ -949,12 +805,24 @@ def build_database():
         raise FileNotFoundError(
             "ไม่พบไฟล์ข้อมูลต่อไปนี้ใน repo: "
             + "; ".join(missing)
-            + f"\n\nไฟล์/โฟลเดอร์ใน working directory ปัจจุบัน:\n"
-            + cwd_listing
-            + f"\n\nไฟล์ใน Dataset/ ที่เจอ:\n"
-            + ds_listing
-            + "\n\n➡️ กรุณาตรวจสอบว่าโฟลเดอร์ Dataset/ "
-            "พร้อมไฟล์ CSV ถูก push ขึ้น GitHub ครบถ้วน"
+
+            + f"""
+
+ไฟล์/โฟลเดอร์ใน working directory ปัจจุบัน:
+{cwd_listing}
+
+ไฟล์ใน Dataset/ ที่เจอ:
+{ds_listing}
+
+➡️ กรุณาตรวจสอบว่าโฟลเดอร์ Dataset/
+พร้อมไฟล์ CSV ทั้ง 5 ไฟล์ถูก push ขึ้น GitHub จริง
+
+เช็คได้จากหน้า repo บน GitHub ว่าเห็น
+โฟลเดอร์ Dataset/ และไฟล์ .csv ข้างในหรือไม่
+
+และเช็ค .gitignore ว่าไม่ได้ ignore
+*.csv หรือทั้งโฟลเดอร์ Dataset/
+"""
         )
 
     engine = get_connection()
@@ -974,14 +842,18 @@ def build_database():
     calculate_scores.run_full_pipeline()
 
 
-# ============================================================================
-# 7. LOAD DATA
-# ============================================================================
-
 @st.cache_data(ttl=600)
 def load_all_data():
+    """
+    โหลดทุกตารางจากฐานข้อมูลครั้งเดียว
+    cache ไว้ 10 นาที
+    """
 
     engine = get_connection()
+
+    # ---------------------------------------------------------
+    # Summary scores
+    # ---------------------------------------------------------
 
     scores_df = pd.read_sql(
         """
@@ -991,6 +863,10 @@ def load_all_data():
         """,
         engine,
     )
+
+    # ---------------------------------------------------------
+    # Daily prices
+    # ---------------------------------------------------------
 
     daily_df = pd.read_sql(
         """
@@ -1005,6 +881,10 @@ def load_all_data():
         daily_df["date"]
     )
 
+    # ---------------------------------------------------------
+    # Financials
+    # ---------------------------------------------------------
+
     fin_df = pd.read_sql(
         """
         SELECT *
@@ -1014,6 +894,10 @@ def load_all_data():
         engine,
     )
 
+    # ---------------------------------------------------------
+    # AI feature importance
+    # ---------------------------------------------------------
+
     feat_imp_df = pd.read_sql(
         """
         SELECT *
@@ -1021,6 +905,10 @@ def load_all_data():
         """,
         engine,
     )
+
+    # ---------------------------------------------------------
+    # AI backtest
+    # ---------------------------------------------------------
 
     try:
 
@@ -1040,6 +928,10 @@ def load_all_data():
 
         backtest_df = pd.DataFrame()
 
+    # ---------------------------------------------------------
+    # Risk rolling history
+    # ---------------------------------------------------------
+
     try:
 
         risk_hist_df = pd.read_sql(
@@ -1058,6 +950,10 @@ def load_all_data():
 
         risk_hist_df = pd.DataFrame()
 
+    # ---------------------------------------------------------
+    # Health yearly
+    # ---------------------------------------------------------
+
     try:
 
         health_yearly_df = pd.read_sql(
@@ -1072,6 +968,10 @@ def load_all_data():
 
         health_yearly_df = pd.DataFrame()
 
+    # ---------------------------------------------------------
+    # Fair value yearly
+    # ---------------------------------------------------------
+
     try:
 
         fair_value_yearly_df = pd.read_sql(
@@ -1085,6 +985,10 @@ def load_all_data():
     except Exception:
 
         fair_value_yearly_df = pd.DataFrame()
+
+    # ---------------------------------------------------------
+    # Risk static
+    # ---------------------------------------------------------
 
     try:
 
@@ -1113,11 +1017,10 @@ def load_all_data():
     )
 
 
-# ============================================================================
-# 8. DATABASE READY
-# ============================================================================
-
 def ensure_database_ready():
+    """
+    เรียกจาก app.py ครั้งเดียวตอนเริ่มแอป
+    """
 
     if not database_is_ready():
 
@@ -1136,13 +1039,24 @@ def ensure_database_ready():
             except Exception as build_err:
 
                 st.error(
-                    f"⚠️ สร้างฐานข้อมูลอัตโนมัติไม่สำเร็จ: "
-                    f"{build_err}\n\n"
-                    f"กรุณาตรวจสอบว่าโฟลเดอร์ "
-                    f"`Dataset/` ถูกอัปโหลดขึ้น GitHub ครบถ้วน "
-                    f"หรือรัน `python import_data.py` "
-                    f"แล้วตามด้วย "
-                    f"`python calculate_scores.py`"
+                    f"""
+⚠️ สร้างฐานข้อมูลอัตโนมัติไม่สำเร็จ:
+
+{build_err}
+
+กรุณาตรวจสอบว่าโฟลเดอร์ Dataset/
+ถูกอัปโหลดขึ้น GitHub ครบถ้วน
+
+หรือรัน:
+
+python import_data.py
+
+แล้วตามด้วย:
+
+python calculate_scores.py
+
+ก่อนเปิด Dashboard
+"""
                 )
 
                 st.stop()
@@ -1151,11 +1065,14 @@ def ensure_database_ready():
 
 
 # ============================================================================
-# 9. PAGE CONTEXT
+# 5. PageContext
 # ============================================================================
 
 @dataclass
 class PageContext:
+    """
+    ข้อมูลทั้งหมดที่หน้าโมดูลแต่ละหน้าอาจต้องใช้
+    """
 
     selected_ticker: str
 
@@ -1194,7 +1111,6 @@ class PageContext:
     arrow_sign: str
 
 
-
 def build_context(
     selected_ticker,
     scores_df,
@@ -1206,19 +1122,24 @@ def build_context(
     health_yearly_df,
     fair_value_yearly_df,
 ):
+    """
+    ประกอบ PageContext
+    """
 
-    stock_rows = scores_df[
+    selected_rows = scores_df[
         scores_df["ticker"] == selected_ticker
     ]
 
-    if stock_rows.empty:
+    if selected_rows.empty:
 
         raise ValueError(
-            f"ไม่พบ ticker: {selected_ticker}"
+            f"ไม่พบ ticker '{selected_ticker}' "
+            "ใน cis_summary_scores"
         )
 
     stock_info = (
-        stock_rows.iloc[0]
+        selected_rows
+        .iloc[0]
         .to_dict()
     )
 
@@ -1239,8 +1160,7 @@ def build_context(
     )
 
     sector_peers = scores_df[
-        scores_df["sector"]
-        == stock_info["sector"]
+        scores_df["sector"] == stock_info.get("sector")
     ]
 
     current_price = safe(
@@ -1274,108 +1194,147 @@ def build_context(
     )
 
     return PageContext(
+
         selected_ticker=selected_ticker,
+
         stock_info=stock_info,
+
         stock_daily=stock_daily,
+
         fin_stock=fin_stock,
+
         sector_peers=sector_peers,
+
         scores_df=scores_df,
+
         fin_df=fin_df,
+
         feat_imp_df=feat_imp_df,
+
         backtest_df=backtest_df,
+
         risk_hist_df=risk_hist_df,
+
         health_yearly_df=health_yearly_df,
+
         fair_value_yearly_df=fair_value_yearly_df,
+
         current_price=current_price,
+
         change_pct=change_pct,
+
         change_val=change_val,
+
         change_color=change_color,
+
         change_sign=change_sign,
+
         arrow_sign=arrow_sign,
     )
 
 
 # ============================================================================
-# 10. SIDEBAR
+# 6. UI ส่วนกลาง: Sidebar
 # ============================================================================
 
 def render_sidebar(scores_df):
+    """
+    วาด sidebar:
+    - Logo
+    - Company selector
+    - Navigation
+    - Data information
 
-    st.sidebar.markdown(
+    return:
+        nav_page
+        selected_ticker
+    """
+
+    # =========================================================
+    # LOGO
+    #
+    # ใช้ st.html() แทน markdown HTML
+    # เพื่อไม่ให้ <div> / <span> ถูกแสดงเป็นข้อความ
+    # =========================================================
+
+    st.sidebar.html(
         """
-        <div style="padding:8px 0 14px 0;">
+        <div style="
+            padding:8px 0 14px 0;
+            width:100%;
+            box-sizing:border-box;
+        ">
 
-            <div
-                style="
+            <div style="
+                display:flex;
+                align-items:flex-start;
+                gap:10px;
+                min-width:0;
+                width:100%;
+            ">
+
+                <div style="
+                    width:26px;
+                    height:26px;
+                    min-width:26px;
+                    flex-shrink:0;
+                    border-radius:7px;
+                    background:#0F172A;
                     display:flex;
-                    align-items:flex-start;
-                    gap:10px;
-                    min-width:0;
-                "
-            >
-
-                <div
-                    style="
-                        width:26px;
-                        height:26px;
-                        flex-shrink:0;
-                        border-radius:7px;
-                        background:#0F172A;
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                    "
-                >
-                    <span
-                        style="
-                            font-size:13px;
-                            font-weight:800;
-                            color:#FFFFFF;
-                        "
-                    >
+                    align-items:center;
+                    justify-content:center;
+                ">
+                    <span style="
+                        font-size:13px;
+                        font-weight:800;
+                        color:#FFFFFF;
+                    ">
                         CI
                     </span>
                 </div>
 
-                <span
-                    style="
-                        font-size:15px;
-                        font-weight:800;
-                        color:#0F172A;
-                        letter-spacing:-0.1px;
-                        line-height:1.3;
-                        min-width:0;
-                        word-break:break-word;
-                        overflow-wrap:break-word;
-                    "
-                >
+                <span style="
+                    font-size:15px;
+                    font-weight:800;
+                    color:#0F172A;
+                    letter-spacing:-0.1px;
+                    line-height:1.3;
+                    min-width:0;
+                    word-break:break-word;
+                    overflow-wrap:break-word;
+                ">
                     Comprehensive Investment System
                 </span>
 
             </div>
 
-            <div
-                style="
-                    font-size:12px;
-                    color:#94A3B8;
-                    margin-top:4px;
-                    padding-left:36px;
-                    letter-spacing:0.3px;
-                    font-weight:600;
-                "
-            >
+            <div style="
+                font-size:12px;
+                color:#94A3B8;
+                margin-top:4px;
+                padding-left:36px;
+                letter-spacing:0.3px;
+                font-weight:600;
+            ">
                 Investment Decision Support
             </div>
 
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
     st.sidebar.markdown("---")
 
+    # =========================================================
+    # NAVIGATION STATE
+    # =========================================================
+
     if "nav_page" not in st.session_state:
+
         st.session_state["nav_page"] = PAGES[0]
+
+    # ปุ่ม navigation จาก footer
+    # ฝากค่ามาที่ pending_nav แล้วมาเปลี่ยนก่อน radio ถูกสร้าง
 
     if "pending_nav" in st.session_state:
 
@@ -1383,40 +1342,45 @@ def render_sidebar(scores_df):
             st.session_state.pop("pending_nav")
         )
 
-
-    # ================================================================
+    # =========================================================
     # COMPANY SELECTOR
-    # ================================================================
+    # =========================================================
 
     st.sidebar.markdown(
         """
-        <div
-            style="
-                font-size:12px;
-                font-weight:700;
-                color:#64748B;
-                margin-bottom:6px;
-                letter-spacing:0.5px;
-            "
-        >
+        <div style="
+            font-size:12px;
+            font-weight:700;
+            color:#64748B;
+            margin-bottom:6px;
+            letter-spacing:0.5px;
+        ">
             COMPANY
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+    # ป้องกัน ticker ซ้ำ
+    ticker_options = (
+        scores_df["ticker"]
+        .dropna()
+        .astype(str)
+        .unique()
+        .tolist()
+    )
+
     selected_ticker = st.sidebar.selectbox(
         "Choose a company",
-        scores_df["ticker"].unique(),
+        ticker_options,
         label_visibility="collapsed",
     )
 
     st.sidebar.markdown("---")
 
-
-    # ================================================================
+    # =========================================================
     # NAVIGATION
-    # ================================================================
+    # =========================================================
 
     selected_page = st.sidebar.radio(
         "Navigation",
@@ -1424,34 +1388,50 @@ def render_sidebar(scores_df):
         key="nav_page",
     )
 
+    # =========================================================
+    # NAV COLORS
+    # =========================================================
 
     nav_colors = {
 
-        " Overview": "#3B82F6",
+        " Overview":
+            "#3B82F6",
 
-        " Company Health": "#34D399",
+        " Company Health":
+            "#34D399",
 
-        " Fair Value": "#FBBF24",
+        " Fair Value":
+            "#FBBF24",
 
-        " Entry Timing": "#38BDF8",
+        " Entry Timing":
+            "#38BDF8",
 
-        " AI Prediction": "#C084FC",
+        " AI Prediction":
+            "#C084FC",
 
-        " Risk Analysis": "#FB923C",
+        " Risk Analysis":
+            "#FB923C",
 
-        " Industry Benchmark": "#2DD4BF",
+        " Industry Benchmark":
+            "#2DD4BF",
     }
-
 
     active_color = nav_colors.get(
         selected_page,
         "#3B82F6",
     )
 
+    # =========================================================
+    # SIDEBAR ACTIVE ITEM + RESPONSIVE CSS
+    # =========================================================
 
     st.markdown(
         f"""
         <style>
+
+        /* =====================================================
+           ACTIVE SIDEBAR ITEM
+           ===================================================== */
 
         [data-testid="stSidebar"]
         [data-testid="stRadio"]
@@ -1470,40 +1450,227 @@ def render_sidebar(scores_df):
             font-weight:700 !important;
         }}
 
+
+        /* =====================================================
+           RESPONSIVE / MOBILE
+           ===================================================== */
+
+        @media (max-width:768px) {{
+
+            .main .block-container {{
+                padding:1rem 0.85rem 2rem 0.85rem !important;
+                max-width:100% !important;
+            }}
+
+            [data-testid="stHorizontalBlock"] {{
+                flex-wrap:wrap !important;
+                gap:0.75rem !important;
+            }}
+
+            [data-testid="column"] {{
+                width:100% !important;
+                flex:1 1 100% !important;
+                min-width:100% !important;
+            }}
+
+            .cis-header {{
+                flex-direction:column !important;
+                align-items:flex-start !important;
+                gap:10px !important;
+                padding:14px 16px !important;
+            }}
+
+            .cis-header-info {{
+                width:100% !important;
+                display:flex !important;
+                flex-wrap:wrap !important;
+                gap:6px 10px !important;
+                font-size:13px !important;
+                white-space:normal !important;
+                text-align:left !important;
+            }}
+
+            .cis-header-divider {{
+                display:none !important;
+            }}
+
+            .module-title {{
+                font-size:21px !important;
+                line-height:1.25 !important;
+            }}
+
+            .module-subtitle {{
+                font-size:14px !important;
+                line-height:1.5 !important;
+            }}
+
+            [data-testid="stDataFrame"] {{
+                width:100% !important;
+                overflow-x:auto !important;
+            }}
+
+            .js-plotly-plot,
+            .plot-container {{
+                width:100% !important;
+                max-width:100% !important;
+            }}
+
+            .stButton > button {{
+                width:100% !important;
+            }}
+        }}
+
+
+        /* =====================================================
+           VERY SMALL MOBILE
+           ===================================================== */
+
+        @media (max-width:480px) {{
+
+            .main .block-container {{
+                padding:0.75rem 0.65rem 1.5rem 0.65rem !important;
+            }}
+
+            .module-title {{
+                font-size:19px !important;
+            }}
+
+            .module-subtitle {{
+                font-size:13.5px !important;
+            }}
+
+            [data-testid="stHorizontalBlock"] {{
+                gap:0.6rem !important;
+            }}
+        }}
+
         </style>
         """,
         unsafe_allow_html=True,
     )
 
+    nav_page = st.session_state["nav_page"]
 
-    # ================================================================
-    # SIDEBAR DATA INFO
-    # ================================================================
+    # =========================================================
+    # DATA INFORMATION
+    # =========================================================
 
-    latest_date = scores_df[
-        "latest_date"
-    ].max()
+    try:
+
+        latest_date = scores_df["latest_date"].max()
+
+    except Exception:
+
+        latest_date = "-"
 
     st.sidebar.caption(
-        f"📅 ข้อมูล ณ วันที่ล่าสุดในชุดข้อมูล: "
-        f"**{latest_date}**\n\n"
-        f"(ราคาทั้งหมดอ้างอิงจากไฟล์ Dataset "
-        f"ไม่ใช่ราคาตลาดสด)"
+        f"📅 ข้อมูล ณ วันที่ล่าสุดในชุดข้อมูล: **{latest_date}**\n\n"
+        "(ราคาทั้งหมดอ้างอิงจากไฟล์ Dataset ไม่ใช่ราคาตลาดสด)"
     )
 
-    return (
-        selected_page,
-        selected_ticker,
-    )
+    return nav_page, selected_ticker
 
 
 # ============================================================================
-# 11. HEADER BAR
+# HEADER BAR
 # ============================================================================
 
 def render_header_bar(ctx):
+    """
+    แถบหัวข้อบนสุดของทุกหน้า
 
-    st.markdown(
+    ticker
+    sector
+    price
+    change
+    P/E
+    ROE
+    data as of
+
+    สำคัญ:
+    ใช้ st.html() เพื่อให้ HTML render จริง
+    ไม่ให้ <div> / <span> / style="" โผล่บนหน้า
+    """
+
+    ticker = str(
+        ctx.selected_ticker
+    )
+
+    sector = str(
+        ctx.stock_info.get(
+            "sector",
+            "-"
+        )
+    )
+
+    price = safe(
+        ctx.current_price
+    )
+
+    change_pct = safe(
+        ctx.change_pct
+    )
+
+    change_sign = (
+        ctx.change_sign
+        if ctx.change_sign is not None
+        else (
+            "+"
+            if change_pct >= 0
+            else ""
+        )
+    )
+
+    arrow_sign = (
+        ctx.arrow_sign
+        if ctx.arrow_sign is not None
+        else (
+            "▲"
+            if change_pct >= 0
+            else "▼"
+        )
+    )
+
+    change_color = (
+        ctx.change_color
+        if ctx.change_color
+        else (
+            "#10B981"
+            if change_pct >= 0
+            else "#EF4444"
+        )
+    )
+
+    pe = fmt_ratio(
+        ctx.stock_info.get(
+            "pe_ratio"
+        )
+    )
+
+    roe = ctx.stock_info.get(
+        "roe",
+        "-"
+    )
+
+    if roe is None or pd.isna(roe):
+        roe = "-"
+
+    latest_date = ctx.stock_info.get(
+        "latest_date",
+        "-"
+    )
+
+    if latest_date is None:
+        latest_date = "-"
+
+    # =========================================================
+    # IMPORTANT
+    #
+    # ใช้ st.html() แทน st.markdown()
+    # เพราะ block นี้เป็น HTML โดยตรง
+    # =========================================================
+
+    st.html(
         f"""
         <div
             class="cis-header"
@@ -1516,20 +1683,30 @@ def render_header_bar(ctx):
                 border-radius:12px;
                 border:1px solid #E2E8F0;
                 margin-bottom:20px;
+                width:100%;
                 box-sizing:border-box;
             "
         >
 
-            <div>
+            <!-- =================================================
+                 LEFT SIDE
+                 ================================================= -->
+
+            <div
+                style="
+                    min-width:0;
+                    flex:1;
+                "
+            >
 
                 <span
                     style="
                         font-size:24px;
-                        font-weight:bold;
+                        font-weight:700;
                         color:#0F172A;
                     "
                 >
-                    {ctx.selected_ticker}
+                    {ticker}
                 </span>
 
                 <span
@@ -1539,17 +1716,23 @@ def render_header_bar(ctx):
                         margin-left:8px;
                     "
                 >
-                    {ctx.stock_info.get("sector", "-")} (SET)
+                    {sector} (SET)
                 </span>
 
             </div>
 
+
+            <!-- =================================================
+                 RIGHT SIDE
+                 ================================================= -->
 
             <div
                 class="cis-header-info"
                 style="
                     font-size:16.5px;
                     color:#64748B;
+                    white-space:nowrap;
+                    text-align:right;
                 "
             >
 
@@ -1561,23 +1744,20 @@ def render_header_bar(ctx):
                         font-size:19px;
                     "
                 >
-                    {ctx.current_price:.2f}
+                    {price:.2f}
                 </b>
 
                 THB
 
                 <span
                     style="
-                        color:{ctx.change_color};
-                        font-weight:bold;
+                        color:{change_color};
+                        font-weight:700;
                         margin-left:6px;
                     "
                 >
-                    (
-                    {ctx.change_sign}
-                    {ctx.change_pct:.2f}%
-                    )
-                    {ctx.arrow_sign}
+                    ({change_sign}{change_pct:.2f}%)
+                    {arrow_sign}
                 </span>
 
 
@@ -1594,10 +1774,12 @@ def render_header_bar(ctx):
 
                 P/E:
 
-                <b style="color:#0F172A;">
-                    {fmt_ratio(
-                        ctx.stock_info.get("pe_ratio")
-                    )}
+                <b
+                    style="
+                        color:#0F172A;
+                    "
+                >
+                    {pe}
                 </b>
 
 
@@ -1614,8 +1796,12 @@ def render_header_bar(ctx):
 
                 ROE:
 
-                <b style="color:#0F172A;">
-                    {ctx.stock_info.get("roe", "-")}%
+                <b
+                    style="
+                        color:#0F172A;
+                    "
+                >
+                    {roe}%
                 </b>
 
 
@@ -1632,13 +1818,16 @@ def render_header_bar(ctx):
 
                 Data as of:
 
-                <b style="color:#475569;">
-                    {ctx.stock_info.get("latest_date", "-")}
+                <b
+                    style="
+                        color:#475569;
+                    "
+                >
+                    {latest_date}
                 </b>
 
             </div>
 
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
