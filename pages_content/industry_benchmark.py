@@ -289,12 +289,12 @@ def render(ctx):
     <td>{timing_b}</td>
     <td>{ai_b}</td>
     <td><span style="color:{risk_c};">{risk_b}</span></td>
-    <td style="color:{star_color}; letter-spacing:1px;">{'★'*star_n}{'☆'*(5-star_n)}</td>
+    <td style="color:{star_color}; letter-spacing:0.5px; font-size:12px; white-space:normal; overflow-wrap:anywhere; word-break:break-word;">{'★'*star_n}{'☆'*(5-star_n)}</td>
     </tr>"""
 
         st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:350px;">
     <div style="font-size:14.5px; color:#64748B; font-weight:bold; margin-bottom:6px;">PEER COMPARISON — {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
-    <table style="width:100%; text-align:center; font-size:14px; color:#475569; border-collapse:collapse;">
+    <table class="peer-comparison-table" style="width:100%; max-width:100%; min-width:0; table-layout:fixed; text-align:center; font-size:14px; color:#475569; border-collapse:collapse; box-sizing:border-box;">
     <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:13px;"><th style="text-align:left; padding:5px 0;">Company</th><th>Health</th><th>Fair Value</th><th>Entry Timing</th><th>AI Prediction</th><th>Risk</th><th>Overall</th></tr>
     {rows_html}
     </table>
