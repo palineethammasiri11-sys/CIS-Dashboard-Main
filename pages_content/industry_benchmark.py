@@ -530,9 +530,9 @@ def render(ctx):
         )
 
         rec_bg = (
-            "rgba(16,185,129,0.08)" if pos_stars == 5
-            else "rgba(245,158,11,0.08)" if pos_stars >= 4
-            else "rgba(239,68,68,0.08)"
+            "#D1FAE5" if pos_stars == 5
+            else "#FEF3C7" if pos_stars >= 4
+            else "#FEE2E2"
         )
 
         st.markdown(f"""<div style="background-color:{rec_bg}; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:275px; text-align:center;">
