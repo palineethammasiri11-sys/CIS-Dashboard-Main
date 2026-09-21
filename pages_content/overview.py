@@ -99,6 +99,14 @@ def render(ctx):
         "REDUCE / SELL": "#EF4444"
     }.get(rec, "#F59E0B")
 
+    rec_bg = {
+        "STRONG BUY": "rgba(16,185,129,0.12)",
+        "BUY": "rgba(16,185,129,0.12)",
+        "ACCUMULATE": "rgba(132,204,22,0.12)",
+        "REDUCE / SELL": "rgba(239,68,68,0.12)"
+    }.get(rec, "rgba(245,158,11,0.12)")    
+    
+
     stars = min(5, max(1, round(overall / 20)))
     arc_frac = min(1.0, overall / 100)
     dash_len = round(119.38 * arc_frac, 2)
