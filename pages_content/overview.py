@@ -104,8 +104,15 @@ def render(ctx):
         "BUY": "rgba(16,185,129,0.12)",
         "ACCUMULATE": "rgba(132,204,22,0.12)",
         "REDUCE / SELL": "rgba(239,68,68,0.12)"
-    }.get(rec, "rgba(245,158,11,0.12)")    
+    }.get(rec, "rgba(245,158,11,0.12)") 
     
+    ai_bg = {
+        "STRONG BUY": "#ECFDF5",
+        "BUY": "#ECFDF5",
+        "ACCUMULATE": "#F0F9E8",
+        "REDUCE / SELL": "#FEF2F2"
+    }.get(rec, "#FFFBEB")
+
 
     stars = min(5, max(1, round(overall / 20)))
     arc_frac = min(1.0, overall / 100)
@@ -144,7 +151,7 @@ def render(ctx):
     """, unsafe_allow_html=True)
 
     st.html(f"""
-    <div style="background-color:#FFFFFF;border:2px solid {rec_color};border-radius:12px;
+    <div style="background-color:{ai_bg};border:2px solid {rec_color};border-radius:12px;
                 padding:16px;margin-bottom:16px;width:100%;max-width:100%;min-width:0;box-sizing:border-box;">
         <div style="font-size:14.5px;font-weight:bold;color:#64748B;letter-spacing:0.5px;margin-bottom:12px;">
             AI INVESTMENT SUMMARY
@@ -404,7 +411,7 @@ def render(ctx):
 
     def hl_card(icon, bg, label, value, sub, val_color="#0F172A"):
         return f"""
-        <div style="background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;
+        <div style="background-color:{ai_bg};border:1px solid #E2E8F0;border-radius:8px;
                     padding:10px 12px;display:flex;align-items:center;gap:10px;
                     width:100%;min-width:0;max-width:100%;box-sizing:border-box;">
             <div style="background:{bg};width:40px;height:40px;border-radius:8px;
