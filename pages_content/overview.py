@@ -217,13 +217,13 @@ def render(ctx):
         # Entry Timing
         # --------------------------------------------------------
 
-        # 0–44   = RED
-        # 45–64  = AMBER
-        # 65–100 = GREEN
+        # 0–33   = RED
+        # 34–66  = AMBER
+        # 67–100 = GREEN
 
-        if m3_s >= 65:
+        if m3_s >= 67:
             m3_badge, m3_desc = "BULLISH", "Strong upward momentum across moving averages"
-        elif m3_s >= 45:
+        elif m3_s >= 34:
             m3_badge, m3_desc = "NEUTRAL", "Consolidating near key technical support"
         else:
             m3_badge, m3_desc = "BEARISH", "Downtrend momentum; elevated pullback risk"
@@ -354,17 +354,17 @@ def render(ctx):
             ),
 
             # MODULE 03 — ENTRY TIMING
-            # 0–44   = RED
-            # 45–64  = AMBER
-            # 65–100 = GREEN
+            # 0–33   = RED
+            # 34–66  = AMBER
+            # 67–100 = GREEN
             module_card(
                 "03",
                 "ENTRY TIMING",
                 m3_s,
                 m3_badge,
                 m3_desc,
-                65,
-                45
+                67,
+                34
             ),
 
             module_card("04", "AI PREDICTION", m4_s, m4_badge, m4_desc, 70, 50),
