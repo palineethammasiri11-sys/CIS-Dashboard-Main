@@ -495,4 +495,16 @@ def render(ctx):
     </div>
     """)
 
-    render_nav_footer(next_page=" Company Health")
+    st.html("""
+    <div style="margin-top:18px;border-top:1px solid #E2E8F0;padding-top:14px;">
+        <div style="display:flex;justify-content:flex-end;">
+            <div style="width:30%;min-width:220px;height:52px;
+                        border:1px solid #E2E8F0;border-radius:10px;
+                        background:#FFFFFF;
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:16px;color:#0F172A;">
+                หน้าถัดไป →
+            </div>
+        </div>
+    </div>
+    """)
