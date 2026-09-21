@@ -6,11 +6,12 @@ IKB v3.1 (Single-source-of-truth signal classification)
 
 Changelog vs v3.0:
 - FIX: reads 'trend_available_count' / 'mom_available_count'
-- FIX: status_label / status_color / action_th / readiness
-  come from calculate_modules.entry_timing.classify_signal(total_score)
+- FIX: status_label / status_color / action_th / readiness come
+  from calculate_modules.entry_timing.classify_signal(total_score)
 - FIX: Risk/Reward is now a 7th item in the SIGNAL CHECKLIST
 - FIX: "TOTAL SCORE" row renamed to "CHECKS PASSED"
-- Cleanup: dropped redundant unsafe_allow_html=True kwargs
+- Cleanup: dropped redundant unsafe_allow_html=True kwargs on
+  calls to _render_html
 """
 
 import html
@@ -28,18 +29,20 @@ from calculate_modules.entry_timing import classify_signal
 
 
 # --------------------------------------------------------------------
-# Design tokens
+# Design tokens - LIGHT THEME
 # --------------------------------------------------------------------
+BG_PAGE = "#F8FAFC"
+BG_CARD = "#FFFFFF"
+BG_CARD_2 = "#F8FAFC"
+BG_CHIP = "#F1F5F9"
 
-BG_PAGE = "#0B1120"
-BG_CARD = "#0F172A"
-BG_CARD_2 = "#111C30"
-BG_CHIP = "#1E293B"
-BORDER = "#334155"
-BORDER_SOFT = "#1E293B"
-TEXT_MUTED = "#94A3B8"
-TEXT = "#E2E8F0"
-TEXT_WHITE = "#FFFFFF"
+BORDER = "#E2E8F0"
+BORDER_SOFT = "#E2E8F0"
+
+TEXT_MUTED = "#64748B"
+TEXT = "#334155"
+TEXT_WHITE = "#0F172A"
+
 ACCENT = "#38BDF8"
 GREEN = "#10B981"
 RED = "#EF4444"
@@ -48,7 +51,7 @@ AMBER = "#F59E0B"
 
 def _badge(ok, available):
     if not available:
-        return "N/A", TEXT_MUTED, "148,163,184"
+        return "N/A", TEXT_MUTED, "100,116,139"
     if ok:
         return "PASS", GREEN, "16,185,129"
     return "FAIL", RED, "239,68,68"
@@ -76,13 +79,10 @@ def _metric_card(
     sub="",
     value_color=TEXT_WHITE,
     is_summary=False,
-    bg_color=BG_CARD,
-    label_color=TEXT_MUTED,
-    sub_color=TEXT_MUTED,
+    card_bg=BG_CARD,
 ):
     content_style = (
-        "font-size:11px;font-weight:700;"
-        f"color:{value_color};margin-top:4px;"
+        f"font-size:11px;font-weight:700;color:{value_color};margin-top:4px;"
         "overflow:hidden;text-overflow:ellipsis;display:-webkit-box;"
         "-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35;"
         if is_summary
@@ -92,35 +92,16 @@ def _metric_card(
     )
 
     return f"""
-    <div style="
-        background:{bg_color};
-        border:1px solid {BORDER};
-        border-radius:10px;
-        padding:16px;
-        height:100%;
-        box-sizing:border-box;
-    ">
-        <div style="
-            font-size:10px;
-            font-weight:800;
-            color:{label_color};
-            letter-spacing:.5px;
-        ">
+    <div style="{_card_style(
+        f'height:100%;box-sizing:border-box;background:{card_bg};'
+    )}">
+        <div style="font-size:10px;font-weight:800;color:{'#FFFFFF' if card_bg != BG_CARD else TEXT_MUTED};letter-spacing:.5px;">
             {label}
         </div>
-
         <div style="{content_style}">
             {value}
         </div>
-
-        <div style="
-            font-size:10px;
-            color:{sub_color};
-            margin-top:3px;
-            white-space:nowrap;
-            overflow:hidden;
-            text-overflow:ellipsis;
-        ">
+        <div style="font-size:10px;color:{'#FFFFFF' if card_bg != BG_CARD else TEXT_MUTED};margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             {sub}
         </div>
     </div>
@@ -128,10 +109,20 @@ def _metric_card(
 
 
 def render(ctx):
-
     info = ctx.stock_info
     c_p = float(ctx.current_price)
     ticker_safe = html.escape(str(ctx.selected_ticker))
+
+    st.markdown("""
+    <div style="margin-bottom:20px;">
+        <div style="font-size:23px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
+            ENTRY TIMING
+        </div>
+        <div style="font-size:15px; color:#64748B; margin-top:4px;">
+            วิเคราะห์จังหวะการเข้าลงทุนจากแนวโน้ม โมเมนตัม และ Risk/Reward
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     adx_val = float(safe(info.get("adx"), 0.0))
 
@@ -139,21 +130,11 @@ def render(ctx):
     r2 = float(safe(info.get("resistance_2"), r1 * 1.05))
     s1 = float(safe(info.get("support_60d"), c_p * 0.95))
     s2 = float(safe(info.get("support_2"), s1 * 0.95))
-    pp = float(
-        safe(
-            info.get("pivot_point"),
-            round((r1 + s1 + c_p) / 3, 2)
-        )
-    )
+    pp = float(safe(info.get("pivot_point"), round((r1 + s1 + c_p) / 3, 2)))
 
-    total_score = float(
-        safe(info.get("timing_score"), 50.0)
-    )
+    total_score = float(safe(info.get("timing_score"), 50.0))
 
-    # ---------------------------------------------------------------
     # Single source of truth
-    # ---------------------------------------------------------------
-
     sig = classify_signal(total_score)
 
     status_label = sig["status_label"]
@@ -161,22 +142,11 @@ def render(ctx):
     action_th = sig["action_th"]
     readiness = sig["readiness"]
 
-    price_chg_pct = float(
-        safe(info.get("price_change_pct"), 0.0)
-    )
-
+    price_chg_pct = float(safe(info.get("price_change_pct"), 0.0))
     pe_ratio = safe(info.get("pe_ratio"), None)
     roe_pct = safe(info.get("roe_pct"), None)
-    data_as_of = str(
-        safe(info.get("data_as_of"), "-")
-    )
-    sector_label = str(
-        safe(info.get("sector_label"), "")
-    )
-
-    # ---------------------------------------------------------------
-    # Checklist flags
-    # ---------------------------------------------------------------
+    data_as_of = str(safe(info.get("data_as_of"), "-"))
+    sector_label = str(safe(info.get("sector_label"), ""))
 
     k15_ok = bool(info.get("k15_ok", False))
     k16_ok = bool(info.get("k16_ok", False))
@@ -196,177 +166,129 @@ def render(ctx):
     trend_avail_count = int(
         safe(info.get("trend_available_count"), 0)
     )
-
     mom_avail_count = int(
         safe(info.get("mom_available_count"), 0)
     )
 
-    rr_ratio = float(
-        safe(info.get("rr_ratio"), 0.0)
-    )
-
-    rr_score = float(
-        safe(info.get("rr_score"), 0.0)
-    )
-
-    downside_pct = float(
-        safe(info.get("downside_pct"), 0.0)
-    )
-
-    upside_pct = float(
-        safe(info.get("upside_pct"), 0.0)
-    )
+    rr_ratio = float(safe(info.get("rr_ratio"), 0.0))
+    rr_score = float(safe(info.get("rr_score"), 0.0))
+    downside_pct = float(safe(info.get("downside_pct"), 0.0))
+    upside_pct = float(safe(info.get("upside_pct"), 0.0))
 
     vol_series = next(
         (
             ctx.stock_daily[v]
-            for v in [
-                "volume",
-                "Volume",
-                "vol",
-                "Vol"
-            ]
+            for v in ["volume", "Volume", "vol", "Vol"]
             if v in ctx.stock_daily.columns
         ),
         None,
     )
 
-    def pillar_pts_label(
-        ok,
-        available,
-        n_available,
-        pillar_max
-    ):
+    def pillar_pts_label(ok, available, n_available, pillar_max):
         if not available:
             return "N/A"
 
-        share = (
-            pillar_max / n_available
-            if n_available > 0
-            else 0
-        )
+        share = pillar_max / n_available if n_available > 0 else 0
 
-        return (
-            f"+{share:.1f} pts"
-            if ok
-            else
-            "0.0 pts"
-        )
+        return f"+{share:.1f} pts" if ok else "0.0 pts"
 
-    # ---------------------------------------------------------------
-    # Signal checklist
-    # ---------------------------------------------------------------
-
+    # 7 items total:
+    # 3 Trend + 3 Momentum + 1 Risk/Reward
     checklist = [
-
         (
             k15_ok,
             k15_av,
             "Short-Term Trend",
             "ราคายืนเหนือเส้น EMA20"
             if k15_ok
-            else
-            "ราคาต่ำกว่าเส้น EMA20",
+            else "ราคาต่ำกว่าเส้น EMA20",
             pillar_pts_label(
                 k15_ok,
                 k15_av,
                 trend_avail_count,
-                40.0
+                40.0,
             ),
         ),
-
         (
             k16_ok,
             k16_av,
             "Medium-Term Trend",
             "EMA20 อยู่เหนือ EMA50"
             if k16_ok
-            else
-            "EMA20 ยังไม่ตัดขึ้นเหนือ EMA50",
+            else "EMA20 ยังไม่ตัดขึ้นเหนือ EMA50",
             pillar_pts_label(
                 k16_ok,
                 k16_av,
                 trend_avail_count,
-                40.0
+                40.0,
             ),
         ),
-
         (
             k17_ok,
             k17_av,
             "Long-Term Trend",
             "ราคายืนเหนือเส้น MA200"
             if k17_ok
-            else
-            "ราคายังอยู่ต่ำกว่า MA200",
+            else "ราคายังอยู่ต่ำกว่า MA200",
             pillar_pts_label(
                 k17_ok,
                 k17_av,
                 trend_avail_count,
-                40.0
+                40.0,
             ),
         ),
-
         (
             k18_ok,
             k18_av,
             "Momentum (MACD)",
             "MACD อยู่ในโซนบวก"
             if k18_ok
-            else
-            "MACD อยู่ในโซนลบ",
+            else "MACD อยู่ในโซนลบ",
             pillar_pts_label(
                 k18_ok,
                 k18_av,
                 mom_avail_count,
-                30.0
+                30.0,
             ),
         ),
-
         (
             k19_ok,
             k19_av,
             "Trend Strength (ADX)",
             f"ADX {adx_val:.1f} (มีแรงเหวี่ยงดี)"
             if k19_ok
-            else
-            f"ADX {adx_val:.1f} (ต่ำกว่าเกณฑ์)",
+            else f"ADX {adx_val:.1f} (ต่ำกว่าเกณฑ์)",
             pillar_pts_label(
                 k19_ok,
                 k19_av,
                 mom_avail_count,
-                30.0
+                30.0,
             ),
         ),
-
         (
             k20_ok,
             k20_av,
             "Volume Confirmation",
             "วอลุ่มล่าสุดสูงกว่าค่าเฉลี่ย"
             if k20_ok
-            else
-            "วอลุ่มเบาบางกว่าค่าเฉลี่ย",
+            else "วอลุ่มเบาบางกว่าค่าเฉลี่ย",
             pillar_pts_label(
                 k20_ok,
                 k20_av,
                 mom_avail_count,
-                30.0
+                30.0,
             ),
         ),
-
         (
             k_rr_ok,
             True,
             "Risk / Reward",
             f"RR {rr_ratio:.2f} : 1 ผ่านเกณฑ์ขั้นต่ำ"
             if k_rr_ok
-            else
-            f"RR {rr_ratio:.2f} : 1 ต่ำกว่าเกณฑ์ขั้นต่ำ",
+            else f"RR {rr_ratio:.2f} : 1 ต่ำกว่าเกณฑ์ขั้นต่ำ",
             f"+{rr_score:.1f} pts"
             if k_rr_ok
-            else
-            "0.0 pts",
+            else "0.0 pts",
         ),
     ]
 
@@ -380,20 +302,17 @@ def render(ctx):
 
     failed_items = [
         name
-        for ok, av, name, _, _
-        in checklist
+        for ok, av, name, _, _ in checklist
         if not ok and av
     ]
 
     if bullish_count >= 6:
-
         summary_text = (
             f"สัญญาณพร้อมสูง ({bullish_count}/{total_checks}) "
-            "โครงสร้างราคาและโมเมนตัมสนับสนุนการเข้าสะสม"
+            f"โครงสร้างราคาและโมเมนตัมสนับสนุนการเข้าสะสม"
         )
 
     elif len(failed_items) <= 2:
-
         missing_str = ", ".join(failed_items)
 
         summary_text = (
@@ -402,24 +321,13 @@ def render(ctx):
         )
 
     else:
-
         summary_text = (
             f"ผ่าน {bullish_count}/{total_checks} เกณฑ์ --- "
-            "<b>สัญญาณยังไม่ครบถ้วน ควรงดเข้าซื้อ</b>"
+            f"<b>สัญญาณยังไม่ครบถ้วน ควรงดเข้าซื้อ</b>"
         )
 
-    chg_color = (
-        GREEN
-        if price_chg_pct >= 0
-        else RED
-    )
-
-    chg_arrow = (
-        "▲"
-        if price_chg_pct >= 0
-        else
-        "▼"
-    )
+    chg_color = GREEN if price_chg_pct >= 0 else RED
+    chg_arrow = "▲" if price_chg_pct >= 0 else "▼"
 
     pe_html = (
         f'<div><span style="color:{TEXT_MUTED};">P/E:</span> '
@@ -435,118 +343,25 @@ def render(ctx):
         else ""
     )
 
-    # ==============================================================
-    # TOP HEADER BAR
-    # ==============================================================
-
-    _render_html(
-        f"""
-        <div style="{_card_style(
-            'display:flex;'
-            'justify-content:space-between;'
-            'align-items:center;'
-            'padding:12px 20px;'
-            'margin-bottom:12px;'
-        )}">
-
-            <div style="
-                font-size:18px;
-                font-weight:900;
-                color:{TEXT_WHITE};
-                letter-spacing:.5px;
-            ">
-                {ticker_safe}
-
-                <span style="
-                    font-size:11.5px;
-                    font-weight:500;
-                    color:{TEXT_MUTED};
-                ">
-                    {sector_label}
-                </span>
-            </div>
-
-            <div style="
-                display:flex;
-                gap:20px;
-                font-size:11.5px;
-                align-items:center;
-            ">
-
-                <div>
-                    <span style="color:{TEXT_MUTED};">
-                        Price:
-                    </span>
-
-                    <b style="
-                        color:{TEXT_WHITE};
-                        font-size:14px;
-                    ">
-                        {c_p:.2f} THB
-                    </b>
-
-                    <span style="
-                        color:{chg_color};
-                        font-weight:700;
-                    ">
-                        ({price_chg_pct:+.2f}%) {chg_arrow}
-                    </span>
-                </div>
-
-                {pe_html}
-
-                {roe_html}
-
-                <div>
-                    <span style="color:{TEXT_MUTED};">
-                        Data as of:
-                    </span>
-
-                    <b style="color:{ACCENT};">
-                        {data_as_of}
-                    </b>
-                </div>
-
-            </div>
-        </div>
-        """
-    )
-
-    # ==============================================================
-    # KPI
-    # ==============================================================
-
     readiness_color = (
         GREEN
         if readiness == "READY"
         else AMBER
     )
 
+    # ---------------------------------------------------------------
+    # CONFIDENCE DOTS
+    # ---------------------------------------------------------------
     confidence_dots = "".join([
-        f'''
-        <span style="
-            height:7px;
-            width:7px;
-            background-color:{
-                "#10B981"
-                if i < bullish_count
-                else "#334155"
-            };
-            border-radius:50%;
-            display:inline-block;
-            margin-right:3px;
-        "></span>
-        '''
+        f'<span style="height:7px;width:7px;'
+        f'background-color:{"#10B981" if i < bullish_count else "#CBD5E1"};'
+        f'border-radius:50%;display:inline-block;margin-right:3px;"></span>'
         for i in range(total_checks)
     ])
 
-    # --------------------------------------------------------------
-    # IMPORTANT:
-    # Entry Readiness comes FIRST.
-    # Its background follows status_color.
-    # All Entry text is WHITE.
-    # --------------------------------------------------------------
-
+    # ---------------------------------------------------------------
+    # KPI TOP ROW
+    # ---------------------------------------------------------------
     kpi_html = f"""
     <div style="
         display:grid;
@@ -559,10 +374,8 @@ def render(ctx):
             "ENTRY READINESS",
             readiness,
             "รอการยืนยันสัญญาณเพิ่มเติม",
-            TEXT_WHITE,
-            bg_color=status_color,
-            label_color=TEXT_WHITE,
-            sub_color="rgba(255,255,255,0.88)"
+            "#FFFFFF",
+            card_bg=readiness_color
         )}
 
         {_metric_card(
@@ -572,7 +385,7 @@ def render(ctx):
             status_color
         )}
 
-        <div style="{_card_style()}">
+        <div style="{_card_style('height:100%;box-sizing:border-box;')}">
 
             <div style="
                 font-size:10px;
@@ -611,17 +424,16 @@ def render(ctx):
 
     _render_html(kpi_html)
 
-    # ==============================================================
-    # MAIN 3-COLUMN SECTION
-    # ==============================================================
-
+    # ---------------------------------------------------------------
+    # MAIN THREE COLUMNS
+    # ---------------------------------------------------------------
     left, center, right = st.columns(
         [1.0, 2.3, 1.15],
-        gap="medium"
+        gap="medium",
     )
 
     # ==============================================================
-    # LEFT
+    # LEFT COLUMN
     # ==============================================================
 
     with left:
@@ -637,7 +449,7 @@ def render(ctx):
                     total_score / 100.0
                 )
             ),
-            2
+            2,
         )
 
         _render_html(
@@ -672,7 +484,7 @@ def render(ctx):
                         <path
                             d="M 10 48 A 38 38 0 0 1 90 48"
                             fill="none"
-                            stroke="#1E293B"
+                            stroke="{BORDER_SOFT}"
                             stroke-width="7"
                             stroke-linecap="round"
                         />
@@ -737,7 +549,6 @@ def render(ctx):
                     font-size:10px;
                     font-weight:800;
                 ">
-
                     <span style="color:{TEXT_WHITE};">
                         CONFLUENCE
                     </span>
@@ -745,7 +556,6 @@ def render(ctx):
                     <span style="color:{status_color};">
                         {bullish_count} / {total_checks} ผ่าน
                     </span>
-
                 </div>
 
             </div>
@@ -764,8 +574,7 @@ def render(ctx):
             icon = (
                 "✓"
                 if ok and av
-                else
-                ("✕" if av else "--")
+                else ("✕" if av else "--")
             )
 
             checklist_items.append(
@@ -890,17 +699,19 @@ def render(ctx):
         )
 
     # ==============================================================
-    # CENTER
+    # CENTER COLUMN
     # ==============================================================
 
     with center:
 
-        c_head1, c_head2 = st.columns([1, 1.5])
+        c_head1, c_head2 = st.columns(
+            [1, 1.5]
+        )
 
         with c_head1:
 
             _render_html(
-                f'''
+                f"""
                 <div style="
                     font-size:12px;
                     font-weight:800;
@@ -909,14 +720,21 @@ def render(ctx):
                 ">
                     PRICE ACTION &amp; VOLUME
                 </div>
-                '''
+                """
             )
 
         with c_head2:
 
             tf_selected = st.radio(
                 "TF",
-                ["1M", "3M", "6M", "1Y", "2Y", "ALL"],
+                [
+                    "1M",
+                    "3M",
+                    "6M",
+                    "1Y",
+                    "2Y",
+                    "ALL",
+                ],
                 index=2,
                 horizontal=True,
                 label_visibility="collapsed",
@@ -933,13 +751,18 @@ def render(ctx):
         }
 
         n_bars = min(
-            tf_bars.get(tf_selected, 132),
-            len(ctx.stock_daily)
+            tf_bars.get(
+                tf_selected,
+                132
+            ),
+            len(ctx.stock_daily),
         )
 
-        chart_df = ctx.stock_daily.tail(
-            n_bars
-        ).copy()
+        chart_df = (
+            ctx.stock_daily
+            .tail(n_bars)
+            .copy()
+        )
 
         aliases = {
             "Close": "close",
@@ -965,7 +788,9 @@ def render(ctx):
             "date",
         }
 
-        if not required.issubset(chart_df.columns):
+        if not required.issubset(
+            chart_df.columns
+        ):
 
             st.error(
                 "ไม่พบข้อมูล OHLC/Date ที่จำเป็นสำหรับกราฟ"
@@ -978,7 +803,10 @@ def render(ctx):
                 cols=1,
                 shared_xaxes=True,
                 vertical_spacing=0.03,
-                row_heights=[0.78, 0.22],
+                row_heights=[
+                    0.78,
+                    0.22,
+                ],
             )
 
             fig_main.add_trace(
@@ -1049,7 +877,7 @@ def render(ctx):
                 GREEN if c >= o else RED
                 for c, o in zip(
                     chart_df["close"],
-                    chart_df["open"]
+                    chart_df["open"],
                 )
             ]
 
@@ -1057,8 +885,10 @@ def render(ctx):
                 vol_series.tail(n_bars)
                 if vol_series is not None
                 else pd.Series(
-                    np.zeros(len(chart_df)),
-                    index=chart_df.index
+                    np.zeros(
+                        len(chart_df)
+                    ),
+                    index=chart_df.index,
                 )
             )
 
@@ -1074,14 +904,44 @@ def render(ctx):
             )
 
             lines_to_plot = [
-                (r2, "dot", "#F87171", 1.0),
-                (r1, "dash", RED, 1.2),
-                (pp, "dash", "#FFFFFF", 1.2),
-                (s1, "dash", GREEN, 1.2),
-                (s2, "dash", RED, 1.2),
+                (
+                    r2,
+                    "dot",
+                    "#F87171",
+                    1.0
+                ),
+                (
+                    r1,
+                    "dash",
+                    RED,
+                    1.2
+                ),
+                (
+                    pp,
+                    "dash",
+                    "#94A3B8",
+                    1.2
+                ),
+                (
+                    s1,
+                    "dash",
+                    GREEN,
+                    1.2
+                ),
+                (
+                    s2,
+                    "dash",
+                    RED,
+                    1.2
+                ),
             ]
 
-            for val, dash_type, col_hex, w in lines_to_plot:
+            for (
+                val,
+                dash_type,
+                col_hex,
+                w,
+            ) in lines_to_plot:
 
                 fig_main.add_hline(
                     y=val,
@@ -1090,49 +950,66 @@ def render(ctx):
                     line_width=w,
                 )
 
+            # -------------------------------------------------------
+            # LIGHT THEME PLOTLY
+            # -------------------------------------------------------
+
             fig_main.update_layout(
                 height=525,
+
                 margin=dict(
                     l=8,
                     r=40,
                     t=25,
-                    b=5
+                    b=5,
                 ),
+
                 paper_bgcolor=BG_CARD,
                 plot_bgcolor=BG_CARD,
+
                 xaxis=dict(
                     gridcolor=BORDER_SOFT,
-                    showticklabels=False
+                    showticklabels=False,
+                    linecolor=BORDER,
                 ),
+
                 xaxis2=dict(
                     gridcolor=BORDER_SOFT,
                     tickfont=dict(
                         size=10,
-                        color=TEXT_MUTED
-                    )
+                        color=TEXT_MUTED,
+                    ),
+                    linecolor=BORDER,
                 ),
+
                 yaxis=dict(
                     gridcolor=BORDER_SOFT,
                     side="right",
                     tickfont=dict(
                         size=10,
-                        color=TEXT_MUTED
-                    )
+                        color=TEXT_MUTED,
+                    ),
+                    linecolor=BORDER,
                 ),
+
                 yaxis2=dict(
-                    showticklabels=False
+                    showticklabels=False,
+                    gridcolor=BORDER_SOFT,
                 ),
+
                 legend=dict(
                     orientation="h",
                     y=1.12,
                     x=0.01,
                     font=dict(
                         size=10,
-                        color=TEXT_WHITE
+                        color=TEXT_WHITE,
                     ),
-                    bgcolor="rgba(0,0,0,0)"
+                    bgcolor="rgba(255,255,255,0)",
                 ),
+
                 xaxis_rangeslider_visible=False,
+
                 hovermode="x unified",
             )
 
@@ -1141,12 +1018,12 @@ def render(ctx):
                 use_container_width=True,
                 config={
                     "displayModeBar": True,
-                    "displaylogo": False
+                    "displaylogo": False,
                 },
             )
 
     # ==============================================================
-    # RIGHT
+    # RIGHT COLUMN
     # ==============================================================
 
     with right:
@@ -1195,6 +1072,7 @@ def render(ctx):
                         border-bottom:1px solid {BORDER_SOFT};
                         font-size:11px;
                     ">
+
                         <span style="color:{TEXT_MUTED};">
                             Current Price
                         </span>
@@ -1202,6 +1080,7 @@ def render(ctx):
                         <b style="color:{TEXT_WHITE};">
                             {c_p:.2f} THB
                         </b>
+
                     </div>
 
                     <div style="
@@ -1211,6 +1090,7 @@ def render(ctx):
                         border-bottom:1px solid {BORDER_SOFT};
                         font-size:11px;
                     ">
+
                         <span style="color:{GREEN};">
                             Preferred Entry
                         </span>
@@ -1218,6 +1098,7 @@ def render(ctx):
                         <b style="color:{GREEN};">
                             {s1:.2f} -- {pp:.2f}
                         </b>
+
                     </div>
 
                     <div style="
@@ -1227,6 +1108,7 @@ def render(ctx):
                         border-bottom:1px solid {BORDER_SOFT};
                         font-size:11px;
                     ">
+
                         <span style="color:{AMBER};">
                             Watch Zone
                         </span>
@@ -1234,6 +1116,7 @@ def render(ctx):
                         <b style="color:{AMBER};">
                             {pp:.2f} -- {r1:.2f}
                         </b>
+
                     </div>
 
                     <div style="
@@ -1243,6 +1126,7 @@ def render(ctx):
                         border-bottom:1px solid {BORDER_SOFT};
                         font-size:11px;
                     ">
+
                         <span style="color:{RED};">
                             Stop Loss
                         </span>
@@ -1250,6 +1134,7 @@ def render(ctx):
                         <b style="color:{RED};">
                             &lt; {s2:.2f}
                         </b>
+
                     </div>
 
                     <div style="
@@ -1259,6 +1144,7 @@ def render(ctx):
                         border-bottom:1px solid {BORDER_SOFT};
                         font-size:11px;
                     ">
+
                         <span style="color:{TEXT_WHITE};">
                             Target 1
                         </span>
@@ -1266,6 +1152,7 @@ def render(ctx):
                         <b style="color:{TEXT_WHITE};">
                             {r1:.2f}
                         </b>
+
                     </div>
 
                     <div style="
@@ -1274,6 +1161,7 @@ def render(ctx):
                         padding:5px 0;
                         font-size:11px;
                     ">
+
                         <span style="color:{TEXT_WHITE};">
                             Target 2
                         </span>
@@ -1281,9 +1169,11 @@ def render(ctx):
                         <b style="color:{TEXT_WHITE};">
                             {r2:.2f}
                         </b>
+
                     </div>
 
                 </div>
+
             </div>
             """
         )
@@ -1312,7 +1202,9 @@ def render(ctx):
                     <b style="color:{TEXT_WHITE};">
                         Trend --- 40 pts
                     </b>
+
                     <br>
+
                     ราคาเทียบ EMA20, EMA50 และ MA200
 
                     <br><br>
@@ -1320,7 +1212,9 @@ def render(ctx):
                     <b style="color:{TEXT_WHITE};">
                         Momentum --- 30 pts
                     </b>
+
                     <br>
+
                     MACD, ADX และ Volume Confirmation
 
                     <br><br>
@@ -1328,7 +1222,9 @@ def render(ctx):
                     <b style="color:{TEXT_WHITE};">
                         Reward / Risk --- 30 pts
                     </b>
+
                     <br>
+
                     ประเมินจากผลตอบแทนเทียบกับ downside
 
                 </div>
@@ -1343,16 +1239,16 @@ def render(ctx):
 
     st.markdown(
         "<div style='margin-top:12px;'></div>",
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
     b_c1, b_c2 = st.columns(
         [1.0, 1.5],
-        gap="medium"
+        gap="medium",
     )
 
     # ==============================================================
-    # RISK / REWARD
+    # BOTTOM LEFT - RISK / REWARD
     # ==============================================================
 
     with b_c1:
@@ -1360,8 +1256,7 @@ def render(ctx):
         rr_color = (
             GREEN
             if rr_ratio >= 2.0
-            else
-            (
+            else (
                 AMBER
                 if rr_ratio >= 1.5
                 else RED
@@ -1373,7 +1268,7 @@ def render(ctx):
             max(
                 0,
                 upside_pct * 2
-            )
+            ),
         )
 
         downside_bar = min(
@@ -1381,7 +1276,7 @@ def render(ctx):
             max(
                 0,
                 downside_pct * 5
-            )
+            ),
         )
 
         _render_html(
@@ -1505,67 +1400,43 @@ def render(ctx):
         )
 
     # ==============================================================
-    # WHY WAIT / WHY NOW
+    # BOTTOM RIGHT - WHY WAIT / WHY NOW
     # ==============================================================
 
     with b_c2:
 
         reasons = [
-
             (
                 "Trend",
-                "✓"
-                if k15_ok and k16_ok
-                else "✕",
-                GREEN
-                if k15_ok and k16_ok
-                else RED,
+                "✓" if k15_ok and k16_ok else "✕",
+                GREEN if k15_ok and k16_ok else RED,
                 "โครงสร้างราคาเหนือเส้นเฉลี่ย"
                 if k15_ok and k16_ok
-                else
-                "ราคาอยู่ใต้ EMA20",
+                else "ราคาอยู่ใต้ EMA20",
             ),
-
             (
                 "Momentum",
-                "✓"
-                if k18_ok
-                else "✕",
-                GREEN
-                if k18_ok
-                else RED,
+                "✓" if k18_ok else "✕",
+                GREEN if k18_ok else RED,
                 "MACD สนับสนุนโมเมนตัม"
                 if k18_ok
-                else
-                "MACD เป็นขาลง",
+                else "MACD เป็นขาลง",
             ),
-
             (
                 "Volume",
-                "✓"
-                if k20_ok
-                else "✕",
-                GREEN
-                if k20_ok
-                else RED,
+                "✓" if k20_ok else "✕",
+                GREEN if k20_ok else RED,
                 "มี Volume ยืนยัน"
                 if k20_ok
-                else
-                "วอลุ่มไม่หนุน",
+                else "วอลุ่มไม่หนุน",
             ),
-
             (
                 "Risk / Reward",
-                "✓"
-                if k_rr_ok
-                else "✕",
-                GREEN
-                if k_rr_ok
-                else RED,
+                "✓" if k_rr_ok else "✕",
+                GREEN if k_rr_ok else RED,
                 "อัตราผลตอบแทนคุ้มค่า"
                 if k_rr_ok
-                else
-                "อัตราผลตอบแทนยังไม่คุ้มความเสี่ยง",
+                else "อัตราผลตอบแทนยังไม่คุ้มความเสี่ยง",
             ),
         ]
 
@@ -1602,15 +1473,13 @@ def render(ctx):
         wait_title = (
             "WHY WAIT?"
             if readiness != "READY"
-            else
-            "WHY NOW?"
+            else "WHY NOW?"
         )
 
         wait_subtitle = (
             "เหตุผลที่ระบบยังรอการยืนยันก่อนเข้าซื้อ"
             if readiness != "READY"
-            else
-            "เหตุผลที่สัญญาณมีความพร้อมมากขึ้น"
+            else "เหตุผลที่สัญญาณมีความพร้อมมากขึ้น"
         )
 
         _render_html(
@@ -1660,6 +1529,6 @@ def render(ctx):
 
     render_nav_footer(
         "m3",
-        prev_page=" ⚖️ Fair Value",
-        next_page=" 🔮 AI Prediction"
+        prev_page=" Fair Value",
+        next_page=" AI Prediction",
     )
