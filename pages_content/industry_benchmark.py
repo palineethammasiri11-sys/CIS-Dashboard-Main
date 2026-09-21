@@ -536,13 +536,13 @@ def render(ctx):
         )
 
         st.markdown(f"""<div style="background-color:{rec_bg}; border:1px solid {rec_bg}; border-radius:8px; padding:14px; height:275px; text-align:center;">
-    <div style="font-size:14.5px; color:#CBD5E1; font-weight:bold; margin-bottom:4px; text-align:left;">FINAL RECOMMENDATION</div>
+    <div style="font-size:14.5px; color:#475569; font-weight:bold; margin-bottom:4px; text-align:left;">FINAL RECOMMENDATION</div>
     <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin:4px 0;">
     <div><h1 style="color:{rec_color2}; margin:0; font-size:24px; line-height:1.1;">{rec}</h1></div></div>
     <div style="text-align:left; font-size:13.5px; margin-top:8px; border-top:1px dashed rgba(255,255,255,0.6); padding-top:6px;">
-    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#CBD5E1;">Confidence Level</span><span style="color:#FFFFFF; font-weight:bold;">{conf_lvl}</span></div>
-    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#CBD5E1;">Overall Score</span><span style="color:#FFFFFF; font-weight:bold;">{safe(ctx.stock_info.get('overall_score')):.1f}/100</span></div>
-    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#CBD5E1;">Sector Rank</span><span style="color:#FFFFFF; font-weight:bold;">{sector_rank} / {n_sector}</span></div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#475569;">Confidence Level</span><span style="color:#FFFFFF; font-weight:bold;">{conf_lvl}</span></div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#475569;">Overall Score</span><span style="color:#FFFFFF; font-weight:bold;">{safe(ctx.stock_info.get('overall_score')):.1f}/100</span></div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#475569;">Sector Rank</span><span style="color:#FFFFFF; font-weight:bold;">{sector_rank} / {n_sector}</span></div>
     </div></div>""", unsafe_allow_html=True)
 
     import base64
