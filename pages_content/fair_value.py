@@ -84,7 +84,7 @@ def render(ctx):
 
     with r1_c5:
         conf = "High" if abs(val_mos) > 15 else ("Medium" if abs(val_mos) > 5 else "Low")
-    st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:12px; min-height:170px; display:flex; flex-direction:column; justify-content:space-between; text-align:center;">
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:12px; min-height:170px; display:flex; flex-direction:column; justify-content:space-between; text-align:center;">
     <div style="font-size:13px; font-weight:bold; color:#64748B; text-align:left;">CONFIDENCE LEVEL</div>
     <div><div style="font-size:18.5px; font-weight:bold; color:{val_color}; line-height:1;">{conf.upper()}</div></div>
     </div>""", unsafe_allow_html=True)
