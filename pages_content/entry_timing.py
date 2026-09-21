@@ -142,6 +142,18 @@ def render(ctx):
     action_th = sig["action_th"]
     readiness = sig["readiness"]
 
+    # ---------------------------------------------------------------
+    # STATUS COLOR
+    # ไม่แก้ข้อความจาก classify_signal
+    # เปลี่ยนเฉพาะสีตามสถานะ
+    # ---------------------------------------------------------------
+    if status_label in ("WAIT", "NEUTRAL", "NATURAL"):
+        status_color = AMBER
+    elif status_label == "READY":
+        status_color = GREEN
+    elif status_label == "BEARISH":
+        status_color = RED
+
     price_chg_pct = float(safe(info.get("price_change_pct"), 0.0))
     pe_ratio = safe(info.get("pe_ratio"), None)
     roe_pct = safe(info.get("roe_pct"), None)
@@ -454,10 +466,17 @@ def render(ctx):
 
         _render_html(
             f"""
-            <div style="{_card_style('margin-bottom:12px;')}">
+            <div style="
+                background:{BG_CARD};
+                border:2px solid {status_color};
+                border-radius:10px;
+                padding:16px;
+                margin-bottom:12px;
+                box-sizing:border-box;
+            ">
 
                 <div style="
-                    border-bottom:2px solid {ACCENT};
+                    border-bottom:2px solid {status_color};
                     padding-bottom:5px;
                     font-size:12px;
                     font-weight:800;
