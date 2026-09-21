@@ -217,6 +217,10 @@ def render(ctx):
         # Entry Timing
         # --------------------------------------------------------
 
+        # 0–44   = RED
+        # 45–64  = AMBER
+        # 65–100 = GREEN
+
         if m3_s >= 65:
             m3_badge, m3_desc = "BULLISH", "Strong upward momentum across moving averages"
         elif m3_s >= 45:
@@ -338,8 +342,31 @@ def render(ctx):
 
         cards_html = "".join([
             module_card("01", "COMPANY HEALTH", m1_s, m1_badge, m1_desc, 70, 45),
-            module_card("02", "FAIR VALUE", m2_s, m2_badge, m2_desc, 67, 34),
-            module_card("03", "ENTRY TIMING", m3_s, m3_badge, m3_desc, 65, 45),
+
+            module_card(
+                "02",
+                "FAIR VALUE",
+                m2_s,
+                m2_badge,
+                m2_desc,
+                67,
+                34
+            ),
+
+            # MODULE 03 — ENTRY TIMING
+            # 0–44   = RED
+            # 45–64  = AMBER
+            # 65–100 = GREEN
+            module_card(
+                "03",
+                "ENTRY TIMING",
+                m3_s,
+                m3_badge,
+                m3_desc,
+                65,
+                45
+            ),
+
             module_card("04", "AI PREDICTION", m4_s, m4_badge, m4_desc, 70, 50),
             module_card("05", "RISK ANALYSIS", m5_s, m5_badge, m5_desc, 65, 45),
             module_card("06", "INDUSTRY BENCHMARK", m6_s, m6_badge, m6_desc, 70, 45)
