@@ -197,7 +197,7 @@ def render(ctx):
     <div style="font-size:12.5px; color:#64748B; margin-top:6px;">*จัดอันดับจาก Overall Score ที่คำนวณจริงจากข้อมูลใน cis_summary_scores</div>
     </div>""", unsafe_allow_html=True)
         
-    with r2_c2:
+with r2_c2:
         cats = ['Health', 'Valuation', 'Timing', 'AI Pred.', 'Risk', 'Industry']
         stock_vals = [
             safe(ctx.stock_info.get('health_score')),
