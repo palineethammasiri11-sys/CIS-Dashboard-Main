@@ -258,30 +258,33 @@ def render(ctx):
             m6_badge, m6_desc = "LAGGING", "Trailing behind sectoral benchmark"
 
         # ========================================================
-        # SCORE COLOR
-        # 0-33 RED / 34-66 YELLOW / 67-100 GREEN
+        # SCORE COLOR — EACH MODULE USES ITS OWN THRESHOLDS
         # ========================================================
 
-        def score_color(score):
-            return "#EF4444" if score <= 33 else "#F59E0B" if score <= 66 else "#10B981"
+        def score_color(score, green_at, yellow_at):
+            if score >= green_at:
+                return "#10B981"
+            elif score >= yellow_at:
+                return "#F59E0B"
+            else:
+                return "#EF4444"
 
-        def score_bg(score):
-            return (
-                "rgba(239,68,68,0.20)"
-                if score <= 33
-                else "rgba(245,158,11,0.20)"
-                if score <= 66
-                else "rgba(16,185,129,0.20)"
-            )
+        def score_bg(score, green_at, yellow_at):
+            if score >= green_at:
+                return "rgba(16,185,129,0.20)"
+            elif score >= yellow_at:
+                return "rgba(245,158,11,0.20)"
+            else:
+                return "rgba(239,68,68,0.20)"
 
         # ========================================================
         # MODULE CARD
         # ========================================================
 
-        def module_card(num, label, score, color, badge, desc, badge_bg):
+        def module_card(num, label, score, badge, desc, green_at, yellow_at):
 
-            color = score_color(score)
-            badge_bg = score_bg(score)
+            color = score_color(score, green_at, yellow_at)
+            badge_bg = score_bg(score, green_at, yellow_at)
 
             return f"""
             <div style="background-color:#FFFFFF;border:1px solid #E2E8F0;
@@ -334,12 +337,12 @@ def render(ctx):
         # ========================================================
 
         cards_html = "".join([
-            module_card("01", "COMPANY HEALTH", m1_s, "#34D399", m1_badge, m1_desc, ""),
-            module_card("02", "FAIR VALUE", m2_s, "#FBBF24", m2_badge, m2_desc, ""),
-            module_card("03", "ENTRY TIMING", m3_s, "#38BDF8", m3_badge, m3_desc, ""),
-            module_card("04", "AI PREDICTION", m4_s, "#C084FC", m4_badge, m4_desc, ""),
-            module_card("05", "RISK ANALYSIS", m5_s, "#FB923C", m5_badge, m5_desc, ""),
-            module_card("06", "INDUSTRY BENCHMARK", m6_s, "#2DD4BF", m6_badge, m6_desc, "")
+            module_card("01", "COMPANY HEALTH", m1_s, m1_badge, m1_desc, 70, 45),
+            module_card("02", "FAIR VALUE", m2_s, m2_badge, m2_desc, 70, 45),
+            module_card("03", "ENTRY TIMING", m3_s, m3_badge, m3_desc, 65, 45),
+            module_card("04", "AI PREDICTION", m4_s, m4_badge, m4_desc, 70, 50),
+            module_card("05", "RISK ANALYSIS", m5_s, m5_badge, m5_desc, 65, 45),
+            module_card("06", "INDUSTRY BENCHMARK", m6_s, m6_badge, m6_desc, 70, 45)
         ])
 
         # ========================================================
