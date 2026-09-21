@@ -871,7 +871,17 @@ def render(ctx):
 
     dim_html = "".join([
         f"""
-        <div style="background-color:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:10px 8px;text-align:center;">
+        <div style="
+            background-color:#FFFFFF;
+            border:1px solid #E2E8F0;
+            border-radius:10px;
+            padding:10px 8px;
+            text-align:center;
+            width:100%;
+            min-width:0;
+            max-width:100%;
+            box-sizing:border-box;
+        ">
             <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
                 <span style="font-size:14.5px;">{icon}</span>
                 <span style="font-size:13px;font-weight:bold;color:#0F172A;">{n}. {label}</span>
@@ -894,8 +904,41 @@ def render(ctx):
         ]
     ])
 
+    st.markdown("""
+    <style>
+    @media (max-width: 768px) {
+
+        .health-dimensions-grid {
+            grid-template-columns: 1fr !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+            gap: 10px !important;
+        }
+
+        .health-dimensions-grid > div {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     st.html(f"""
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;">
+    <div class="health-dimensions-grid"
+         style="
+             display:grid;
+             grid-template-columns:repeat(7,minmax(0,1fr));
+             gap:8px;
+             width:100%;
+             min-width:0;
+             max-width:100%;
+             box-sizing:border-box;
+         ">
         {dim_html}
     </div>
     """)
