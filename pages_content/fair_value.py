@@ -51,7 +51,7 @@ def render(ctx):
     val_stars = min(5, max(1, round(val_score / 20)))
 
     with r1_c1:
-    st.markdown(
+        st.markdown(
         f"""
         <div style="
             background-color:#FFFFFF;
