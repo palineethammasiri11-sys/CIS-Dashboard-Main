@@ -67,22 +67,19 @@ def render(ctx):
     </div>""", unsafe_allow_html=True)
 
     with r1_c2:
-        pct_overall = round((overall_rank / max(n_all, 1)) * 100)
-        sector_block = f"""<span style="display:inline-block; margin-top:6px; background-color:rgba(100,116,139,0.10); color:#64748B; font-size:14px; font-weight:bold; padding:3px 14px; border-radius:8px;">กลุ่มมีเพียง 1 หุ้น</span>""" if single_member_sector else f"""<span style="display:inline-block; margin-top:6px; background-color:rgba(245,158,11,0.15); color:#F59E0B; font-size:14px; font-weight:bold; padding:3px 14px; border-radius:8px;">Top {pct_in_sector}%</span>"""
-
         st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; text-align:center; display:flex; flex-direction:column; justify-content:space-between;">
     <div style="font-size:14.5px; color:#64748B; font-weight:bold;">RANKING</div>
     <div style="border-bottom:1px solid #E2E8F0; padding-bottom:10px; flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
-    <div style="font-size:14px; color:#64748B;">ในกลุ่ม</div>
-    <div style="font-size:13px; color:#64748B; margin-bottom:4px;">{ctx.stock_info.get('sector','-')}</div>
-    <div><span style="font-size:32px; color:#0F172A; font-weight:bold;">{sector_rank}</span> <span style="font-size:14px; color:#64748B;">/ {n_sector} หุ้น</span></div>
-    {sector_block}
-    </div>
-    <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
     <div style="font-size:14px; color:#64748B;">ทั้งตลาด</div>
     <div style="font-size:13px; color:#64748B; margin-bottom:4px;">{n_all} หุ้นที่ติดตาม</div>
     <div><span style="font-size:32px; color:#0F172A; font-weight:bold;">{overall_rank}</span> <span style="font-size:14px; color:#64748B;">/ {n_all} หุ้น</span></div>
     <span style="display:inline-block; margin-top:6px; background-color:rgba(56,189,248,0.15); color:#38BDF8; font-size:14px; font-weight:bold; padding:3px 14px; border-radius:8px;">Top {pct_overall}%</span>
+    </div>
+    <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
+    <div style="font-size:14px; color:#64748B;">ในกลุ่ม</div>
+    <div style="font-size:13px; color:#64748B; margin-bottom:4px;">{ctx.stock_info.get('sector','-')}</div>
+    <div><span style="font-size:32px; color:#0F172A; font-weight:bold;">{sector_rank}</span> <span style="font-size:14px; color:#64748B;">/ {n_sector} หุ้น</span></div>
+    {sector_block}
     </div>
     </div>""", unsafe_allow_html=True)
 
