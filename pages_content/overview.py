@@ -166,6 +166,41 @@ def render(ctx):
         else "fair value"
     )
 
+    st.markdown("""
+    <style>
+    @media (max-width: 768px) {
+
+        .ai-summary-grid {
+            grid-template-columns: 1fr !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+            gap: 16px !important;
+        }
+
+        .ai-summary-grid > div {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+        .ai-summary-grid * {
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .ai-summary-grid div[style*="display:flex"] {
+            min-width: 0 !important;
+            max-width: 100% !important;
+            flex-wrap: wrap !important;
+        }
+
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     st.html(f"""
     <div style="
         background-color:#FFFFFF;
@@ -173,6 +208,9 @@ def render(ctx):
         border-radius:12px;
         padding:16px;
         margin-bottom:16px;
+        width:100%;
+        max-width:100%;
+        min-width:0;
         box-sizing:border-box;
     ">
 
@@ -186,11 +224,15 @@ def render(ctx):
             AI INVESTMENT SUMMARY
         </div>
 
-        <div style="
+        <div class="ai-summary-grid" style="
             display:grid;
-            grid-template-columns:180px 1fr 1.3fr;
+            grid-template-columns:minmax(0,180px) minmax(0,1fr) minmax(0,1.3fr);
             gap:24px;
             align-items:center;
+            width:100%;
+            min-width:0;
+            max-width:100%;
+            box-sizing:border-box;
         ">
 
             <div style="text-align:center;">
