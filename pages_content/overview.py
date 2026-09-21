@@ -104,14 +104,9 @@ def render(ctx):
         "BUY": "rgba(16,185,129,0.12)",
         "ACCUMULATE": "rgba(132,204,22,0.12)",
         "REDUCE / SELL": "rgba(239,68,68,0.12)"
-    }.get(rec, "rgba(245,158,11,0.12)") 
-    
-    ai_bg = {
-        "STRONG BUY": "#ECFDF5",
-        "BUY": "#ECFDF5",
-        "ACCUMULATE": "#F0F9E8",
-        "REDUCE / SELL": "#FEF2F2"
-    }.get(rec, "#FFFBEB")
+    }.get(rec, "rgba(245,158,11,0.12)")
+
+    ai_bg = "#10B981"
 
 
     stars = min(5, max(1, round(overall / 20)))
