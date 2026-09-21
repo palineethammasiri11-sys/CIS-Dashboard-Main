@@ -51,7 +51,7 @@ def render(ctx):
     val_stars = min(5, max(1, round(val_score / 20)))
 
     with r1_c1:
-        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:170px; display:flex; flex-direction:column; justify-content:space-between;">
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:2px solid {val_color}; border-radius:12px; padding:14px; min-height:170px; display:flex; flex-direction:column; justify-content:space-between;">
     <div style="font-size:13.5px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">FAIR VALUE SUMMARY</div>
     <div style="display:flex; align-items:center; gap:12px;">
     <div style="width:76px; height:76px; border-radius:50%; background:conic-gradient({val_color} 0% {val_score}%, #E2E8F0 {val_score}% 100%); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
@@ -61,7 +61,7 @@ def render(ctx):
     <div style="font-size:13px; color:#475569; line-height:1.35; margin-top:3px;">Margin of Safety อยู่ที่ {val_mos:.1f}% เมื่อเทียบกับมูลค่าพื้นฐานที่แท้จริง</div>
     <div style="color:{val_color}; font-size:14.5px; letter-spacing:1px; margin-top:4px;">{'★'*val_stars}{'☆'*(5-val_stars)}</div></div>
     </div></div>""", unsafe_allow_html=True)
-
+        
     with r1_c2:
         st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:12px; min-height:170px; display:flex; flex-direction:column; justify-content:space-between;">
     <div style="font-size:13px; font-weight:bold; color:#64748B;">CURRENT PRICE</div>
