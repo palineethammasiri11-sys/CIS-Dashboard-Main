@@ -659,20 +659,58 @@ def render_sidebar(scores_df):
 
             /* ---------- Main content ---------- */
             .main .block-container {{
-                padding: 1rem 0.85rem 2rem 0.85rem !important;
+                width: 100% !important;
                 max-width: 100% !important;
+                box-sizing: border-box !important;
+                padding: 1rem 0.85rem 2rem 0.85rem !important;
+            }}
+
+            /* ---------- Prevent horizontal overflow ---------- */
+            html,
+            body,
+            .stApp {{
+                width: 100% !important;
+                max-width: 100vw !important;
+                overflow-x: hidden !important;
+            }}
+
+            .main,
+            .main > div,
+            [data-testid="stAppViewContainer"],
+            [data-testid="stMain"] {{
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow-x: hidden !important;
+                box-sizing: border-box !important;
+            }}
+
+            /* ---------- HTML cards / markdown blocks ---------- */
+            .stMarkdown,
+            .stMarkdown > div {{
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }}
+
+            .stMarkdown div {{
+                max-width: 100%;
+                box-sizing: border-box;
             }}
 
             /* ---------- Streamlit columns ---------- */
             [data-testid="stHorizontalBlock"] {{
+                width: 100% !important;
+                max-width: 100% !important;
                 flex-wrap: wrap !important;
                 gap: 0.75rem !important;
+                box-sizing: border-box !important;
             }}
 
             [data-testid="column"] {{
                 width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
                 flex: 1 1 100% !important;
-                min-width: 100% !important;
+                box-sizing: border-box !important;
             }}
         
             /* ---------- Shared Header ---------- */
@@ -709,19 +747,19 @@ def render_sidebar(scores_df):
             /* ---------- Tables ---------- */
             [data-testid="stDataFrame"] {{
                 width: 100% !important;
+                max-width: 100% !important;
                 overflow-x: auto !important;
+                box-sizing: border-box !important;
             }}
 
             /* ---------- Plotly charts ---------- */
             .js-plotly-plot,
-            .plot-container {{
+            .plot-container,
+            .plotly,
+            [data-testid="stPlotlyChart"] {{
                 width: 100% !important;
                 max-width: 100% !important;
-            }}
-
-             /* ---------- Buttons ---------- */
-            .stButton > button {{
-                width: 100% !important;
+                box-sizing: border-box !important;
             }}
         }}
 
