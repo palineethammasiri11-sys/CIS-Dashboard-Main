@@ -63,7 +63,13 @@ def render(ctx):
     </div>
     """)
 
-    col_left, col_center, col_right = st.columns([1.1, 2.3, 1.2])
+    # ============================================================
+    # TOP SECTION
+    # LEFT = STOCK INFORMATION
+    # RIGHT = SCORE MODULES
+    # ============================================================
+
+    col_left, col_center = st.columns([1.1, 2.3])
 
 
     # ============================================================
@@ -713,9 +719,12 @@ def render(ctx):
 
         # ========================================================
         # ALL MODULE CARDS
+        # 01 02 03
+        # 04 05 06
         # ========================================================
 
         cards_html = "".join([
+
             module_card(
                 "01",
                 "COMPANY HEALTH",
@@ -775,6 +784,7 @@ def render(ctx):
                 m6_desc,
                 "rgba(20,184,166,0.2)"
             )
+
         ])
 
 
@@ -788,7 +798,6 @@ def render(ctx):
             border:1px solid #E2E8F0;
             border-radius:12px;
             padding:16px;
-            min-height:900px;
         ">
 
             <div style="
@@ -806,7 +815,7 @@ def render(ctx):
                 class="overview-module-grid"
                 style="
                     display:grid;
-                    grid-template-columns:repeat(2, 1fr);
+                    grid-template-columns:repeat(3, 1fr);
                     gap:12px;
                 "
             >
@@ -818,110 +827,115 @@ def render(ctx):
 
 
     # ============================================================
-    # RIGHT COLUMN
+    # AI INVESTMENT SUMMARY — FULL WIDTH BELOW
     # ============================================================
 
-    with col_right:
+    overall = safe(
+        ctx.stock_info.get(
+            'overall_score'
+        ),
+        50
+    )
 
-        overall = safe(
-            ctx.stock_info.get(
-                'overall_score'
-            ),
-            50
-        )
+    rec = ctx.stock_info.get(
+        'recommendation',
+        'ACCUMULATE'
+    )
 
-        rec = ctx.stock_info.get(
-            'recommendation',
-            'ACCUMULATE'
-        )
+    rec_color = {
+        "STRONG BUY": "#10B981",
+        "BUY": "#10B981",
+        "ACCUMULATE": "#84CC16",
+        "REDUCE / SELL": "#EF4444"
+    }.get(
+        rec,
+        "#F59E0B"
+    )
 
-        rec_color = {
-            "STRONG BUY": "#10B981",
-            "BUY": "#10B981",
-            "ACCUMULATE": "#84CC16",
-            "REDUCE / SELL": "#EF4444"
-        }.get(
-            rec,
-            "#F59E0B"
-        )
-
-        stars = min(
-            5,
-            max(
-                1,
-                round(
-                    overall / 20
-                )
+    stars = min(
+        5,
+        max(
+            1,
+            round(
+                overall / 20
             )
         )
+    )
 
-        arc_frac = min(
-            1.0,
-            overall / 100
+    arc_frac = min(
+        1.0,
+        overall / 100
+    )
+
+    dash_len = round(
+        119.38 * arc_frac,
+        2
+    )
+
+    label = (
+        "ATTRACTIVE"
+        if overall >= 65
+        else (
+            "FAIR"
+            if overall >= 45
+            else "CAUTION"
         )
+    )
 
-        dash_len = round(
-            119.38 * arc_frac,
-            2
+    top_strength = (
+        "financial health"
+        if m1_s == max(
+            m1_s,
+            m2_s,
+            m3_s,
+            m4_s,
+            m5_s,
+            m6_s
         )
-
-        label = (
-            "ATTRACTIVE"
-            if overall >= 65
-            else (
-                "FAIR"
-                if overall >= 45
-                else "CAUTION"
-            )
-        )
-
-        top_strength = (
-            "financial health"
-            if m1_s == max(
-                m1_s,
-                m2_s,
-                m3_s,
-                m4_s,
-                m5_s,
-                m6_s
-            )
-            else "fair value"
-        )
+        else "fair value"
+    )
 
 
-        # ========================================================
-        # AI INVESTMENT SUMMARY
-        # ========================================================
+    # ============================================================
+    # AI INVESTMENT SUMMARY
+    # ============================================================
 
-        st.html(f"""
+    st.html(f"""
+    <div style="
+        background-color:#FFFFFF;
+        border:1px solid #E2E8F0;
+        border-radius:12px;
+        padding:16px;
+        margin-top:12px;
+    ">
+
         <div style="
-            background-color:#FFFFFF;
-            border:1px solid #E2E8F0;
-            border-radius:12px;
-            padding:16px;
-            min-height:900px;
-            display:flex;
-            flex-direction:column;
-            justify-content:space-between;
-            text-align:center;
+            font-size:14.5px;
+            font-weight:bold;
+            color:#64748B;
+            letter-spacing:0.5px;
+            margin-bottom:12px;
+        ">
+            AI INVESTMENT SUMMARY
+        </div>
+
+
+        <div style="
+            display:grid;
+            grid-template-columns:180px 1fr 1.3fr;
+            gap:24px;
+            align-items:center;
         ">
 
-            <div>
+
+            <!-- SCORE -->
+
+            <div style="
+                text-align:center;
+            ">
 
                 <div style="
-                    font-size:14.5px;
-                    font-weight:bold;
-                    color:#64748B;
-                    letter-spacing:0.5px;
-                    text-align:left;
-                    margin-bottom:4px;
-                ">
-                    AI INVESTMENT SUMMARY
-                </div>
-
-
-                <div style="
-                    margin:6px auto 0 auto;
+                    margin:0 auto;
                     width:140px;
                 ">
 
@@ -985,7 +999,6 @@ def render(ctx):
                     font-size:13px;
                     font-weight:bold;
                     color:#64748B;
-                    margin-top:2px;
                 ">
                     OVERALL SCORE
                 </div>
@@ -1005,111 +1018,140 @@ def render(ctx):
                     color:{rec_color};
                     font-size:16px;
                     font-weight:bold;
-                    margin-top:2px;
                 ">
                     {label}
                 </div>
 
+            </div>
+
+
+            <!-- AI DESCRIPTION -->
+
+            <div style="
+                text-align:center;
+            ">
+
+                <div style="
+                    font-size:14px;
+                    color:#475569;
+                    line-height:1.6;
+                ">
+
+                    <b style="
+                        color:#0F172A;
+                    ">
+                        {ctx.selected_ticker}
+                    </b>
+
+                    ได้คะแนนภาพรวม
+                    <b>
+                        {overall:.1f}/100
+                    </b>
+
+                    <br>
+
+                    จุดเด่นหลักอยู่ที่
+                    <b>
+                        {top_strength}
+                    </b>
+
+                    <br>
+
+                    อันดับ
+                    <b>
+                        {int(ctx.stock_info.get('sector_rank',1))}
+                        / {n_sector}
+                    </b>
+
+                    จากบริษัทในกลุ่ม
+                    <b>
+                        {ctx.stock_info.get('sector','-')}
+                    </b>
+
+                </div>
+
+            </div>
+
+
+            <!-- RECOMMENDATION -->
+
+            <div style="
+                background-color:#F8FAFC;
+                border:1px solid #E2E8F0;
+                border-radius:8px;
+                padding:12px 14px;
+                text-align:left;
+            ">
 
                 <div style="
                     font-size:12.5px;
-                    color:#475569;
-                    line-height:1.35;
-                    margin-top:4px;
-                    padding:0 2px;
+                    color:#64748B;
+                    font-weight:bold;
+                    margin-bottom:4px;
                 ">
-
-                    <b>{ctx.selected_ticker}</b>
-                    ได้คะแนนภาพรวม {overall:.1f}/100
-                    จุดเด่นหลักอยู่ที่ {top_strength}
-                    อันดับ {int(ctx.stock_info.get('sector_rank',1))}
-                    จาก {n_sector}
-                    บริษัทในกลุ่ม {ctx.stock_info.get('sector','-')}
-
+                    RECOMMENDATION
                 </div>
 
 
                 <div style="
-                    background-color:#F8FAFC;
-                    border:1px solid #E2E8F0;
-                    border-radius:8px;
-                    padding:8px 10px;
-                    margin-top:8px;
-                    text-align:left;
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
                 ">
 
                     <div style="
-                        font-size:12.5px;
-                        color:#64748B;
-                        font-weight:bold;
-                        margin-bottom:2px;
-                    ">
-                        RECOMMENDATION
-                    </div>
-
-
-                    <div style="
                         display:flex;
-                        justify-content:space-between;
                         align-items:center;
+                        gap:8px;
                     ">
 
-                        <div style="
-                            display:flex;
-                            align-items:center;
-                            gap:6px;
+                        <span style="
+                            color:{rec_color};
+                            font-size:18px;
                         ">
+                            📈
+                        </span>
 
-                            <span style="
+
+                        <div>
+
+                            <b style="
                                 color:{rec_color};
-                                font-size:16.5px;
+                                font-size:16px;
                             ">
-                                📈
-                            </span>
-
-
-                            <div>
-
-                                <b style="
-                                    color:{rec_color};
-                                    font-size:16px;
-                                    line-height:1;
-                                ">
-                                    {rec}
-                                </b>
-
-                                <div style="
-                                    color:#64748B;
-                                    font-size:11.5px;
-                                ">
-                                    Based on Overall Score
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <div style="
-                            text-align:right;
-                        ">
+                                {rec}
+                            </b>
 
                             <div style="
                                 color:#64748B;
                                 font-size:11.5px;
                             ">
-                                Sector Rank:
+                                Based on Overall Score
                             </div>
 
-                            <b style="
-                                color:{rec_color};
-                                font-size:13px;
-                            ">
-                                {int(ctx.stock_info.get('sector_rank',1))}
-                                / {n_sector}
-                            </b>
-
                         </div>
+
+                    </div>
+
+
+                    <div style="
+                        text-align:right;
+                    ">
+
+                        <div style="
+                            color:#64748B;
+                            font-size:11.5px;
+                        ">
+                            Sector Rank:
+                        </div>
+
+                        <b style="
+                            color:{rec_color};
+                            font-size:13px;
+                        ">
+                            {int(ctx.stock_info.get('sector_rank',1))}
+                            / {n_sector}
+                        </b>
 
                     </div>
 
@@ -1118,7 +1160,9 @@ def render(ctx):
             </div>
 
         </div>
-        """)
+
+    </div>
+    """)
 
 
     # ============================================================
