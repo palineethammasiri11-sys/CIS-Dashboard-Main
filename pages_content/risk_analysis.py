@@ -102,24 +102,130 @@ def render(ctx):
     r1_c1, r1_c2 = st.columns([1.15, 2.85])
 
     with r1_c1:
-        # risk_score นิยามว่า "higher = safer" แต่ arc วาดจากเขียว(ซ้าย)->แดง(ขวา)
-        # ต้อง invert (1 - ...) ไม่งั้นคะแนนสูง (ปลอดภัย) จะดันเข็มไปทางแดงแทนที่จะเป็นเขียว
+        # risk_score นิยามว่า "higher = safer"
+        # arc วาดจากเขียว(ซ้าย) -> แดง(ขวา) จึงต้อง invert
         needle_frac = 1 - min(1.0, risk_score / 100)
 
         st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px; padding:16px; min-height:260px; display:flex; flex-direction:column; justify-content:space-between; text-align:center;">
-    <div style="font-size:14.5px; font-weight:bold; color:#64748B; letter-spacing:0.5px; text-align:left;">RISK SUMMARY</div>
-    <div style="margin:auto 0;"><svg viewBox="0 0 100 55" style="width:140px; height:90px; display:block; margin:0 auto;">
-    <path d="M 12 50 A 38 38 0 0 1 35 15" fill="none" stroke="#10B981" stroke-width="8" stroke-linecap="round" />
-    <path d="M 35 15 A 38 38 0 0 1 65 15" fill="none" stroke="#F59E0B" stroke-width="8" />
-    <path d="M 65 15 A 38 38 0 0 1 88 50" fill="none" stroke="#EF4444" stroke-width="8" stroke-linecap="round" />
-    <line x1="50" y1="50" x2="{50 - 30*np.cos(np.pi*needle_frac):.1f}" y2="{50 - 40*np.sin(np.pi*needle_frac):.1f}" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round"/>
-    <circle cx="50" cy="50" r="4" fill="#0F172A"/></svg></div>
-    <div style="color:{risk_color}; font-size:16.5px; font-weight:bold; margin-top:2px;">{risk_status}</div>
-    <div style="font-size:12px; color:#64748B; margin-top:1px;">Risk Score (higher = safer)</div>
-    <div style="font-size:21px; font-weight:bold; color:#0F172A; line-height:1.1;">{risk_score}<span style="font-size:13.5px; color:#64748B;">/100</span></div></div>
-    <div style="font-size:12.5px; color:#64748B; line-height:1.35;">ระดับความเสี่ยงของ {ctx.selected_ticker} ประเมินจาก Beta, Volatility และ Max Drawdown จริง</div>
-    </div>""",
+            f"""
+            <div style="
+                background-color:#FFFFFF;
+                border:2px solid {risk_color};
+                border-radius:12px;
+                padding:16px;
+                min-height:260px;
+                box-sizing:border-box;
+                display:flex;
+                flex-direction:column;
+                justify-content:space-between;
+                text-align:center;
+            ">
+
+                <div style="
+                    font-size:14.5px;
+                    font-weight:bold;
+                    color:#64748B;
+                    letter-spacing:0.5px;
+                    text-align:left;
+                ">
+                    RISK SUMMARY
+                </div>
+
+                <div style="margin:auto 0;">
+                    <svg
+                        viewBox="0 0 100 55"
+                        style="
+                            width:140px;
+                            height:90px;
+                            display:block;
+                            margin:0 auto;
+                        "
+                    >
+                        <path
+                            d="M 12 50 A 38 38 0 0 1 35 15"
+                            fill="none"
+                            stroke="#10B981"
+                            stroke-width="8"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M 35 15 A 38 38 0 0 1 65 15"
+                            fill="none"
+                            stroke="#F59E0B"
+                            stroke-width="8"
+                        />
+
+                        <path
+                            d="M 65 15 A 38 38 0 0 1 88 50"
+                            fill="none"
+                            stroke="#EF4444"
+                            stroke-width="8"
+                            stroke-linecap="round"
+                        />
+
+                        <line
+                            x1="50"
+                            y1="50"
+                            x2="{50 - 30*np.cos(np.pi*needle_frac):.1f}"
+                            y2="{50 - 40*np.sin(np.pi*needle_frac):.1f}"
+                            stroke="#0F172A"
+                            stroke-width="2.5"
+                            stroke-linecap="round"
+                        />
+
+                        <circle
+                            cx="50"
+                            cy="50"
+                            r="4"
+                            fill="#0F172A"
+                        />
+                    </svg>
+                </div>
+
+                <div style="
+                    color:{risk_color};
+                    font-size:16.5px;
+                    font-weight:bold;
+                    margin-top:2px;
+                ">
+                    {risk_status}
+                </div>
+
+                <div style="
+                    font-size:12px;
+                    color:#64748B;
+                    margin-top:1px;
+                ">
+                    Risk Score (higher = safer)
+                </div>
+
+                <div style="
+                    font-size:21px;
+                    font-weight:bold;
+                    color:#0F172A;
+                    line-height:1.1;
+                ">
+                    {risk_score}
+                    <span style="
+                        font-size:13.5px;
+                        color:#64748B;
+                    ">
+                        /100
+                    </span>
+                </div>
+
+                <div style="
+                    font-size:12.5px;
+                    color:#64748B;
+                    line-height:1.35;
+                    margin-top:8px;
+                ">
+                    ระดับความเสี่ยงของ {ctx.selected_ticker} ประเมินจาก Beta, Volatility และ Max Drawdown จริง
+                </div>
+
+            </div>
+            """,
             unsafe_allow_html=True
         )
 
