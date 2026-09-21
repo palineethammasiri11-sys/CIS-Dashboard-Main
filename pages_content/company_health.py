@@ -2,38 +2,31 @@
 pages_content/company_health.py
 ---------------------------
 หน้า "Company Health" ของ CIS Dashboard
-
-วิธีทดสอบหน้านี้แบบเดี่ยว (ไม่ต้องรอทีมคนอื่น):
-    streamlit run preview_my_page.py
-    (แล้วเลือกโมดูลนี้จาก dropdown ในไฟล์ preview_my_page.py)
-
-ข้อมูลที่ใช้ได้ใน ctx (ดูนิยามเต็มใน common.py -> class PageContext):
-    ctx.selected_ticker, ctx.stock_info, ctx.stock_daily, ctx.fin_stock, ctx.sector_peers,
-    ctx.scores_df, ctx.fin_df, ctx.feat_imp_df, ctx.backtest_df, ctx.risk_hist_df,
-    ctx.health_yearly_df, ctx.fair_value_yearly_df,
-    ctx.current_price, ctx.change_pct, ctx.change_val, ctx.change_color, ctx.change_sign, ctx.arrow_sign
-
-ห้ามแก้ CSS ส่วนกลางหรือ helper function ใน common.py จากไฟล์นี้ — ถ้าจำเป็นต้องแก้ ให้แจ้ง Layout Lead ก่อน
 """
 
 import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
 import datetime
 
-from common import fmt_mb, fmt_ratio, safe, show_chart, render_nav_footer, COMPANY_NAMES, SECTOR_MAP
+from common import (
+    fmt_mb,
+    fmt_ratio,
+    safe,
+    show_chart,
+    render_nav_footer,
+    COMPANY_NAMES,
+    SECTOR_MAP,
+)
 
 
 def render(ctx):
 
     # ============================================================
     # LIGHT THEME - COMPANY HEALTH
-    # เปลี่ยนเฉพาะสีของ Streamlit widgets
-    # ไม่เปลี่ยนข้อมูล / logic / layout
     # ============================================================
+
     st.markdown("""
     <style>
 
@@ -41,7 +34,6 @@ def render(ctx):
        SELECTBOX : เทียบกับคู่แข่ง
        ========================================================= */
 
-    /* กล่องหลัก */
     [data-testid="stSelectbox"] [data-baseweb="select"] {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
@@ -56,7 +48,6 @@ def render(ctx):
         box-shadow: none !important;
     }
 
-    /* ตัวหนังสือในช่อง */
     [data-testid="stSelectbox"] [data-baseweb="select"] div {
         color: #0F172A !important;
     }
@@ -65,7 +56,6 @@ def render(ctx):
         color: #0F172A !important;
     }
 
-    /* ลูกศร */
     [data-testid="stSelectbox"] [data-baseweb="select"] svg {
         fill: #0F172A !important;
         color: #0F172A !important;
@@ -98,19 +88,17 @@ def render(ctx):
     }
 
     /* =========================================================
-       DATE INPUT : ข้อมูล ณ วันที่
+       DATE INPUT
        ========================================================= */
 
     [data-testid="stDateInput"] {
         color: #0F172A !important;
     }
 
-    /* กล่องด้านนอก */
     [data-testid="stDateInput"] > div {
         color: #0F172A !important;
     }
 
-    /* กล่อง input ของ BaseWeb */
     [data-testid="stDateInput"] [data-baseweb="input"] {
         background-color: #FFFFFF !important;
         border: 1px solid #CBD5E1 !important;
@@ -123,7 +111,6 @@ def render(ctx):
         color: #0F172A !important;
     }
 
-    /* input จริง */
     [data-testid="stDateInput"] input {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
@@ -135,13 +122,11 @@ def render(ctx):
         color: #64748B !important;
     }
 
-    /* icon ปฏิทิน */
     [data-testid="stDateInput"] svg {
         fill: #0F172A !important;
         color: #0F172A !important;
     }
 
-    /* label */
     [data-testid="stDateInput"] label {
         color: #0F172A !important;
     }
@@ -151,7 +136,7 @@ def render(ctx):
     }
 
     /* =========================================================
-       DATE PICKER ที่เด้งออกมา
+       DATE PICKER
        ========================================================= */
 
     [data-baseweb="calendar"] {
@@ -173,46 +158,163 @@ def render(ctx):
         background-color: #F1F5F9 !important;
     }
 
+    /* =========================================================
+       TOP 3 CARDS
+       ทำให้ 3 card ต่อกันเป็นกรอบเดียว
+       ========================================================= */
+
+    .health-top-card {
+        background-color: #FFFFFF;
+        min-height: 235px;
+        height: 235px;
+        padding: 16px;
+        box-sizing: border-box;
+    }
+
+    .health-top-card-left {
+        border: 1px solid #E2E8F0;
+        border-right: none;
+        border-radius: 12px 0 0 12px;
+    }
+
+    .health-top-card-middle {
+        border-top: 1px solid #E2E8F0;
+        border-bottom: 1px solid #E2E8F0;
+    }
+
+    .health-top-card-right {
+        border: 1px solid #E2E8F0;
+        border-left: none;
+        border-radius: 0 12px 12px 0;
+    }
+
+    /* ลบ spacing ระหว่าง Streamlit columns ของ top section */
+    .health-top-row [data-testid="column"] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
     </style>
     """, unsafe_allow_html=True)
 
-    # ฟังก์ชันดึงค่างบการเงิน
 
-    # ฟังก์ชันดึงค่างบการเงิน
-    def get_fin_val(target_yr, col_name, default="-", fmt="{:.1f}"):
-        match = ctx.fin_stock[ctx.fin_stock['year'] == target_yr]
+    # ============================================================
+    # FUNCTIONS
+    # ============================================================
+
+    def get_fin_val(
+        target_yr,
+        col_name,
+        default="-",
+        fmt="{:.1f}"
+    ):
+        match = ctx.fin_stock[
+            ctx.fin_stock["year"] == target_yr
+        ]
+
         if not match.empty:
             v = match.iloc[0].get(col_name)
-            if v is not None and str(v).strip() not in ['', '-', 'nan', 'None']:
+
+            if (
+                v is not None
+                and str(v).strip() not in ["", "-", "nan", "None"]
+            ):
                 try:
                     return fmt.format(float(v))
                 except Exception:
                     return str(v)
+
         return str(default)
 
-    roe_23, roe_24, roe_25 = get_fin_val(2023, 'roe'), get_fin_val(2024, 'roe'), get_fin_val(2025, 'roe')
-    roa_23, roa_24, roa_25 = get_fin_val(2023, 'roa'), get_fin_val(2024, 'roa'), get_fin_val(2025, 'roa')
-    npm_23, npm_24, npm_25 = get_fin_val(2023, 'net_margin'), get_fin_val(2024, 'net_margin'), get_fin_val(2025, 'net_margin')
-    de_23, de_24, de_25 = get_fin_val(2023, 'de_ratio', fmt="{:.2f}"), get_fin_val(2024, 'de_ratio', fmt="{:.2f}"), get_fin_val(2025, 'de_ratio', fmt="{:.2f}")
-    cr_23, cr_24, cr_25 = get_fin_val(2023, 'current_ratio', fmt="{:.2f}"), get_fin_val(2024, 'current_ratio', fmt="{:.2f}"), get_fin_val(2025, 'current_ratio', fmt="{:.2f}")
 
-    # --- ส่วนเลือกวันที่: ล็อกเฉพาะช่วงปี 2023 - 2025 ---
+    # ============================================================
+    # FINANCIAL VALUES
+    # ============================================================
+
+    roe_23 = get_fin_val(2023, "roe")
+    roe_24 = get_fin_val(2024, "roe")
+    roe_25 = get_fin_val(2025, "roe")
+
+    roa_23 = get_fin_val(2023, "roa")
+    roa_24 = get_fin_val(2024, "roa")
+    roa_25 = get_fin_val(2025, "roa")
+
+    npm_23 = get_fin_val(2023, "net_margin")
+    npm_24 = get_fin_val(2024, "net_margin")
+    npm_25 = get_fin_val(2025, "net_margin")
+
+    de_23 = get_fin_val(
+        2023,
+        "de_ratio",
+        fmt="{:.2f}"
+    )
+
+    de_24 = get_fin_val(
+        2024,
+        "de_ratio",
+        fmt="{:.2f}"
+    )
+
+    de_25 = get_fin_val(
+        2025,
+        "de_ratio",
+        fmt="{:.2f}"
+    )
+
+    cr_23 = get_fin_val(
+        2023,
+        "current_ratio",
+        fmt="{:.2f}"
+    )
+
+    cr_24 = get_fin_val(
+        2024,
+        "current_ratio",
+        fmt="{:.2f}"
+    )
+
+    cr_25 = get_fin_val(
+        2025,
+        "current_ratio",
+        fmt="{:.2f}"
+    )
+
+
+    # ============================================================
+    # DATE
+    # ============================================================
+
     min_limit = datetime.date(2023, 1, 1)
     max_limit = datetime.date(2025, 12, 31)
 
-    # กำหนดค่า default เริ่มต้นจากข้อมูลจริง (ถ้าเกินช่วงให้ fallback เป็น 2025-12-30)
     try:
-        raw_date = pd.to_datetime(ctx.stock_info.get('latest_date', '2025-12-30')).date()
-        default_date = max(min_limit, min(max_limit, raw_date))
+        raw_date = pd.to_datetime(
+            ctx.stock_info.get(
+                "latest_date",
+                "2025-12-30"
+            )
+        ).date()
+
+        default_date = max(
+            min_limit,
+            min(max_limit, raw_date)
+        )
+
     except Exception:
         default_date = datetime.date(2025, 12, 30)
 
-    # วาง Header และตัวเลือกวันที่ไว้มุมขวาบนอย่างสวยงาม
+
+    # ============================================================
+    # HEADER
+    # ============================================================
+
     col_title, col_date = st.columns([3, 1.2])
 
     with col_title:
+
         st.html("""
         <div style="margin-bottom:10px;">
+
             <h2 style="
                 margin:0;
                 font-size:23px;
@@ -230,10 +332,13 @@ def render(ctx):
             ">
                 ประเมินสุขภาพทางการเงินของบริษัทจากมิติสำคัญตามงบการเงินจริง
             </div>
+
         </div>
         """)
 
+
     with col_date:
+
         selected_date = st.date_input(
             "ข้อมูล ณ วันที่ (2023-2025):",
             value=default_date,
@@ -242,35 +347,91 @@ def render(ctx):
             key="health_data_as_of"
         )
 
-        display_date_str = selected_date.strftime("%Y-%m-%d")
+        display_date_str = selected_date.strftime(
+            "%Y-%m-%d"
+        )
 
-        # อัปเดตลง context เพื่อให้จุดอื่นๆ ที่อ้างอิง stock_info นำไปใช้ต่อได้ด้วย
-        ctx.stock_info['latest_date'] = display_date_str
+        ctx.stock_info["latest_date"] = display_date_str
 
-    r1_c1, r1_c2, r1_c3 = st.columns([1.1, 1.4, 1.5])
-
-    h_score = int(round(safe(ctx.stock_info.get('health_score'), 75)))
-    h_badge = "EXCELLENT" if h_score >= 75 else ("MODERATE" if h_score >= 50 else "WEAK")
-    h_color = "#10B981" if h_score >= 75 else ("#F59E0B" if h_score >= 50 else "#EF4444")
-    h_stars = min(5, max(1, round(h_score / 20)))
 
     # ============================================================
-    # SCORE CARD
+    # HEALTH SCORE
+    # ============================================================
+
+    h_score = int(
+        round(
+            safe(
+                ctx.stock_info.get(
+                    "health_score"
+                ),
+                75
+            )
+        )
+    )
+
+    h_badge = (
+        "EXCELLENT"
+        if h_score >= 75
+        else (
+            "MODERATE"
+            if h_score >= 50
+            else "WEAK"
+        )
+    )
+
+    h_color = (
+        "#10B981"
+        if h_score >= 75
+        else (
+            "#F59E0B"
+            if h_score >= 50
+            else "#EF4444"
+        )
+    )
+
+    h_stars = min(
+        5,
+        max(
+            1,
+            round(h_score / 20)
+        )
+    )
+
+
+    # ============================================================
+    # TOP 3 CARDS
+    # ============================================================
+    #
+    # เดิม:
+    #   แต่ละ column มี border ของตัวเอง
+    #
+    # ใหม่:
+    #   LEFT   = border ซ้าย + บน + ล่าง
+    #   MIDDLE = border บน + ล่าง
+    #   RIGHT  = border ขวา + บน + ล่าง
+    #
+    # ทำให้มองเป็นกรอบเดียวกัน
+    # ============================================================
+
+    st.markdown(
+        '<div class="health-top-row">',
+        unsafe_allow_html=True
+    )
+
+    r1_c1, r1_c2, r1_c3 = st.columns(
+        [1.1, 1.4, 1.5],
+        gap="small"
+    )
+
+
+    # ============================================================
+    # 01 COMPANY HEALTH SCORE
     # ============================================================
 
     with r1_c1:
 
         st.html(f"""
-        <div style="
-            background-color:#FFFFFF;
-            border:1px solid #E2E8F0;
-            border-radius:12px;
-            padding:16px;
-            min-height:235px;
-            display:flex;
-            flex-direction:column;
-            justify-content:space-between;
-        ">
+        <div class="health-top-card health-top-card-left">
 
             <div style="
                 font-size:14.5px;
@@ -286,7 +447,7 @@ def render(ctx):
                 display:flex;
                 align-items:center;
                 gap:16px;
-                margin:auto 0;
+                margin-top:34px;
             ">
 
                 <div style="
@@ -361,7 +522,7 @@ def render(ctx):
                         letter-spacing:2px;
                         margin-top:6px;
                     ">
-                        {'★'*h_stars}{'☆'*(5-h_stars)}
+                        {"★" * h_stars}{"☆" * (5 - h_stars)}
                     </div>
 
                 </div>
@@ -373,55 +534,44 @@ def render(ctx):
 
 
     # ============================================================
-    # EXPLAINABLE FINANCIAL SUMMARY
+    # 02 EXPLAINABLE FINANCIAL SUMMARY
     # ============================================================
 
     with r1_c2:
 
         st.html(f"""
-        <div style="
-            background-color:#FFFFFF;
-            border:1px solid #E2E8F0;
-            border-radius:12px;
-            padding:16px;
-            min-height:235px;
-            display:flex;
-            flex-direction:column;
-            justify-content:space-between;
-        ">
+        <div class="health-top-card health-top-card-middle">
 
-            <div>
-
-                <div style="
-                    font-size:14.5px;
-                    font-weight:bold;
-                    color:#64748B;
-                    letter-spacing:0.5px;
-                    margin-bottom:8px;
-                ">
-                    EXPLAINABLE FINANCIAL SUMMARY ({ctx.selected_ticker})
-                </div>
-
-
-                <p style="
-                    font-size:15px;
-                    color:#475569;
-                    line-height:1.6;
-                    margin:0;
-                ">
-                    ผลการวิเคราะห์สุขภาพการเงินของ
-                    <b>{ctx.selected_ticker}</b>
-                    พบว่ามีอัตราส่วนผลตอบแทนต่อส่วนของผู้ถือหุ้น (ROE)
-                    ล่าสุดอยู่ที่ {roe_25}% และความสามารถในการทำกำไรสุทธิ
-                    (Net Margin) อยู่ที่ {npm_25}% ในขณะที่ภาระหนี้สินต่อทุน
-                    (D/E Ratio) อยู่ที่ {de_25} เท่า และสภาพคล่องหมุนเวียน
-                    (Current Ratio) อยู่ที่ {cr_25} เท่า
-                </p>
-
+            <div style="
+                font-size:14.5px;
+                font-weight:bold;
+                color:#64748B;
+                letter-spacing:0.5px;
+                margin-bottom:8px;
+            ">
+                EXPLAINABLE FINANCIAL SUMMARY ({ctx.selected_ticker})
             </div>
 
 
-            <div>
+            <p style="
+                font-size:15px;
+                color:#475569;
+                line-height:1.6;
+                margin:0;
+            ">
+                ผลการวิเคราะห์สุขภาพการเงินของ
+                <b>{ctx.selected_ticker}</b>
+                พบว่ามีอัตราส่วนผลตอบแทนต่อส่วนของผู้ถือหุ้น (ROE)
+                ล่าสุดอยู่ที่ {roe_25}% และความสามารถในการทำกำไรสุทธิ
+                (Net Margin) อยู่ที่ {npm_25}% ในขณะที่ภาระหนี้สินต่อทุน
+                (D/E Ratio) อยู่ที่ {de_25} เท่า และสภาพคล่องหมุนเวียน
+                (Current Ratio) อยู่ที่ {cr_25} เท่า
+            </p>
+
+
+            <div style="
+                margin-top:22px;
+            ">
 
                 <span style="
                     display:inline-flex;
@@ -435,7 +585,7 @@ def render(ctx):
                     border-radius:6px;
                 ">
                     Financial Health Benchmark:
-                    {ctx.stock_info.get('sector','-')}
+                    {ctx.stock_info.get("sector", "-")}
                 </span>
 
             </div>
@@ -445,24 +595,20 @@ def render(ctx):
 
 
     # ============================================================
-    # HEALTH SCORE TREND
+    # 03 HEALTH SCORE TREND
     # ============================================================
 
     with r1_c3:
 
         st.html("""
-        <div style="
-            background-color:#FFFFFF;
-            border:1px solid #E2E8F0;
-            border-radius:12px 12px 0 0;
-            padding:12px 16px 0 16px;
-        ">
+        <div class="health-top-card health-top-card-right">
 
             <div style="
                 font-size:14.5px;
                 font-weight:bold;
                 color:#64748B;
                 letter-spacing:0.5px;
+                margin-bottom:2px;
             ">
                 COMPANY HEALTH SCORE TREND (Actual, 2023-2025)
             </div>
@@ -470,43 +616,61 @@ def render(ctx):
         </div>
         """)
 
-        hy = ctx.health_yearly_df[
-            ctx.health_yearly_df['ticker'] == ctx.selected_ticker
-        ].sort_values('year') if not ctx.health_yearly_df.empty else pd.DataFrame()
+        hy = (
+            ctx.health_yearly_df[
+                ctx.health_yearly_df["ticker"]
+                == ctx.selected_ticker
+            ].sort_values("year")
+            if not ctx.health_yearly_df.empty
+            else pd.DataFrame()
+        )
 
-        trend_x = hy['year'].astype(int).tolist() if not hy.empty else [2023, 2024, 2025]
-        trend_y = hy['health_score'].tolist() if not hy.empty else [h_score, h_score, h_score]
+        trend_x = (
+            hy["year"].astype(int).tolist()
+            if not hy.empty
+            else [2023, 2024, 2025]
+        )
+
+        trend_y = (
+            hy["health_score"].tolist()
+            if not hy.empty
+            else [h_score, h_score, h_score]
+        )
+
 
         fig_health_trend = go.Figure()
+
 
         fig_health_trend.add_trace(
             go.Scatter(
                 x=trend_x,
                 y=trend_y,
-                mode='lines+markers+text',
+                mode="lines+markers+text",
                 text=trend_y,
-                textposition='top center',
+                textposition="top center",
                 textfont=dict(
                     size=12.5,
-                    color='#0F172A'
+                    color="#0F172A"
                 ),
                 line=dict(
-                    color='#10B981',
+                    color="#10B981",
                     width=2
                 ),
                 marker=dict(
                     size=10,
-                    color='#10B981',
+                    color="#10B981",
                     line=dict(
                         width=1.5,
-                        color='#FFFFFF'
+                        color="#FFFFFF"
                     )
                 )
             )
         )
 
+
         fig_health_trend.update_layout(
             height=168,
+
             margin=dict(
                 l=25,
                 r=15,
@@ -519,7 +683,13 @@ def render(ctx):
 
             yaxis=dict(
                 range=[0, 110],
-                tickvals=[0, 25, 50, 75, 100],
+                tickvals=[
+                    0,
+                    25,
+                    50,
+                    75,
+                    100
+                ],
                 tickfont=dict(
                     size=11.5,
                     color="#64748B"
@@ -541,11 +711,18 @@ def render(ctx):
             showlegend=False
         )
 
+
         show_chart(
             fig_health_trend,
             key="health_trend",
             expand_height=650
         )
+
+
+    st.markdown(
+        "</div>",
+        unsafe_allow_html=True
+    )
 
 
     # ============================================================
@@ -555,6 +732,7 @@ def render(ctx):
     st.html("""
     <div style="margin-top:22px;"></div>
     """)
+
 
     st.html("""
     <div style="
@@ -572,7 +750,8 @@ def render(ctx):
             font-weight:normal;
             margin-left:6px;
         ">
-            ผลการประเมินสุขภาพทางการเงินในแต่ละมิติ (คำนวณจากอัตราส่วนจริง)
+            ผลการประเมินสุขภาพทางการเงินในแต่ละมิติ
+            (คำนวณจากอัตราส่วนจริง)
         </span>
     </div>
     """)
@@ -584,29 +763,36 @@ def render(ctx):
         else pd.Series(dtype=float)
     )
 
+
     ocf_ni = safe(
-        latest_fin_row.get('ocf_to_ni'),
+        latest_fin_row.get("ocf_to_ni"),
         1.0
     )
 
+
     int_cov = safe(
-        latest_fin_row.get('interest_coverage'),
+        latest_fin_row.get("interest_coverage"),
         5.0
     )
 
+
     rev_growth = safe(
-        ctx.stock_info.get('revenue_growth_yoy'),
+        ctx.stock_info.get("revenue_growth_yoy"),
         0.0
     )
+
 
     dim_profit = int(
         round(
             safe(
-                ctx.stock_info.get('s_profitability'),
+                ctx.stock_info.get(
+                    "s_profitability"
+                ),
                 50
             )
         )
     )
+
 
     dim_growth = int(
         round(
@@ -618,23 +804,30 @@ def render(ctx):
         )
     )
 
+
     dim_stability = int(
         round(
             safe(
-                ctx.stock_info.get('s_debt'),
+                ctx.stock_info.get(
+                    "s_debt"
+                ),
                 50
             )
         )
     )
 
+
     dim_liquidity = int(
         round(
             safe(
-                ctx.stock_info.get('s_liquidity'),
+                ctx.stock_info.get(
+                    "s_liquidity"
+                ),
                 50
             )
         )
     )
+
 
     dim_cashflow = int(
         round(
@@ -646,11 +839,14 @@ def render(ctx):
         )
     )
 
+
     dim_efficiency = int(
         round(
             np.clip(
                 safe(
-                    ctx.stock_info.get('roa'),
+                    ctx.stock_info.get(
+                        "roa"
+                    ),
                     5
                 ) * 7,
                 0,
@@ -658,6 +854,7 @@ def render(ctx):
             )
         )
     )
+
 
     dim_earnings = int(
         round(
@@ -671,6 +868,7 @@ def render(ctx):
 
 
     def label_for(score):
+
         if score >= 75:
             return "EXCELLENT"
 
@@ -684,13 +882,62 @@ def render(ctx):
 
 
     dims = [
-        ("1", "📊", "PROFITABILITY", "30%", dim_profit, "#10B981"),
-        ("2", "📈", "GROWTH", "15%", dim_growth, "#3B82F6"),
-        ("3", "🛡️", "FIN. STABILITY", "20%", dim_stability, "#EAB308"),
-        ("4", "💧", "LIQUIDITY", "10%", dim_liquidity, "#06B6D4"),
-        ("5", "💵", "CASH FLOW", "10%", dim_cashflow, "#8B5CF6"),
-        ("6", "⚙️", "EFFICIENCY", "10%", dim_efficiency, "#F97316"),
-        ("7", "🎖️", "EARNINGS Q.", "5%", dim_earnings, "#10B981"),
+        (
+            "1",
+            "📊",
+            "PROFITABILITY",
+            "30%",
+            dim_profit,
+            "#10B981"
+        ),
+        (
+            "2",
+            "📈",
+            "GROWTH",
+            "15%",
+            dim_growth,
+            "#3B82F6"
+        ),
+        (
+            "3",
+            "🛡️",
+            "FIN. STABILITY",
+            "20%",
+            dim_stability,
+            "#EAB308"
+        ),
+        (
+            "4",
+            "💧",
+            "LIQUIDITY",
+            "10%",
+            dim_liquidity,
+            "#06B6D4"
+        ),
+        (
+            "5",
+            "💵",
+            "CASH FLOW",
+            "10%",
+            dim_cashflow,
+            "#8B5CF6"
+        ),
+        (
+            "6",
+            "⚙️",
+            "EFFICIENCY",
+            "10%",
+            dim_efficiency,
+            "#F97316"
+        ),
+        (
+            "7",
+            "🎖️",
+            "EARNINGS Q.",
+            "5%",
+            dim_earnings,
+            "#10B981"
+        ),
     ]
 
 
@@ -816,7 +1063,10 @@ def render(ctx):
     <div style="margin-top:22px;"></div>
     """)
 
-    r3_c1, r3_c2, r3_c3 = st.columns([1.5, 1.25, 1.25])
+
+    r3_c1, r3_c2, r3_c3 = st.columns(
+        [1.5, 1.25, 1.25]
+    )
 
 
     # ============================================================
@@ -864,9 +1114,7 @@ def render(ctx):
                         font-size:13px;
                     ">
 
-                        <th style="
-                            padding:4px 0;
-                        ">
+                        <th style="padding:4px 0;">
                             Metric
                         </th>
 
@@ -1009,7 +1257,8 @@ def render(ctx):
                 color:#64748B;
                 margin-top:6px;
             ">
-                * ข้อมูลทางการเงินดึงตรงจาก stock_financials.csv สำหรับปี 2023-2025 จริงทุกค่า
+                * ข้อมูลทางการเงินดึงตรงจาก stock_financials.csv
+                สำหรับปี 2023-2025 จริงทุกค่า
             </div>
 
         </div>
@@ -1022,52 +1271,137 @@ def render(ctx):
 
     with r3_c2:
 
-        strengths, watch = [], []
+        strengths = []
+        watch = []
 
-        if safe(roe_25 if roe_25 != '-' else 0) > 15:
+
+        if safe(
+            roe_25 if roe_25 != "-" else 0
+        ) > 15:
+
             strengths.append(
                 f"ROE ล่าสุดอยู่ในเกณฑ์ดีที่ {roe_25}%"
             )
 
-        if safe(cr_25 if cr_25 != '-' else 0) >= 1.0:
+
+        if safe(
+            cr_25 if cr_25 != "-" else 0
+        ) >= 1.0:
+
             strengths.append(
-                f"สภาพคล่อง Current Ratio อยู่ที่ {cr_25} เท่า เพียงพอต่อภาระหนี้ระยะสั้น"
+                f"สภาพคล่อง Current Ratio อยู่ที่ "
+                f"{cr_25} เท่า เพียงพอต่อภาระหนี้ระยะสั้น"
             )
 
-        if safe(npm_25 if npm_25 != '-' else 0) > 10:
+
+        if safe(
+            npm_25 if npm_25 != "-" else 0
+        ) > 10:
+
             strengths.append(
-                f"Net Margin ระดับ {npm_25}% สะท้อนความสามารถทำกำไรที่ดี"
+                f"Net Margin ระดับ {npm_25}% "
+                f"สะท้อนความสามารถทำกำไรที่ดี"
             )
 
-        if safe(de_25 if de_25 != '-' else 0) < 1.5:
+
+        if safe(
+            de_25 if de_25 != "-" else 0
+        ) < 1.5:
+
             strengths.append(
-                f"โครงสร้างเงินทุนมี D/E เพียง {de_25} เท่า ความเสี่ยงหนี้สินต่ำ"
+                f"โครงสร้างเงินทุนมี D/E เพียง "
+                f"{de_25} เท่า ความเสี่ยงหนี้สินต่ำ"
             )
+
 
         if not strengths:
+
             strengths.append(
                 "ผลประกอบการโดยรวมยังอยู่ระหว่างการฟื้นตัว"
             )
 
-        if safe(de_25 if de_25 != '-' else 0) > 1.5:
+
+        if safe(
+            de_25 if de_25 != "-" else 0
+        ) > 1.5:
+
             watch.append(
-                f"ภาระหนี้สินต่อทุนค่อนข้างสูงที่ {de_25} เท่า ควรติดตามใกล้ชิด"
+                f"ภาระหนี้สินต่อทุนค่อนข้างสูงที่ "
+                f"{de_25} เท่า ควรติดตามใกล้ชิด"
             )
 
-        if safe(cr_25 if cr_25 != '-' else 0) < 1.0:
+
+        if safe(
+            cr_25 if cr_25 != "-" else 0
+        ) < 1.0:
+
             watch.append(
-                f"Current Ratio ต่ำกว่า 1 เท่า ({cr_25}) สภาพคล่องระยะสั้นควรเฝ้าระวัง"
+                f"Current Ratio ต่ำกว่า 1 เท่า "
+                f"({cr_25}) สภาพคล่องระยะสั้นควรเฝ้าระวัง"
             )
+
 
         if rev_growth < 0:
+
             watch.append(
-                f"รายได้หดตัว {rev_growth:.1f}% YoY ควรติดตามแนวโน้มปีถัดไป"
+                f"รายได้หดตัว {rev_growth:.1f}% YoY "
+                f"ควรติดตามแนวโน้มปีถัดไป"
             )
 
+
         if not watch:
+
             watch.append(
                 "ยังไม่พบสัญญาณความเสี่ยงเชิงโครงสร้างที่ชัดเจนในงบล่าสุด"
             )
+
+
+        strengths_html = "".join([
+            f"""
+            <div style="
+                display:flex;
+                gap:6px;
+                margin-bottom:3px;
+            ">
+
+                <span style="
+                    color:#10B981;
+                ">
+                    ✔
+                </span>
+
+                <span>
+                    {s}
+                </span>
+
+            </div>
+            """
+            for s in strengths
+        ])
+
+
+        watch_html = "".join([
+            f"""
+            <div style="
+                display:flex;
+                gap:6px;
+                margin-bottom:3px;
+            ">
+
+                <span style="
+                    color:#F59E0B;
+                ">
+                    ⚠️
+                </span>
+
+                <span>
+                    {w}
+                </span>
+
+            </div>
+            """
+            for w in watch
+        ])
 
 
         st.html(f"""
@@ -1096,30 +1430,7 @@ def render(ctx):
                 line-height:1.45;
                 margin-bottom:10px;
             ">
-
-                {
-                    ''.join([
-                        f'''
-                        <div style="
-                            display:flex;
-                            gap:6px;
-                            margin-bottom:3px;
-                        ">
-                            <span style="
-                                color:#10B981;
-                            ">
-                                ✔
-                            </span>
-
-                            <span>
-                                {s}
-                            </span>
-                        </div>
-                        '''
-                        for s in strengths
-                    ])
-                }
-
+                {strengths_html}
             </div>
 
 
@@ -1140,30 +1451,7 @@ def render(ctx):
                 color:#475569;
                 line-height:1.45;
             ">
-
-                {
-                    ''.join([
-                        f'''
-                        <div style="
-                            display:flex;
-                            gap:6px;
-                            margin-bottom:3px;
-                        ">
-                            <span style="
-                                color:#F59E0B;
-                            ">
-                                ⚠️
-                            </span>
-
-                            <span>
-                                {w}
-                            </span>
-                        </div>
-                        '''
-                        for w in watch
-                    ])
-                }
-
+                {watch_html}
             </div>
 
         </div>
@@ -1176,15 +1464,19 @@ def render(ctx):
 
     with r3_c3:
 
-        # เลือกคู่แข่งในกลุ่มเดียวกัน (ไม่รวมตัวเอง)
-        peer_options = [
-            t
-            for t in ctx.sector_peers['ticker'].tolist()
-            if t != ctx.selected_ticker
-        ] if not ctx.sector_peers.empty else []
+        peer_options = (
+            [
+                t
+                for t in ctx.sector_peers["ticker"].tolist()
+                if t != ctx.selected_ticker
+            ]
+            if not ctx.sector_peers.empty
+            else []
+        )
+
 
         latest_year = (
-            ctx.fin_stock['year'].max()
+            ctx.fin_stock["year"].max()
             if not ctx.fin_stock.empty
             else 2025
         )
@@ -1233,18 +1525,21 @@ def render(ctx):
 
             comp_fin_all = (
                 ctx.fin_df[
-                    ctx.fin_df['ticker'] == competitor
+                    ctx.fin_df["ticker"] == competitor
                 ]
-                .sort_values('year')
+                .sort_values("year")
             )
 
 
             comp_fin_row = comp_fin_all[
-                comp_fin_all['year'] == latest_year
+                comp_fin_all["year"] == latest_year
             ]
 
 
-            if comp_fin_row.empty and not comp_fin_all.empty:
+            if (
+                comp_fin_row.empty
+                and not comp_fin_all.empty
+            ):
                 comp_fin_row = comp_fin_all.iloc[[-1]]
 
 
@@ -1255,7 +1550,9 @@ def render(ctx):
 
                 return (
                     safe(
-                        comp_fin_row.iloc[0].get(col),
+                        comp_fin_row.iloc[0].get(
+                            col
+                        ),
                         default
                     )
                     if not comp_fin_row.empty
@@ -1263,29 +1560,38 @@ def render(ctx):
                 )
 
 
-            comp_roe = comp_val('roe')
-            comp_roa = comp_val('roa')
-            comp_npm = comp_val('net_margin')
-            comp_de = comp_val('de_ratio')
-            comp_cr = comp_val('current_ratio')
+            comp_roe = comp_val("roe")
+            comp_roa = comp_val("roa")
+            comp_npm = comp_val("net_margin")
+            comp_de = comp_val("de_ratio")
+            comp_cr = comp_val("current_ratio")
+
 
             comp_year_used = (
                 int(
-                    comp_fin_row.iloc[0]['year']
+                    comp_fin_row.iloc[0]["year"]
                 )
                 if not comp_fin_row.empty
                 else None
             )
 
+
             target_label = competitor
+
 
             sub_label = (
                 f"เทียบกับคู่แข่งจริง &bull; "
-                f"{ctx.stock_info.get('sector','-')}"
+                f"{ctx.stock_info.get('sector', '-')}"
             )
 
-            if comp_year_used and comp_year_used != latest_year:
-                sub_label += f" (ปี {comp_year_used})"
+
+            if (
+                comp_year_used
+                and comp_year_used != latest_year
+            ):
+                sub_label += (
+                    f" (ปี {comp_year_used})"
+                )
 
 
         else:
@@ -1297,61 +1603,70 @@ def render(ctx):
                 f"เทียบค่าเฉลี่ยตลาดรวม (ปี {latest_year})"
             )
 
+
             market_latest = (
                 ctx.fin_df[
-                    ctx.fin_df['year'] == latest_year
+                    ctx.fin_df["year"] == latest_year
                 ]
                 if not ctx.fin_df.empty
                 else pd.DataFrame()
             )
 
 
-            if market_latest.empty and not ctx.fin_df.empty:
+            if (
+                market_latest.empty
+                and not ctx.fin_df.empty
+            ):
                 market_latest = ctx.fin_df
 
 
             comp_roe = safe(
                 pd.to_numeric(
-                    market_latest['roe'],
-                    errors='coerce'
+                    market_latest["roe"],
+                    errors="coerce"
                 ).median(),
                 0.0
             )
+
 
             comp_roa = safe(
                 pd.to_numeric(
-                    market_latest['roa'],
-                    errors='coerce'
+                    market_latest["roa"],
+                    errors="coerce"
                 ).median(),
                 0.0
             )
+
 
             comp_npm = safe(
                 pd.to_numeric(
-                    market_latest['net_margin'],
-                    errors='coerce'
+                    market_latest["net_margin"],
+                    errors="coerce"
                 ).median(),
                 0.0
             )
+
 
             comp_de = safe(
                 pd.to_numeric(
-                    market_latest['de_ratio'],
-                    errors='coerce'
+                    market_latest["de_ratio"],
+                    errors="coerce"
                 ).median(),
                 0.0
             )
 
+
             comp_cr = safe(
                 pd.to_numeric(
-                    market_latest['current_ratio'],
-                    errors='coerce'
+                    market_latest["current_ratio"],
+                    errors="coerce"
                 ).median(),
                 0.0
             )
 
 
         rows_cmp = [
+
             (
                 "ROE (%)",
                 roe_25,
@@ -1359,7 +1674,7 @@ def render(ctx):
                 pct_bar(
                     safe(
                         roe_25
-                        if roe_25 != '-'
+                        if roe_25 != "-"
                         else 0
                     ),
                     comp_roe
@@ -1373,7 +1688,7 @@ def render(ctx):
                 pct_bar(
                     safe(
                         roa_25
-                        if roa_25 != '-'
+                        if roa_25 != "-"
                         else 0
                     ),
                     comp_roa
@@ -1387,7 +1702,7 @@ def render(ctx):
                 pct_bar(
                     safe(
                         npm_25
-                        if npm_25 != '-'
+                        if npm_25 != "-"
                         else 0
                     ),
                     comp_npm
@@ -1401,7 +1716,7 @@ def render(ctx):
                 pct_bar(
                     safe(
                         de_25
-                        if de_25 != '-'
+                        if de_25 != "-"
                         else 0
                     ),
                     comp_de,
@@ -1416,100 +1731,13 @@ def render(ctx):
                 pct_bar(
                     safe(
                         cr_25
-                        if cr_25 != '-'
+                        if cr_25 != "-"
                         else 0
                     ),
                     comp_cr
                 )
-            )
+            ),
         ]
-
-
-        rows_html = "".join([
-            f"""
-            <tr style="
-                border-bottom:1px solid #E2E8F0;
-            ">
-
-                <td style="
-                    padding:5px 2px;
-                    white-space:nowrap;
-                    font-size:12px;
-                    color:#475569;
-                ">
-                    {name}
-                </td>
-
-
-                <td style="
-                    padding:5px 2px;
-                    font-weight:bold;
-                    color:#0F172A;
-                    white-space:nowrap;
-                    font-size:12px;
-                ">
-                    {v}
-                </td>
-
-
-                <td style="
-                    padding:5px 2px;
-                    color:#64748B;
-                    white-space:nowrap;
-                    font-size:12px;
-                ">
-                    {cv}
-                </td>
-
-
-                <td style="
-                    padding:5px 2px;
-                ">
-
-                    <div style="
-                        display:flex;
-                        align-items:center;
-                        gap:5px;
-                        white-space:nowrap;
-                    ">
-
-                        <div style="
-                            background:#E2E8F0;
-                            width:45px;
-                            height:7px;
-                            border-radius:4px;
-                            overflow:hidden;
-                            flex-shrink:0;
-                        ">
-
-                            <div style="
-                                background:#10B981;
-                                width:{pct}%;
-                                height:100%;
-                            "></div>
-
-                        </div>
-
-
-                        <span style="
-                            font-size:11px;
-                            color:#10B981;
-                            font-weight:bold;
-                        ">
-                            {pct}%
-                        </span>
-
-                    </div>
-
-                </td>
-
-            </tr>
-            """
-            for name, v, cv, pct in rows_cmp
-        ])
-
-
-        st.caption(sub_label)
 
 
         comparison_df = pd.DataFrame(
@@ -1521,6 +1749,9 @@ def render(ctx):
                 f"vs {target_label}"
             ]
         )
+
+
+        st.caption(sub_label)
 
 
         st.dataframe(
