@@ -247,7 +247,11 @@ def render(ctx):
         # อัปเดตลง context เพื่อให้จุดอื่นๆ ที่อ้างอิง stock_info นำไปใช้ต่อได้ด้วย
         ctx.stock_info['latest_date'] = display_date_str
 
-    r1_c1, r1_c2, r1_c3 = st.columns([1.1, 1.4, 1.5])
+    # ============================================================
+    # TOP ROW
+    # ============================================================
+
+    r1_c1, r1_c2, r1_c3 = st.columns([1.25, 1.4, 1.5])
 
     h_score = int(round(safe(ctx.stock_info.get('health_score'), 75)))
     h_badge = "EXCELLENT" if h_score >= 75 else ("MODERATE" if h_score >= 50 else "WEAK")
@@ -255,43 +259,74 @@ def render(ctx):
     h_stars = min(5, max(1, round(h_score / 20)))
 
     # ============================================================
-    # SCORE CARD
+    # SCORE CARD — MAIN OVERALL HEALTH SCORE
     # ============================================================
 
     with r1_c1:
 
         st.html(f"""
         <div style="
-            background-color:#FFFFFF;
-            border:1px solid #E2E8F0;
-            border-radius:12px;
-            padding:16px;
-            min-height:235px;
+            background:linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%);
+            border:2px solid {h_color};
+            border-radius:16px;
+            padding:18px;
+            min-height:255px;
             display:flex;
             flex-direction:column;
             justify-content:space-between;
+            box-shadow:
+                0 8px 24px rgba(15,23,42,0.10),
+                0 0 0 3px rgba(16,185,129,0.06);
+            position:relative;
+            overflow:hidden;
         ">
 
+            <!-- TOP ACCENT -->
             <div style="
-                font-size:14.5px;
-                font-weight:bold;
-                color:#64748B;
-                letter-spacing:0.5px;
+                position:absolute;
+                top:0;
+                left:0;
+                right:0;
+                height:5px;
+                background:{h_color};
+            "></div>
+
+
+            <!-- TITLE -->
+            <div style="
+                font-size:15px;
+                font-weight:800;
+                color:#0F172A;
+                letter-spacing:0.7px;
+                margin-bottom:4px;
             ">
-                COMPANY HEALTH SCORE
+                OVERALL COMPANY HEALTH SCORE
             </div>
 
 
             <div style="
+                font-size:12.5px;
+                color:#64748B;
+                margin-bottom:4px;
+            ">
+                Financial Health • 2023–2025
+            </div>
+
+
+            <!-- SCORE AREA -->
+            <div style="
                 display:flex;
                 align-items:center;
-                gap:16px;
+                justify-content:center;
+                gap:18px;
                 margin:auto 0;
+                padding:8px 0;
             ">
 
+                <!-- BIG SCORE RING -->
                 <div style="
-                    width:92px;
-                    height:92px;
+                    width:118px;
+                    height:118px;
                     border-radius:50%;
                     background:conic-gradient(
                         {h_color} 0% {h_score}%,
@@ -301,22 +336,26 @@ def render(ctx):
                     align-items:center;
                     justify-content:center;
                     flex-shrink:0;
+                    box-shadow:
+                        0 4px 12px rgba(15,23,42,0.12);
                 ">
 
                     <div style="
-                        width:76px;
-                        height:76px;
+                        width:96px;
+                        height:96px;
                         border-radius:50%;
-                        background-color:#FFFFFF;
+                        background:#FFFFFF;
                         display:flex;
                         flex-direction:column;
                         align-items:center;
                         justify-content:center;
+                        box-shadow:
+                            inset 0 0 0 1px #E2E8F0;
                     ">
 
                         <span style="
-                            font-size:23px;
-                            font-weight:bold;
+                            font-size:32px;
+                            font-weight:900;
                             color:#0F172A;
                             line-height:1;
                         ">
@@ -325,9 +364,11 @@ def render(ctx):
 
                         <span style="
                             font-size:13px;
+                            font-weight:600;
                             color:#64748B;
+                            margin-top:3px;
                         ">
-                            /100
+                            / 100
                         </span>
 
                     </div>
@@ -335,36 +376,74 @@ def render(ctx):
                 </div>
 
 
-                <div>
+                <!-- SCORE STATUS -->
+                <div style="
+                    flex:1;
+                    min-width:0;
+                ">
 
                     <div style="
                         color:{h_color};
-                        font-size:18.5px;
-                        font-weight:bold;
-                        line-height:1.2;
+                        font-size:23px;
+                        font-weight:900;
+                        line-height:1.15;
+                        margin-bottom:6px;
                     ">
                         {h_badge}
                     </div>
 
+
                     <div style="
-                        font-size:14.5px;
+                        font-size:13.5px;
                         color:#475569;
-                        line-height:1.4;
-                        margin-top:4px;
+                        line-height:1.45;
                     ">
-                        ประเมินจากอัตราส่วนทางการเงินจริงปี 2023-2025
+                        ประเมินจากอัตราส่วน
+                        <br>
+                        ทางการเงินจริง
+                        <br>
+                        ปี 2023–2025
                     </div>
+
 
                     <div style="
                         color:{h_color};
-                        font-size:15px;
-                        letter-spacing:2px;
-                        margin-top:6px;
+                        font-size:18px;
+                        letter-spacing:3px;
+                        margin-top:8px;
+                        line-height:1;
                     ">
                         {'★'*h_stars}{'☆'*(5-h_stars)}
                     </div>
 
                 </div>
+
+            </div>
+
+
+            <!-- BOTTOM SCORE LABEL -->
+            <div style="
+                border-top:1px solid #E2E8F0;
+                padding-top:8px;
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+            ">
+
+                <span style="
+                    font-size:12px;
+                    color:#64748B;
+                ">
+                    Overall Financial Health
+                </span>
+
+                <span style="
+                    font-size:12px;
+                    font-weight:800;
+                    color:{h_color};
+                ">
+                    {h_score}/100
+                </span>
 
             </div>
 
