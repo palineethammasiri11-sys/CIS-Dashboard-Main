@@ -151,54 +151,6 @@ def render(ctx):
 
     st.markdown("""
     <style>
-    /* Overall Score Info */
-    .overall-score-info {
-        font-size: 12.5px;
-        color: #64748B;
-        margin-top: 6px;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .info-tooltip {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 16px;
-        height: 16px;
-        border: 1px solid #CBD5E1;
-        border-radius: 50%;
-        color: #64748B;
-        font-size: 10px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    .info-tooltip .tooltip-text {
-        visibility: hidden;
-        opacity: 0;
-        position: absolute;
-        z-index: 1000;
-        left: 20px;
-        bottom: 0;
-        width: 240px;
-        padding: 9px 11px;
-        background: #0F172A;
-        color: #FFFFFF;
-        border-radius: 7px;
-        font-size: 11.5px;
-        line-height: 1.45;
-        font-weight: normal;
-        text-align: left;
-        transition: opacity 0.15s ease;
-    }
-
-    .info-tooltip:hover .tooltip-text {
-        visibility: visible;
-        opacity: 1;
-    }
     @media (max-width: 768px) {
 
         /* Peer Comparison */
@@ -385,17 +337,7 @@ def render(ctx):
     </tr>
     {rows_html}
     </table>
-    <div class="overall-score-info">
-        <span>*จัดอันดับจาก Overall Score จากข้อมูลจริง</span>
-        <span class="info-tooltip">
-            ⓘ
-            <span class="tooltip-text">
-                <b>Overall Score Ranking</b><br>
-                จัดอันดับหุ้นโดยใช้ Overall Score ที่คำนวณจากข้อมูลจริงใน
-                <code>cis_summary_scores</code>
-            </span>
-        </span>
-    </div>
+    <div style="font-size:12.5px; color:#64748B; margin-top:6px;">*จัดอันดับจาก Overall Score ที่คำนวณจริงจากข้อมูลใน cis_summary_scores</div>
     </div>""", unsafe_allow_html=True)
 
     with r2_c2:
