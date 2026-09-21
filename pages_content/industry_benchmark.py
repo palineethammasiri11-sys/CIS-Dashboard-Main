@@ -149,7 +149,65 @@ def render(ctx):
     </div>
     </div>""", unsafe_allow_html=True)
 
-    st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
+    st.markdown("""
+    <style>
+    @media (max-width: 768px) {
+
+        /* Peer Comparison */
+        .peer-comparison-card {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+        }
+
+        .peer-comparison-table {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            table-layout: fixed !important;
+            box-sizing: border-box !important;
+        }
+
+        .peer-comparison-table th,
+        .peer-comparison-table td {
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+
+        .peer-comparison-table {
+            font-size: 11px !important;
+        }
+
+        .peer-comparison-table th {
+            font-size: 10px !important;
+        }
+
+        /* Dimension Percentile */
+        .industry-dimension-grid {
+            grid-template-columns: 1fr !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+            gap: 8px !important;
+        }
+
+        .industry-dimension-grid > div {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     r2_c1, r2_c2, r2_c3 = st.columns([2.0, 1.0, 1.1])
 
     with r2_c1:
