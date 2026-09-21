@@ -135,7 +135,7 @@ def render(ctx):
     {''.join([dim_pct_card(l, p, c) for l, p, c in dims_sector])}
     </div>"""
 
-        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; display:flex; flex-direction:column; justify-content:space-between;">
+        st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
     <div>
     <div style="font-size:14.5px; color:#64748B; font-weight:bold; margin-bottom:10px;">DIMENSION PERCENTILE RANK</div>
     {sector_section}
@@ -158,8 +158,10 @@ def render(ctx):
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
+            height: auto !important;
+            min-height: 350px !important;
             box-sizing: border-box !important;
-            overflow: hidden !important;
+            overflow: visible !important;
         }
 
         .peer-comparison-table {
@@ -188,6 +190,16 @@ def render(ctx):
         }
 
         /* Dimension Percentile */
+        .dimension-percentile-card {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            height: auto !important;
+            min-height: 360px !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+
         .industry-dimension-grid {
             grid-template-columns: 1fr !important;
             width: 100% !important;
