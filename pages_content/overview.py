@@ -488,11 +488,6 @@ def render(ctx):
             {hl_html}
         </div>
     </div>
-
-    <div style="font-size:12.5px;color:#475569;text-align:center;margin-top:10px;">
-        Disclaimer: This dashboard is for informational purposes only and not intended as
-        investment advice. Please conduct your own research before making investment decisions.
-    </div>
     """)
 
     col1, col2, col3 = st.columns([2.7, 1.3, 0.5])
