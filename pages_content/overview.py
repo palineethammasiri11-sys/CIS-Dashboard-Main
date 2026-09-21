@@ -497,7 +497,24 @@ def render(ctx):
 
     col1, col2, col3 = st.columns([2.7, 1.3, 0.5])
 
-    with col2:
+    st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
+
+    st.markdown(
+        """
+        <div style="
+            border-top:1px solid #E2E8F0;
+            padding-top:16px;
+            margin-bottom:6px;
+        "></div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    col_space1, col_space2, col_next, col_disc = st.columns(
+        [1.3, 1.3, 1.3, 3.3]
+    )
+
+    with col_next:
         if st.button(
             "หน้าถัดไป ➡",
             key="overview_next_company_health",
@@ -505,3 +522,20 @@ def render(ctx):
         ):
             st.session_state["pending_nav"] = " Company Health"
             st.rerun()
+
+    with col_disc:
+        st.markdown(
+            """
+            <div style="
+                font-size:15.5px;
+                color:#64748B;
+                text-align:right;
+                padding-top:11px;
+                line-height:1.5;
+            ">
+                หมายเหตุ: การประเมินนี้ไม่ใช่คำแนะนำในการลงทุน
+                ผู้ลงทุนควรศึกษาข้อมูลเพิ่มเติม
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
