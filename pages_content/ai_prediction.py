@@ -7,13 +7,13 @@ pages_content/ai_prediction.py
     streamlit run preview_my_page.py
     (แล้วเลือกโมดูลนี้จาก dropdown ในไฟล์ preview_my_page.py)
 
-ข้อมูลที่ใช้ได้ใน ctx:
+ข้อมูลที่ใช้ได้ใน ctx (ดูนิยามเต็มใน common.py -> class PageContext):
     ctx.selected_ticker, ctx.stock_info, ctx.stock_daily, ctx.fin_stock, ctx.sector_peers,
     ctx.scores_df, ctx.fin_df, ctx.feat_imp_df, ctx.backtest_df, ctx.risk_hist_df,
     ctx.health_yearly_df, ctx.fair_value_yearly_df,
     ctx.current_price, ctx.change_pct, ctx.change_val, ctx.change_color, ctx.change_sign, ctx.arrow_sign
 
-ห้ามแก้ CSS ส่วนกลางหรือ helper function ใน common.py จากไฟล์นี้
+ห้ามแก้ CSS ส่วนกลางหรือ helper function ใน common.py จากไฟล์นี้ — ถ้าจำเป็นต้องแก้ ให้แจ้ง Layout Lead ก่อน
 """
 
 import streamlit as st
@@ -32,15 +32,10 @@ RED = "#EF4444"
 BLUE = "#0284C7"
 MUTED = "#64748B"
 
-# สีเข้มสำหรับ Recommendation โดยเฉพาะ
-DARK_GREEN = "#059669"
-DARK_AMBER = "#D97706"
-DARK_RED = "#DC2626"
-
 
 def _hex_to_rgba(hex_color, alpha):
     hex_color = hex_color.lstrip('#')
-    r, g, b = int(hex_color[0:2]), int(hex_color[2:4]), int(hex_color[4:6])
+    r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
     return f"rgba({r},{g},{b},{alpha})"
 
 
@@ -61,9 +56,8 @@ def _kpi_card(
 ):
     """การ์ด KPI ใบเดียว"""
     return (
-        f'<div style="background-color:{bg_color}; border:1px solid {border}; border-radius:12px; '
-        f'padding:18px 10px; text-align:center; height:176px; box-sizing:border-box; '
-        f'display:flex; flex-direction:column; justify-content:center;">'
+        f'<div style="background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:18px 10px; '
+        f'text-align:center; min-height:140px; display:flex; flex-direction:column; justify-content:center;">'
         f'<div style="font-size:14px; font-weight:bold; color:{label_color}; letter-spacing:1px;">{label}</div>'
         f'<div style="font-size:{value_size}px; font-weight:bold; color:{value_color}; line-height:1.2; margin-top:4px;">{value_html}</div>'
         f'{sub_html}'
@@ -103,14 +97,6 @@ def render(ctx):
         status_color = AMBER
     else:
         status_color = RED
-
-    # สีเข้มเฉพาะ Recommendation
-    if status_color == GREEN:
-        recommendation_color = DARK_GREEN
-    elif status_color == AMBER:
-        recommendation_color = DARK_AMBER
-    else:
-        recommendation_color = DARK_RED
 
     direction_th = "ขาขึ้น" if prob_up >= 50 else "ขาลง"
     dir_prob = prob_up if prob_up >= 50 else down_prob
@@ -172,99 +158,103 @@ def render(ctx):
         )
 
     # ============================================================
-    # SCORE — DONUT
-    # ใช้ ai_score จากโมดูลเดิม
+    # SCORE
+    # ใช้ ai_score เดิมจากโมดูล
+    # เปลี่ยนเฉพาะรูปแบบการแสดงเป็น Donut
     # ============================================================
 
     with k4:
 
-        score_ratio = min(100, max(0, ai_score))
+        score_t = min(100, max(0, ai_score))
+        score_angle = 360 * (score_t / 100)
 
         st.markdown(
             f"""
-            <div style="
-                background:#FFFFFF;
-                border:1px solid #D9E2EC;
-                border-radius:12px;
-                height:176px;
-                box-sizing:border-box;
-                display:flex;
-                flex-direction:column;
-                align-items:center;
-                justify-content:center;
-            ">
+<div style="
+    background:#FFFFFF;
+    border:1px solid #D9E2EC;
+    border-radius:12px;
+    padding:18px 10px;
+    text-align:center;
+    min-height:140px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+">
 
-                <div style="
-                    font-size:14px;
-                    font-weight:bold;
-                    color:{MUTED};
-                    letter-spacing:1px;
-                    margin-bottom:8px;
-                ">
-                    SCORE
-                </div>
+<div style="
+    font-size:14px;
+    font-weight:bold;
+    color:{MUTED};
+    letter-spacing:1px;
+    margin-bottom:7px;
+">
+SCORE
+</div>
 
-                <div style="
-                    width:96px;
-                    height:96px;
-                    border-radius:50%;
-                    background:conic-gradient(
-                        {status_color} 0% {score_ratio:.1f}%,
-                        #D9E2EC {score_ratio:.1f}% 100%
-                    );
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                ">
+<div style="
+    width:76px;
+    height:76px;
+    border-radius:50%;
+    background:conic-gradient(
+        {status_color} 0deg {score_angle:.1f}deg,
+        #D9E2EC {score_angle:.1f}deg 360deg
+    );
+    display:flex;
+    align-items:center;
+    justify-content:center;
+">
 
-                    <div style="
-                        width:70px;
-                        height:70px;
-                        border-radius:50%;
-                        background:#FFFFFF;
-                        display:flex;
-                        flex-direction:column;
-                        align-items:center;
-                        justify-content:center;
-                    ">
+<div style="
+    width:58px;
+    height:58px;
+    border-radius:50%;
+    background:#FFFFFF;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+">
 
-                        <div style="
-                            font-size:27px;
-                            font-weight:bold;
-                            color:#0F172A;
-                            line-height:1;
-                        ">
-                            {ai_score}
-                        </div>
+<div style="
+    font-size:24px;
+    font-weight:bold;
+    color:#0F172A;
+    line-height:1;
+">
+{ai_score}
+</div>
 
-                        <div style="
-                            font-size:12px;
-                            color:{MUTED};
-                            margin-top:4px;
-                        ">
-                            /100
-                        </div>
+<div style="
+    font-size:13px;
+    color:{MUTED};
+    margin-top:4px;
+">
+/100
+</div>
 
-                    </div>
-                </div>
+</div>
+</div>
 
-                <div style="
-                    font-size:15px;
-                    color:{MUTED};
-                    margin-top:7px;
-                ">
-                    Prediction Score
-                </div>
+<div style="
+    font-size:15px;
+    color:{MUTED};
+    margin-top:7px;
+">
+Prediction Score
+</div>
 
-            </div>
-            """,
+</div>
+""",
             unsafe_allow_html=True
         )
 
     # ============================================================
     # RECOMMENDATION
-    # ใช้ signal เดิมจากโมดูล
-    # เปลี่ยนเฉพาะสีพื้นให้เข้มขึ้น
+    # พื้นหลังตามสถานะ
+    # RECOMMENDATION สีอ่อน
+    # คำแนะนำเป็นสีขาว
     # ============================================================
 
     with k5:
@@ -274,17 +264,14 @@ def render(ctx):
                 signal,
                 value_color="#FFFFFF",
                 value_size=24,
-                border=recommendation_color,
-                bg_color=recommendation_color,
-                label_color="#FFFFFF"
+                border=status_color,
+                bg_color=status_color,
+                label_color="#E5E7EB"
             ),
             unsafe_allow_html=True
         )
 
-    st.markdown(
-        "<div style='margin-top:24px;'></div>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
 
     # ============================================================
     # 2) PREDICTION
@@ -295,171 +282,63 @@ def render(ctx):
         unsafe_allow_html=True
     )
 
+    _t = min(1, max(0, prob_up / 100))
+    _gx = 50 - 40 * np.cos(np.pi * _t)
+    _gy = 50 - 40 * np.sin(np.pi * _t)
+
     warn_line = ""
 
     if reliability_low:
         warn_line = (
-            f'<div style="font-size:15px; color:{RED}; background:rgba(239,68,68,0.1); '
-            f'border:1px solid {RED}; border-radius:8px; padding:10px 14px; '
-            f'margin-top:14px; line-height:1.55;">'
-            f'⚠ ความแม่นยำของโมเดลต่ำกว่าเกณฑ์เปรียบเทียบ (baseline) สำหรับหุ้นตัวนี้ — '
-            f'ควรใช้ผลทำนายนี้ด้วยความระมัดระวังเป็นพิเศษ</div>'
+            f'<div style="font-size:15px; color:{RED}; background:rgba(239,68,68,0.1); border:1px solid {RED}; '
+            f'border-radius:8px; padding:10px 14px; margin-top:14px; line-height:1.55;">'
+            f'⚠ ความแม่นยำของโมเดลต่ำกว่าเกณฑ์เปรียบเทียบ (baseline) สำหรับหุ้นตัวนี้ — ควรใช้ผลทำนายนี้ด้วยความระมัดระวังเป็นพิเศษ</div>'
         )
 
-    # ============================================================
-    # DONUT PROBABILITY
-    # ใช้ prob_up จากโมดูลเดิม
-    # ไม่ใช้ SVG เพื่อป้องกัน Streamlit แสดง source code
-    # ============================================================
-
     st.markdown(
-        f"""
-        <div style="
-            background-color:#FFFFFF;
-            border:1px solid #D9E2EC;
-            border-top:none;
-            border-radius:0 0 12px 12px;
-            padding:20px;
-        ">
+        f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-top:none; border-radius:0 0 12px 12px; padding:16px;">
+<div style="display:flex; gap:16px; flex-wrap:wrap; align-items:stretch;">
 
-            <div style="
-                display:flex;
-                gap:20px;
-                align-items:stretch;
-            ">
+<div style="flex:0 0 320px; max-width:100%; background-color:#F8FAFC; border:1px solid #D9E2EC; border-radius:12px; padding:22px 14px; display:flex; align-items:center; justify-content:center;">
+<svg viewBox="0 0 100 56" style="width:100%; max-width:290px; height:auto;">
+<path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#D9E2EC" stroke-width="9" stroke-linecap="round" />
+<path d="M 10 50 A 40 40 0 0 1 {_gx:.1f} {_gy:.1f}" fill="none" stroke="{status_color}" stroke-width="9" stroke-linecap="round" />
+<text x="50" y="47" text-anchor="middle" font-size="24" font-weight="bold" fill="#0F172A">{prob_up:.0f}%</text>
+</svg>
+</div>
 
-                <!-- LEFT : PROBABILITY DONUT -->
+<div style="flex:1; min-width:300px; background-color:#F3F7FB; border:1px solid #C7D5E3; border-left:4px solid {status_color}; border-radius:12px; padding:22px 26px; display:flex; flex-direction:column; justify-content:center;">
 
-                <div style="
-                    flex:0 0 320px;
-                    background-color:#F8FAFC;
-                    border:1px solid #D9E2EC;
-                    border-radius:12px;
-                    padding:22px;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    box-sizing:border-box;
-                    min-height:270px;
-                ">
+<div style="font-size:14px; font-weight:bold; color:{MUTED}; letter-spacing:1px; margin-bottom:10px;">
+PROBABILITY OF UP
+</div>
 
-                    <div style="
-                        width:190px;
-                        height:190px;
-                        border-radius:50%;
-                        background:conic-gradient(
-                            {status_color} 0% {prob_up:.1f}%,
-                            #D9E2EC {prob_up:.1f}% 100%
-                        );
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                    ">
+<div style="font-size:18px; color:#334155; line-height:1.7;">
+โมเดล Random Forest ประเมินว่า <b>{ctx.selected_ticker}</b> มีโอกาส
+<b style="color:{status_color};">{direction_th}</b>
+<b>{dir_prob:.0f}%</b> ในอีก 10 วันทำการ
+</div>
 
-                        <div style="
-                            width:138px;
-                            height:138px;
-                            border-radius:50%;
-                            background:#F8FAFC;
-                            display:flex;
-                            flex-direction:column;
-                            align-items:center;
-                            justify-content:center;
-                        ">
+<div style="font-size:18px; color:#334155; line-height:1.7;">
+ด้วยความแม่นยำการทดสอบ <b>{acc_val:.1f}%</b>
+({baseline_note}เกณฑ์เปรียบเทียบ {baseline_val:.1f}%)
+&nbsp;→&nbsp; คำแนะนำ:
+<b style="color:{status_color};">{signal}</b>
+</div>
 
-                            <div style="
-                                font-size:32px;
-                                font-weight:bold;
-                                color:#0F172A;
-                                line-height:1;
-                            ">
-                                {prob_up:.0f}%
-                            </div>
+<div style="font-size:14.5px; color:{MUTED}; line-height:1.6; margin-top:12px;">
+โปรดใช้ประกอบการตัดสินใจลงทุน ควรพิจารณาร่วมกับ Fair Value และ Company Health ก่อนตัดสินใจ ไม่ใช่คำแนะนำโดยตรง
+</div>
 
-                            <div style="
-                                font-size:14px;
-                                color:{MUTED};
-                                margin-top:6px;
-                            ">
-                                Probability
-                            </div>
+{warn_line}
 
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- RIGHT : EXPLANATION -->
-
-                <div style="
-                    flex:1;
-                    background-color:#F3F7FB;
-                    border:1px solid #C7D5E3;
-                    border-left:4px solid {status_color};
-                    border-radius:12px;
-                    padding:22px 26px;
-                    display:flex;
-                    flex-direction:column;
-                    justify-content:center;
-                    box-sizing:border-box;
-                    min-height:270px;
-                ">
-
-                    <div style="
-                        font-size:14px;
-                        font-weight:bold;
-                        color:{MUTED};
-                        letter-spacing:1px;
-                        margin-bottom:10px;
-                    ">
-                        PROBABILITY OF UP
-                    </div>
-
-                    <div style="
-                        font-size:18px;
-                        color:#334155;
-                        line-height:1.7;
-                    ">
-                        โมเดล Random Forest ประเมินว่า <b>{ctx.selected_ticker}</b> มีโอกาส
-                        <b style="color:{status_color};">{direction_th}</b>
-                        <b>{dir_prob:.0f}%</b> ในอีก 10 วันทำการ
-                    </div>
-
-                    <div style="
-                        font-size:18px;
-                        color:#334155;
-                        line-height:1.7;
-                    ">
-                        ด้วยความแม่นยำการทดสอบ <b>{acc_val:.1f}%</b>
-                        ({baseline_note}เกณฑ์เปรียบเทียบ {baseline_val:.1f}%)
-                        &nbsp;→&nbsp; คำแนะนำ:
-                        <b style="color:{recommendation_color};">{signal}</b>
-                    </div>
-
-                    <div style="
-                        font-size:14.5px;
-                        color:{MUTED};
-                        line-height:1.6;
-                        margin-top:12px;
-                    ">
-                        โปรดใช้ประกอบการตัดสินใจลงทุน ควรพิจารณาร่วมกับ Fair Value และ Company Health
-                        ก่อนตัดสินใจ ไม่ใช่คำแนะนำโดยตรง
-                    </div>
-
-                    {warn_line}
-
-                </div>
-
-            </div>
-        </div>
-        """,
+</div>
+</div>
+</div>""",
         unsafe_allow_html=True
     )
 
-    st.markdown(
-        "<div style='margin-top:24px;'></div>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
 
     # ============================================================
     # 3) FORECAST
@@ -645,10 +524,7 @@ def render(ctx):
         expand_height=700
     )
 
-    st.markdown(
-        "<div style='margin-top:24px;'></div>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
 
     # ============================================================
     # 4) MODEL EXPLANATION
@@ -737,49 +613,21 @@ def render(ctx):
         )
 
         st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #D9E2EC;
-                border-radius:12px;
-                padding:22px;
-                min-height:310px;
-                display:flex;
-                flex-direction:column;
-                justify-content:center;
-            ">
-
-                <div style="
-                    font-size:15.5px;
-                    font-weight:bold;
-                    color:{MUTED};
-                    letter-spacing:0.5px;
-                    margin-bottom:12px;
-                ">
-                    EXPLAINABLE AI SUMMARY
-                </div>
-
-                <p style="
-                    font-size:17px;
-                    color:#334155;
-                    line-height:1.7;
-                    margin:0;
-                ">
-                    โมเดลใช้ 6 ตัวชี้วัดเชิงเทคนิคในการทำนาย โดย feature ที่มีอิทธิพลต่อผลทำนายของ
-                    <b>{ctx.selected_ticker}</b> สูงสุดคือ
-                    <b style="color:{BLUE};">{top_feat}</b>
-                    — ค่านี้มาจากน้ำหนักจริงที่ Random Forest เรียนรู้ได้ ไม่ใช่ค่าคงที่
-                </p>
-
-            </div>
-            """,
+            f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px; padding:22px; min-height:310px; display:flex; flex-direction:column; justify-content:center;">
+<div style="font-size:15.5px; font-weight:bold; color:{MUTED}; letter-spacing:0.5px; margin-bottom:12px;">
+EXPLAINABLE AI SUMMARY
+</div>
+<p style="font-size:17px; color:#334155; line-height:1.7; margin:0;">
+โมเดลใช้ 6 ตัวชี้วัดเชิงเทคนิคในการทำนาย โดย feature ที่มีอิทธิพลต่อผลทำนายของ
+<b>{ctx.selected_ticker}</b> สูงสุดคือ
+<b style="color:{BLUE};">{top_feat}</b>
+— ค่านี้มาจากน้ำหนักจริงที่ Random Forest เรียนรู้ได้ ไม่ใช่ค่าคงที่
+</p>
+</div>""",
             unsafe_allow_html=True
         )
 
-    st.markdown(
-        "<div style='margin-top:24px;'></div>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
 
     # ============================================================
     # 5) MODEL PERFORMANCE
@@ -816,49 +664,15 @@ def render(ctx):
         ])
 
         st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #D9E2EC;
-                border-top:none;
-                border-radius:0 0 12px 12px;
-                padding:16px;
-                min-height:350px;
-            ">
-
-                <div style="
-                    display:grid;
-                    grid-template-columns:repeat(2, 1fr);
-                    gap:10px;
-                ">
-                    {cells}
-                </div>
-
-                <div style="
-                    font-size:15px;
-                    color:{RED if reliability_low else GREEN};
-                    border-top:1px dashed #D9E2EC;
-                    padding-top:12px;
-                    margin-top:14px;
-                    line-height:1.55;
-                ">
-                    vs. Baseline (naive majority-class):
-                    <b>{baseline_val:.1f}%</b> —
-                    {"ต่ำกว่า baseline ⚠" if reliability_low else "สูงกว่า baseline ✓"}
-                </div>
-
-                <div style="
-                    font-size:13.5px;
-                    color:{MUTED};
-                    border-top:1px solid #D9E2EC;
-                    padding-top:10px;
-                    margin-top:10px;
-                ">
-                    Validation: Out-of-time (Train 2023-24 / Test 2025)
-                </div>
-
-            </div>
-            """,
+            f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-top:none; border-radius:0 0 12px 12px; padding:16px; min-height:350px;">
+<div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;">{cells}</div>
+<div style="font-size:15px; color:{RED if reliability_low else GREEN}; border-top:1px dashed #D9E2EC; padding-top:12px; margin-top:14px; line-height:1.55;">
+vs. Baseline (naive majority-class): <b>{baseline_val:.1f}%</b> — {"ต่ำกว่า baseline ⚠" if reliability_low else "สูงกว่า baseline ✓"}
+</div>
+<div style="font-size:13.5px; color:{MUTED}; border-top:1px solid #D9E2EC; padding-top:10px; margin-top:10px;">
+Validation: Out-of-time (Train 2023-24 / Test 2025)
+</div>
+</div>""",
             unsafe_allow_html=True
         )
 
@@ -975,34 +789,16 @@ def render(ctx):
             )
 
             st.markdown(
-                f"""
-                <div style="
-                    background:#FFFFFF;
-                    border:1px solid #D9E2EC;
-                    border-top:none;
-                    border-radius:0 0 12px 12px;
-                    padding:8px 14px 12px 14px;
-                    font-size:13.5px;
-                    color:{MUTED};
-                ">
-                    * Test-set Accuracy: {acc_val:.1f}%
-                </div>
-                """,
+                f"""<div style="background:#FFFFFF; border:1px solid #D9E2EC; border-top:none; border-radius:0 0 12px 12px; padding:8px 14px 12px 14px; font-size:13.5px; color:{MUTED};">
+* Test-set Accuracy: {acc_val:.1f}%
+</div>""",
                 unsafe_allow_html=True
             )
 
         else:
 
             st.markdown(
-                """
-                <div style="
-                    background:#FFFFFF;
-                    border:1px solid #D9E2EC;
-                    border-top:none;
-                    border-radius:0 0 12px 12px;
-                    padding:20px;
-                ">
-                """,
+                """<div style="background:#FFFFFF; border:1px solid #D9E2EC; border-top:none; border-radius:0 0 12px 12px; padding:20px;">""",
                 unsafe_allow_html=True
             )
 
@@ -1034,23 +830,15 @@ def render(ctx):
         )
 
         st.markdown(
-            f"""
-            <ul style="
-                font-size:16px;
-                line-height:1.9;
-                color:#334155;
-                margin:0;
-                padding-left:22px;
-            ">
-                <li><b>Model</b>: Random Forest (n_estimators=200, max_depth=4)</li>
-                <li><b>Target</b>: 10-Day Forward Direction (ราคาปิด 10 วันข้างหน้าสูงกว่าปัจจุบันหรือไม่)</li>
-                <li><b>Train Samples</b>: {n_train} แถว (2023–2024)</li>
-                <li><b>Test Samples</b>: {n_test} แถว (2025)</li>
-                <li><b>Features</b>: 6 ตัว (Technical) — close, EMA20, EMA50, RSI14, MACD, ADX</li>
-                <li><b>Data as of</b>: {ctx.stock_info.get('latest_date','-')}</li>
-                <li><b>Validation</b>: Out-of-time (แบ่งตามช่วงเวลาจริง ไม่ใช่สุ่มแบ่ง)</li>
-            </ul>
-            """,
+            f"""<ul style="font-size:16px; line-height:1.9; color:#334155; margin:0; padding-left:22px;">
+<li><b>Model</b>: Random Forest (n_estimators=200, max_depth=4)</li>
+<li><b>Target</b>: 10-Day Forward Direction (ราคาปิด 10 วันข้างหน้าสูงกว่าปัจจุบันหรือไม่)</li>
+<li><b>Train Samples</b>: {n_train} แถว (2023–2024)</li>
+<li><b>Test Samples</b>: {n_test} แถว (2025)</li>
+<li><b>Features</b>: 6 ตัว (Technical) — close, EMA20, EMA50, RSI14, MACD, ADX</li>
+<li><b>Data as of</b>: {ctx.stock_info.get('latest_date','-')}</li>
+<li><b>Validation</b>: Out-of-time (แบ่งตามช่วงเวลาจริง ไม่ใช่สุ่มแบ่ง)</li>
+</ul>""",
             unsafe_allow_html=True
         )
 
