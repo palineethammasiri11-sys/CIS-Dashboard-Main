@@ -35,6 +35,341 @@ def render(ctx):
     """)
 
     # ============================================================
+    # SCORE DATA
+    # ============================================================
+
+    m1_s = int(round(safe(ctx.stock_info.get('health_score'), 50)))
+    m2_s = int(round(safe(ctx.stock_info.get('valuation_score'), 50)))
+    m3_s = int(round(safe(ctx.stock_info.get('timing_score'), 50)))
+    m4_s = int(round(safe(ctx.stock_info.get('ai_score'), 50)))
+    m5_s = int(round(safe(ctx.stock_info.get('risk_score'), 50)))
+    m6_s = int(round(safe(ctx.stock_info.get('industry_score'), 50)))
+
+    n_sector = len(ctx.sector_peers)
+
+    # ------------------------------------------------------------
+    # Company Health
+    # ------------------------------------------------------------
+
+    if m1_s >= 70:
+        m1_badge, m1_desc = "EXCELLENT", "Strong balance sheet and sustainable quality"
+    elif m1_s >= 45:
+        m1_badge, m1_desc = "MODERATE", "Stable financial position with sound liquidity"
+    else:
+        m1_badge, m1_desc = "WEAK", "Elevated debt leverage or margin pressure"
+
+    # ------------------------------------------------------------
+    # Fair Value
+    # ------------------------------------------------------------
+
+    if m2_s >= 70:
+        m2_badge, m2_desc = "UNDERVALUED", "Attractive valuation with high margin of safety"
+    elif m2_s >= 45:
+        m2_badge, m2_desc = "FAIR VALUE", "Trading near assessed fundamental value"
+    else:
+        m2_badge, m2_desc = "OVERVALUED", "Price trades at premium to fair valuation"
+
+    # ------------------------------------------------------------
+    # Entry Timing
+    # ------------------------------------------------------------
+
+    if m3_s >= 67:
+        m3_badge, m3_desc = "BULLISH", "Strong upward momentum across moving averages"
+    elif m3_s >= 34:
+        m3_badge, m3_desc = "NEUTRAL", "Consolidating near key technical support"
+    else:
+        m3_badge, m3_desc = "BEARISH", "Downtrend momentum; elevated pullback risk"
+
+    # ------------------------------------------------------------
+    # AI Prediction
+    # ------------------------------------------------------------
+
+    if m4_s >= 70:
+        m4_badge, m4_desc = "POSITIVE", "AI model forecasts favorable upside probability"
+    elif m4_s >= 50:
+        m4_badge, m4_desc = "NEUTRAL", "AI predicts range-bound price consolidation"
+    else:
+        m4_badge, m4_desc = "CAUTION", "Low upside probability under current features"
+
+    # ------------------------------------------------------------
+    # Risk Analysis
+    # ------------------------------------------------------------
+
+    if m5_s >= 65:
+        m5_badge, m5_desc = "LOW RISK", "High resilience with stable volatility"
+    elif m5_s >= 45:
+        m5_badge, m5_desc = "MODERATE", "Balanced market risk profile"
+    else:
+        m5_badge, m5_desc = "HIGH RISK", "Higher volatility and deeper drawdown risk"
+
+    # ------------------------------------------------------------
+    # Industry Benchmark
+    # ------------------------------------------------------------
+
+    if m6_s >= 70:
+        m6_badge, m6_desc = "OUTPERFORM", "Leading peer group across key industry metrics"
+    elif m6_s >= 45:
+        m6_badge, m6_desc = "PARITY", "Performing on par with sectoral median"
+    else:
+        m6_badge, m6_desc = "LAGGING", "Trailing behind sectoral benchmark"
+
+    # ============================================================
+    # SCORE COLOR
+    # ============================================================
+
+    def score_color(score, green_at, yellow_at):
+        if score >= green_at:
+            return "#10B981"
+        elif score >= yellow_at:
+            return "#F59E0B"
+        else:
+            return "#EF4444"
+
+    def score_bg(score, green_at, yellow_at):
+        if score >= green_at:
+            return "rgba(16,185,129,0.20)"
+        elif score >= yellow_at:
+            return "rgba(245,158,11,0.20)"
+        else:
+            return "rgba(239,68,68,0.20)"
+
+    # ============================================================
+    # AI INVESTMENT SUMMARY
+    # ย้ายขึ้นมาไว้ด้านบน
+    # ============================================================
+
+    overall = safe(ctx.stock_info.get('overall_score'), 50)
+    rec = ctx.stock_info.get('recommendation', 'ACCUMULATE')
+
+    rec_color = {
+        "STRONG BUY": "#10B981",
+        "BUY": "#10B981",
+        "ACCUMULATE": "#84CC16",
+        "REDUCE / SELL": "#EF4444"
+    }.get(rec, "#F59E0B")
+
+    stars = min(5, max(1, round(overall / 20)))
+    arc_frac = min(1.0, overall / 100)
+    dash_len = round(119.38 * arc_frac, 2)
+
+    label = (
+        "ATTRACTIVE"
+        if overall >= 65
+        else "FAIR"
+        if overall >= 45
+        else "CAUTION"
+    )
+
+    top_strength = (
+        "financial health"
+        if m1_s == max(m1_s, m2_s, m3_s, m4_s, m5_s, m6_s)
+        else "fair value"
+    )
+
+    st.html(f"""
+    <div style="
+        background-color:#FFFFFF;
+        border:2px solid {rec_color};
+        border-radius:12px;
+        padding:16px;
+        margin-bottom:16px;
+        box-sizing:border-box;
+    ">
+
+        <div style="
+            font-size:14.5px;
+            font-weight:bold;
+            color:#64748B;
+            letter-spacing:0.5px;
+            margin-bottom:12px;
+        ">
+            AI INVESTMENT SUMMARY
+        </div>
+
+        <div style="
+            display:grid;
+            grid-template-columns:180px 1fr 1.3fr;
+            gap:24px;
+            align-items:center;
+        ">
+
+            <div style="text-align:center;">
+
+                <div style="margin:0 auto;width:140px;">
+                    <svg viewBox="0 0 100 58"
+                         style="width:130px;height:83px;display:block;margin:0 auto;">
+
+                        <path d="M 12 50 A 38 38 0 0 1 88 50"
+                              fill="none"
+                              stroke="#E2E8F0"
+                              stroke-width="10"
+                              stroke-linecap="round"/>
+
+                        <path d="M 12 50 A 38 38 0 0 1 88 50"
+                              fill="none"
+                              stroke="{rec_color}"
+                              stroke-width="10"
+                              stroke-linecap="round"
+                              stroke-dasharray="{dash_len} 119.38"/>
+
+                        <text x="50" y="38"
+                              text-anchor="middle"
+                              font-size="21"
+                              font-weight="bold"
+                              fill="#0F172A">
+                            {overall:.0f}
+                        </text>
+
+                        <text x="50" y="49"
+                              text-anchor="middle"
+                              font-size="11.5"
+                              fill="#64748B">
+                            100
+                        </text>
+                    </svg>
+                </div>
+
+                <div style="
+                    font-size:13px;
+                    font-weight:bold;
+                    color:#64748B;
+                ">
+                    OVERALL SCORE
+                </div>
+
+                <div style="
+                    color:#F59E0B;
+                    font-size:14.5px;
+                    letter-spacing:2px;
+                    margin:2px 0;
+                ">
+                    {'★' * stars}{'☆' * (5-stars)}
+                </div>
+
+                <div style="
+                    color:{rec_color};
+                    font-size:16px;
+                    font-weight:bold;
+                ">
+                    {label}
+                </div>
+
+            </div>
+
+            <div style="text-align:center;">
+
+                <div style="
+                    font-size:14px;
+                    color:#475569;
+                    line-height:1.6;
+                ">
+
+                    <b style="color:#0F172A;">
+                        {ctx.selected_ticker}
+                    </b>
+                    ได้คะแนนภาพรวม
+                    <b>{overall:.1f}/100</b>
+
+                    <br>
+
+                    จุดเด่นหลักอยู่ที่
+                    <b>{top_strength}</b>
+
+                    <br>
+
+                    อันดับ
+                    <b>{int(ctx.stock_info.get('sector_rank',1))} / {n_sector}</b>
+
+                    จากบริษัทในกลุ่ม
+                    <b>{ctx.stock_info.get('sector','-')}</b>
+
+                </div>
+
+            </div>
+
+            <div style="
+                background-color:#F8FAFC;
+                border:1px solid #E2E8F0;
+                border-radius:8px;
+                padding:12px 14px;
+                text-align:left;
+            ">
+
+                <div style="
+                    font-size:12.5px;
+                    color:#64748B;
+                    font-weight:bold;
+                    margin-bottom:4px;
+                ">
+                    RECOMMENDATION
+                </div>
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                ">
+
+                    <div style="
+                        display:flex;
+                        align-items:center;
+                        gap:8px;
+                    ">
+
+                        <span style="
+                            color:{rec_color};
+                            font-size:18px;
+                        ">
+                            📈
+                        </span>
+
+                        <div>
+
+                            <b style="
+                                color:{rec_color};
+                                font-size:16px;
+                            ">
+                                {rec}
+                            </b>
+
+                            <div style="
+                                color:#64748B;
+                                font-size:11.5px;
+                            ">
+                                Based on Overall Score
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div style="text-align:right;">
+
+                        <div style="
+                            color:#64748B;
+                            font-size:11.5px;
+                        ">
+                            Sector Rank:
+                        </div>
+
+                        <b style="
+                            color:{rec_color};
+                            font-size:13px;
+                        ">
+                            {int(ctx.stock_info.get('sector_rank',1))} / {n_sector}
+                        </b>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+    """)
+
+    # ============================================================
     # TOP SECTION
     # ============================================================
 
@@ -119,7 +454,6 @@ def render(ctx):
         )
 
         # Stock Statistics
-        n_sector = len(ctx.sector_peers)
         market_cap = safe(ctx.stock_info.get('market_cap_mb'))
         fcf_latest = safe(ctx.stock_info.get('free_cash_flow_latest'))
         fcf_yield = fcf_latest / (market_cap * 1e6) * 100 if market_cap > 0 else 0
@@ -184,103 +518,6 @@ def render(ctx):
 
     with col_center:
 
-        m1_s = int(round(safe(ctx.stock_info.get('health_score'), 50)))
-        m2_s = int(round(safe(ctx.stock_info.get('valuation_score'), 50)))
-        m3_s = int(round(safe(ctx.stock_info.get('timing_score'), 50)))
-        m4_s = int(round(safe(ctx.stock_info.get('ai_score'), 50)))
-        m5_s = int(round(safe(ctx.stock_info.get('risk_score'), 50)))
-        m6_s = int(round(safe(ctx.stock_info.get('industry_score'), 50)))
-
-        # --------------------------------------------------------
-        # Company Health
-        # --------------------------------------------------------
-
-        if m1_s >= 70:
-            m1_badge, m1_desc = "EXCELLENT", "Strong balance sheet and sustainable quality"
-        elif m1_s >= 45:
-            m1_badge, m1_desc = "MODERATE", "Stable financial position with sound liquidity"
-        else:
-            m1_badge, m1_desc = "WEAK", "Elevated debt leverage or margin pressure"
-
-        # --------------------------------------------------------
-        # Fair Value
-        # --------------------------------------------------------
-
-        if m2_s >= 70:
-            m2_badge, m2_desc = "UNDERVALUED", "Attractive valuation with high margin of safety"
-        elif m2_s >= 45:
-            m2_badge, m2_desc = "FAIR VALUE", "Trading near assessed fundamental value"
-        else:
-            m2_badge, m2_desc = "OVERVALUED", "Price trades at premium to fair valuation"
-
-        # --------------------------------------------------------
-        # Entry Timing
-        # --------------------------------------------------------
-
-        # 0–33   = RED
-        # 34–66  = AMBER
-        # 67–100 = GREEN
-
-        if m3_s >= 67:
-            m3_badge, m3_desc = "BULLISH", "Strong upward momentum across moving averages"
-        elif m3_s >= 34:
-            m3_badge, m3_desc = "NEUTRAL", "Consolidating near key technical support"
-        else:
-            m3_badge, m3_desc = "BEARISH", "Downtrend momentum; elevated pullback risk"
-
-        # --------------------------------------------------------
-        # AI Prediction
-        # --------------------------------------------------------
-
-        if m4_s >= 70:
-            m4_badge, m4_desc = "POSITIVE", "AI model forecasts favorable upside probability"
-        elif m4_s >= 50:
-            m4_badge, m4_desc = "NEUTRAL", "AI predicts range-bound price consolidation"
-        else:
-            m4_badge, m4_desc = "CAUTION", "Low upside probability under current features"
-
-        # --------------------------------------------------------
-        # Risk Analysis
-        # --------------------------------------------------------
-
-        if m5_s >= 65:
-            m5_badge, m5_desc = "LOW RISK", "High resilience with stable volatility"
-        elif m5_s >= 45:
-            m5_badge, m5_desc = "MODERATE", "Balanced market risk profile"
-        else:
-            m5_badge, m5_desc = "HIGH RISK", "Higher volatility and deeper drawdown risk"
-
-        # --------------------------------------------------------
-        # Industry Benchmark
-        # --------------------------------------------------------
-
-        if m6_s >= 70:
-            m6_badge, m6_desc = "OUTPERFORM", "Leading peer group across key industry metrics"
-        elif m6_s >= 45:
-            m6_badge, m6_desc = "PARITY", "Performing on par with sectoral median"
-        else:
-            m6_badge, m6_desc = "LAGGING", "Trailing behind sectoral benchmark"
-
-        # ========================================================
-        # SCORE COLOR — EACH MODULE USES ITS OWN THRESHOLDS
-        # ========================================================
-
-        def score_color(score, green_at, yellow_at):
-            if score >= green_at:
-                return "#10B981"
-            elif score >= yellow_at:
-                return "#F59E0B"
-            else:
-                return "#EF4444"
-
-        def score_bg(score, green_at, yellow_at):
-            if score >= green_at:
-                return "rgba(16,185,129,0.20)"
-            elif score >= yellow_at:
-                return "rgba(245,158,11,0.20)"
-            else:
-                return "rgba(239,68,68,0.20)"
-
         # ========================================================
         # MODULE CARD
         # ========================================================
@@ -341,7 +578,16 @@ def render(ctx):
         # ========================================================
 
         cards_html = "".join([
-            module_card("01", "COMPANY HEALTH", m1_s, m1_badge, m1_desc, 70, 45),
+
+            module_card(
+                "01",
+                "COMPANY HEALTH",
+                m1_s,
+                m1_badge,
+                m1_desc,
+                70,
+                45
+            ),
 
             module_card(
                 "02",
@@ -353,10 +599,6 @@ def render(ctx):
                 34
             ),
 
-            # MODULE 03 — ENTRY TIMING
-            # 0–33   = RED
-            # 34–66  = AMBER
-            # 67–100 = GREEN
             module_card(
                 "03",
                 "ENTRY TIMING",
@@ -367,9 +609,35 @@ def render(ctx):
                 34
             ),
 
-            module_card("04", "AI PREDICTION", m4_s, m4_badge, m4_desc, 70, 50),
-            module_card("05", "RISK ANALYSIS", m5_s, m5_badge, m5_desc, 65, 45),
-            module_card("06", "INDUSTRY BENCHMARK", m6_s, m6_badge, m6_desc, 70, 45)
+            module_card(
+                "04",
+                "AI PREDICTION",
+                m4_s,
+                m4_badge,
+                m4_desc,
+                70,
+                50
+            ),
+
+            module_card(
+                "05",
+                "RISK ANALYSIS",
+                m5_s,
+                m5_badge,
+                m5_desc,
+                65,
+                45
+            ),
+
+            module_card(
+                "06",
+                "INDUSTRY BENCHMARK",
+                m6_s,
+                m6_badge,
+                m6_desc,
+                70,
+                45
+            )
         ])
 
         # ========================================================
@@ -392,148 +660,6 @@ def render(ctx):
 
         </div>
         """)
-
-    # ============================================================
-    # AI INVESTMENT SUMMARY
-    # ============================================================
-
-    overall = safe(ctx.stock_info.get('overall_score'), 50)
-    rec = ctx.stock_info.get('recommendation', 'ACCUMULATE')
-
-    rec_color = {
-        "STRONG BUY": "#10B981",
-        "BUY": "#10B981",
-        "ACCUMULATE": "#84CC16",
-        "REDUCE / SELL": "#EF4444"
-    }.get(rec, "#F59E0B")
-
-    stars = min(5, max(1, round(overall / 20)))
-    arc_frac = min(1.0, overall / 100)
-    dash_len = round(119.38 * arc_frac, 2)
-
-    label = "ATTRACTIVE" if overall >= 65 else "FAIR" if overall >= 45 else "CAUTION"
-
-    top_strength = (
-        "financial health"
-        if m1_s == max(m1_s, m2_s, m3_s, m4_s, m5_s, m6_s)
-        else "fair value"
-    )
-
-    st.html(f"""
-    <div style="background-color:#FFFFFF;border:1px solid #E2E8F0;
-                border-radius:12px;padding:16px;margin-top:12px;">
-
-        <div style="font-size:14.5px;font-weight:bold;color:#64748B;
-                    letter-spacing:0.5px;margin-bottom:12px;">
-            AI INVESTMENT SUMMARY
-        </div>
-
-        <div style="display:grid;grid-template-columns:180px 1fr 1.3fr;
-                    gap:24px;align-items:center;">
-
-            <div style="text-align:center;">
-
-                <div style="margin:0 auto;width:140px;">
-                    <svg viewBox="0 0 100 58"
-                         style="width:130px;height:83px;display:block;margin:0 auto;">
-
-                        <path d="M 12 50 A 38 38 0 0 1 88 50"
-                              fill="none"stroke="#E2E8F0"stroke-width="10"
-                              stroke-linecap="round"/>
-
-                        <path d="M 12 50 A 38 38 0 0 1 88 50"
-                              fill="none"stroke="#10B981"stroke-width="10"
-                              stroke-linecap="round"
-                              stroke-dasharray="{dash_len} 119.38"/>
-
-                        <text x="50" y="38" text-anchor="middle"
-                              font-size="21" font-weight="bold" fill="#0F172A">
-                            {overall:.0f}
-                        </text>
-
-                        <text x="50" y="49" text-anchor="middle"
-                              font-size="11.5" fill="#64748B">
-                            100
-                        </text>
-                    </svg>
-                </div>
-
-                <div style="font-size:13px;font-weight:bold;color:#64748B;">
-                    OVERALL SCORE
-                </div>
-
-                <div style="color:#F59E0B;font-size:14.5px;letter-spacing:2px;margin:2px 0;">
-                    {'★' * stars}{'☆' * (5-stars)}
-                </div>
-
-                <div style="color:{rec_color};font-size:16px;font-weight:bold;">
-                    {label}
-                </div>
-
-            </div>
-
-            <div style="text-align:center;">
-                <div style="font-size:14px;color:#475569;line-height:1.6;">
-
-                    <b style="color:#0F172A;">{ctx.selected_ticker}</b>
-                    ได้คะแนนภาพรวม
-                    <b>{overall:.1f}/100</b>
-
-                    <br>
-
-                    จุดเด่นหลักอยู่ที่
-                    <b>{top_strength}</b>
-
-                    <br>
-
-                    อันดับ
-                    <b>{int(ctx.stock_info.get('sector_rank',1))} / {n_sector}</b>
-
-                    จากบริษัทในกลุ่ม
-                    <b>{ctx.stock_info.get('sector','-')}</b>
-
-                </div>
-            </div>
-
-            <div style="background-color:#F8FAFC;border:1px solid #E2E8F0;
-                        border-radius:8px;padding:12px 14px;text-align:left;">
-
-                <div style="font-size:12.5px;color:#64748B;font-weight:bold;margin-bottom:4px;">
-                    RECOMMENDATION
-                </div>
-
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        <span style="color:{rec_color};font-size:18px;">📈</span>
-
-                        <div>
-                            <b style="color:{rec_color};font-size:16px;">
-                                {rec}
-                            </b>
-
-                            <div style="color:#64748B;font-size:11.5px;">
-                                Based on Overall Score
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="text-align:right;">
-                        <div style="color:#64748B;font-size:11.5px;">
-                            Sector Rank:
-                        </div>
-
-                        <b style="color:{rec_color};font-size:13px;">
-                            {int(ctx.stock_info.get('sector_rank',1))} / {n_sector}
-                        </b>
-                    </div>
-
-                </div>
-            </div>
-
-        </div>
-    </div>
-    """)
 
     # ============================================================
     # KEY HIGHLIGHTS
