@@ -183,7 +183,7 @@ def render(ctx):
                 </div>
             </div>
 
-            <div style="background-color:{rec_bg};border:1px solid #E2E8F0;border-radius:8px;
+            <div style="background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;
                         padding:12px 14px;text-align:left;">
                 <div style="font-size:12.5px;color:#64748B;font-weight:bold;margin-bottom:4px;">
                     RECOMMENDATION
