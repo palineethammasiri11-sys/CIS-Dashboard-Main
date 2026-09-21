@@ -172,6 +172,16 @@ def render(ctx):
             box-sizing: border-box !important;
         }
 
+        .peer-comparison-table th {
+            line-height: 1.2 !important;
+            padding: 5px 2px !important;
+        }
+
+        .peer-comparison-table td {
+            line-height: 1.3 !important;
+            padding: 6px 2px !important;
+        }
+
         .peer-comparison-table th,
         .peer-comparison-table td {
             min-width: 0 !important;
@@ -301,13 +311,30 @@ def render(ctx):
     <td>{timing_b}</td>
     <td>{ai_b}</td>
     <td><span style="color:{risk_c};">{risk_b}</span></td>
-    <td style="color:{star_color}; letter-spacing:0.5px; font-size:12px; white-space:normal; overflow-wrap:anywhere; word-break:break-word;">{'★'*star_n}{'☆'*(5-star_n)}</td>
+    <td style="color:{star_color}; letter-spacing:0.5px; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:clip;">{'★'*star_n}{'☆'*(5-star_n)}</td>
     </tr>"""
 
-        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:350px;">
+        st.markdown(f"""<div class="peer-comparison-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:350px; width:100%; max-width:100%; min-width:0; box-sizing:border-box;">
     <div style="font-size:14.5px; color:#64748B; font-weight:bold; margin-bottom:6px;">PEER COMPARISON — {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
     <table class="peer-comparison-table" style="width:100%; max-width:100%; min-width:0; table-layout:fixed; text-align:center; font-size:14px; color:#475569; border-collapse:collapse; box-sizing:border-box;">
-    <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:13px;"><th style="text-align:left; padding:5px 0;">Company</th><th>Health</th><th>Fair Value</th><th>Entry Timing</th><th>AI Prediction</th><th>Risk</th><th>Overall</th></tr>
+    <colgroup>
+        <col style="width:14%;">
+        <col style="width:11%;">
+        <col style="width:14%;">
+        <col style="width:16%;">
+        <col style="width:16%;">
+        <col style="width:12%;">
+        <col style="width:17%;">
+    </colgroup>
+    <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:13px;">
+        <th style="text-align:left; padding:5px 0;">Company</th>
+        <th>Health</th>
+        <th>Fair Value</th>
+        <th>Entry Timing</th>
+        <th>AI Prediction</th>
+        <th>Risk</th>
+        <th>Overall</th>
+    </tr>
     {rows_html}
     </table>
     <div style="font-size:12.5px; color:#64748B; margin-top:6px;">*จัดอันดับจาก Overall Score ที่คำนวณจริงจากข้อมูลใน cis_summary_scores</div>
