@@ -495,18 +495,13 @@ def render(ctx):
     </div>
     """)
 
-    st.markdown(
-        "<div style='margin-top:24px;border-top:1px solid #E2E8F0;padding-top:16px;'></div>",
-        unsafe_allow_html=True
-    )
+    col1, col2, col3 = st.columns([2.7, 1.3, 0.5])
 
-    col_next, col_space = st.columns([1.3, 3.7])
-
-    with col_next:
+    with col2:
         if st.button(
             "หน้าถัดไป ➡",
-            key="btn_next_m1",
+            key="overview_next_company_health",
             use_container_width=True
         ):
-            st.session_state["pending_nav"] = " Company Health "
+            st.session_state["pending_nav"] = " Company Health"
             st.rerun()
