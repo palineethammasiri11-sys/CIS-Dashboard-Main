@@ -374,7 +374,7 @@ def render_nav_footer(key_prefix, prev_page=None, next_page=None):
                 st.session_state["pending_nav"] = prev_page
                 st.rerun()
     with col_home:
-        if st.button("🏠 หน้าหลัก", key=f"btn_home_{key_prefix}", use_container_width=True):
+        if st.button("หน้าหลัก", key=f"btn_home_{key_prefix}", use_container_width=True):
             st.session_state["pending_nav"] = " 🏠 Overview"
             st.rerun()
     with col_next:
