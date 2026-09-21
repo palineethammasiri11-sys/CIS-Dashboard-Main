@@ -95,23 +95,23 @@ def render(ctx):
     rec_color = {
         "STRONG BUY": "#10B981",
         "BUY": "#10B981",
-        "ACCUMULATE": "#84CC16",
+        "ACCUMULATE": "#10B981",
         "REDUCE / SELL": "#EF4444"
     }.get(rec, "#F59E0B")
 
     rec_bg = {
         "STRONG BUY": "rgba(16,185,129,0.12)",
         "BUY": "rgba(16,185,129,0.12)",
-        "ACCUMULATE": "rgba(132,204,22,0.12)",
+        "ACCUMULATE": "rgba(16,185,129,0.12)",
         "REDUCE / SELL": "rgba(239,68,68,0.12)"
     }.get(rec, "rgba(245,158,11,0.12)")
-
+    
     ai_bg = {
-        "STRONG BUY": "rgba(16,185,129,0.08)",
-        "BUY": "rgba(16,185,129,0.08)",
-        "ACCUMULATE": "rgba(16,185,129,0.08)",
-        "REDUCE / SELL": "rgba(239,68,68,0.08)"
-    }.get(rec, "rgba(245,158,11,0.08)")
+        "STRONG BUY": "#ECFDF5",
+        "BUY": "#ECFDF5",
+        "ACCUMULATE": "#ECFDF5",
+        "REDUCE / SELL": "#FEF2F2"
+    }.get(rec, "#FFFBEB")
 
 
     stars = min(5, max(1, round(overall / 20)))
