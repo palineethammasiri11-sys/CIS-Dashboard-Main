@@ -55,13 +55,14 @@ def render(ctx):
             pos_stars = 5 if sector_rank == 1 else (4 if sector_rank <= max(2, n_sector // 2) else 2)
 
         star_color = "#10B981" if pos_stars == 5 else ("#F59E0B" if pos_stars >= 4 else "#EF4444")
+        cup_bg = "rgba(16,185,129,0.12)" if pos_stars == 5 else ("rgba(245,158,11,0.12)" if pos_stars >= 4 else "rgba(239,68,68,0.12)")
 
-        st.markdown(f"""<div style="background:#FFFFFF; border:1px solid #CBD5E1; border-radius:10px; padding:14px; height:360px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between;">
+        st.markdown(f"""<div style="background:#FFFFFF; border:1px solid {star_color}; border-radius:10px; padding:14px; height:360px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between;">
     <div style="font-size:14.5px; color:#64748B; font-weight:bold; margin-bottom:8px;">STRATEGIC INVESTMENT POSITION</div>
     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; flex-grow:1;">
-    <div style="background:rgba(168,85,247,0.15); border:2px solid #A855F7; border-radius:50%; width:100px; height:100px; display:flex; align-items:center; justify-content:center; font-size:44px;">🏆</div>
+    <div style="background:{cup_bg}; border:2px solid {star_color}; border-radius:50%; width:100px; height:100px; display:flex; align-items:center; justify-content:center; font-size:44px;">🏆</div>
     <div style="text-align:center;">
-    <div style="color:#A855F7; font-size:26px; font-weight:bold;">{position_label}</div>
+    <div style="color:{star_color}; font-size:26px; font-weight:bold;">{position_label}</div>
     <div style="color:{star_color}; font-size:22px; letter-spacing:4px; margin-top:6px;">{'★'*pos_stars}{'☆'*(5-pos_stars)}</div>
     </div>
     </div>
