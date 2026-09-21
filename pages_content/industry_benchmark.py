@@ -279,8 +279,17 @@ def render(ctx):
         matrix_df = ctx.scores_df[['ticker', 'health_score', 'overall_score']].copy()
         matrix_df.columns = ['Company', 'Business_Quality', 'Investment_Attract']
 
+        # หุ้นที่เลือก = สีตามจำนวนดาว / หุ้นอื่น = เทา
+        star_color = {
+            5: "#10B981",
+            4: "#F59E0B",
+            3: "#F59E0B",
+            2: "#EF4444",
+            1: "#EF4444"
+        }.get(pos_stars, "#64748B")
+
         color_map = {
-            t: ('#C084FC' if t == ctx.selected_ticker else '#38BDF8')
+            t: (star_color if t == ctx.selected_ticker else "#94A3B8")
             for t in matrix_df['Company']
         }
 
@@ -295,7 +304,10 @@ def render(ctx):
 
         fig_matrix.update_traces(
             textposition='top center',
-            marker=dict(size=13, line=dict(width=1, color='#FFFFFF'))
+            marker=dict(
+                size=13,
+                line=dict(width=1, color='#FFFFFF')
+            )
         )
 
         fig_matrix.add_hline(
