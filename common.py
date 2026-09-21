@@ -32,7 +32,7 @@ from dataclasses import dataclass
 TARGET_STOCKS = ['ADVANC', 'CCET', 'DELTA', 'HANA', 'JMART', 'KCE', 'THCOM', 'TRUE']
 
 SECTOR_MAP = {
-    'ADVANC': 'Technology & Telecomm', 'TRUE': 'Technology & Telecomm', 'THCOM': 'Technology & Telecomm',
+    'ADVANC': 'Technology & Telecom', 'TRUE': 'Technology & Telecom', 'THCOM': 'Technology & Telecom',
     'DELTA': 'Electronic Components', 'HANA': 'Electronic Components', 'KCE': 'Electronic Components',
     'CCET': 'Electronic Components', 'JMART': 'Commerce & Technology'
 }
