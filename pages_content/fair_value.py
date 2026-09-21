@@ -50,36 +50,126 @@ from common import (
 
 
 # ============================================================
-# HTML HELPER
+# LOCAL HELPERS
 # ============================================================
-# สำคัญมาก:
-# ถ้า HTML ใน st.markdown() มี indentation จาก Python
-# Streamlit อาจตีความเป็น code block แล้วแสดง <div> ออกมาเป็นข้อความ
-def _html(content: str) -> str:
-    return textwrap.dedent(content).strip()
 
+def _html(value: str) -> str:
+    """
+    ลบ indentation จาก multiline HTML ก่อนส่งเข้า st.markdown
+
+    สำคัญมาก:
+    ถ้า HTML ใน triple-quoted string มี indentation 4 spaces
+    Streamlit Markdown จะตีความบางส่วนเป็น code block
+    ทำให้หน้าเว็บแสดง <div style="..."> ออกมาเป็นข้อความ
+
+    helper นี้แก้เฉพาะในไฟล์นี้ ไม่แตะ common.py
+    """
+    return textwrap.dedent(value).strip()
+
+
+def _safe_float(value, default=0.0):
+    try:
+        if value is None:
+            return float(default)
+
+        if isinstance(value, str):
+            value = value.replace(",", "").replace("%", "").strip()
+
+        if pd.isna(value):
+            return float(default)
+
+        return float(value)
+
+    except Exception:
+        return float(default)
+
+
+def _color_rgba(hex_color: str, alpha: float = 0.10) -> str:
+    """
+    แปลง #RRGGBB -> rgba(r,g,b,alpha)
+    """
+    try:
+        h = hex_color.lstrip("#")
+
+        if len(h) != 6:
+            return f"rgba(100,116,139,{alpha})"
+
+        r = int(h[0:2], 16)
+        g = int(h[2:4], 16)
+        b = int(h[4:6], 16)
+
+        return f"rgba({r},{g},{b},{alpha})"
+
+    except Exception:
+        return f"rgba(100,116,139,{alpha})"
+
+
+def _get_status_colors(mos: float):
+    """
+    สีทั้งหมดของ Fair Value ให้เปลี่ยนตามสถานะเดียวกัน
+    """
+
+    if mos > 10:
+        return {
+            "main": "#10B981",
+            "dark": "#059669",
+            "light": "#D1FAE5",
+            "bg": "rgba(16,185,129,0.10)",
+            "status": "UNDERVALUED",
+            "recommendation": "ATTRACTIVE",
+        }
+
+    if mos < -10:
+        return {
+            "main": "#EF4444",
+            "dark": "#DC2626",
+            "light": "#FEE2E2",
+            "bg": "rgba(239,68,68,0.10)",
+            "status": "OVERVALUED",
+            "recommendation": "CAUTION",
+        }
+
+    return {
+        "main": "#F59E0B",
+        "dark": "#D97706",
+        "light": "#FEF3C7",
+        "bg": "rgba(245,158,11,0.10)",
+        "status": "FAIR VALUE",
+        "recommendation": "FAIR",
+    }
+
+
+# ============================================================
+# MAIN RENDER
+# ============================================================
 
 def render(ctx):
 
     # ========================================================
-    # BASIC VALUES
+    # DATA
     # ========================================================
-    val_cur_price = safe(ctx.current_price, 0.0)
 
-    val_fair_value = safe(
-        ctx.stock_info.get("fair_value"),
-        val_cur_price * 1.1,
+    val_cur_price = _safe_float(
+        getattr(ctx, "current_price", 0),
+        0,
     )
 
-    val_mos = safe(
-        ctx.stock_info.get("margin_of_safety"),
+    stock_info = getattr(ctx, "stock_info", {}) or {}
+
+    val_fair_value = _safe_float(
+        stock_info.get("fair_value"),
+        val_cur_price * 1.10,
+    )
+
+    val_mos = _safe_float(
+        stock_info.get("margin_of_safety"),
         10.0,
     )
 
     val_score = int(
         round(
-            safe(
-                ctx.stock_info.get("valuation_score"),
+            _safe_float(
+                stock_info.get("valuation_score"),
                 75,
             )
         )
@@ -88,54 +178,43 @@ def render(ctx):
     val_score = max(0, min(100, val_score))
 
     # ========================================================
-    # VALUATION STATUS
+    # STATUS / COLOR
     # ========================================================
-    if val_mos > 10:
-        val_status = "UNDERVALUED"
-        val_color = "#10B981"
-        val_bg = "rgba(16,185,129,0.08)"
-        val_border = "#10B981"
-        val_rec_label = "ATTRACTIVE"
 
-    elif val_mos < -10:
-        val_status = "OVERVALUED"
-        val_color = "#EF4444"
-        val_bg = "rgba(239,68,68,0.08)"
-        val_border = "#EF4444"
-        val_rec_label = "CAUTION"
+    status_colors = _get_status_colors(val_mos)
 
-    else:
-        val_status = "FAIR VALUE"
-        val_color = "#F59E0B"
-        val_bg = "rgba(245,158,11,0.08)"
-        val_border = "#F59E0B"
-        val_rec_label = "FAIR"
+    val_color = status_colors["main"]
+    val_color_dark = status_colors["dark"]
+    val_color_light = status_colors["light"]
+    val_color_bg = status_colors["bg"]
+
+    val_status = status_colors["status"]
+    val_rec_label = status_colors["recommendation"]
 
     # ========================================================
-    # FAIR VALUE VALUES
+    # FAIR VALUE COMPONENTS
     # ========================================================
-    val_bear = safe(
-        ctx.stock_info.get("dcf_fair_value"),
-        val_fair_value * 0.9,
+
+    val_bear_raw = _safe_float(
+        stock_info.get("dcf_fair_value"),
+        val_fair_value * 0.90,
     )
 
     val_base = val_fair_value
 
-    val_bull = safe(
-        ctx.stock_info.get("pe_fair_value"),
-        val_fair_value * 1.1,
+    val_bull_raw = _safe_float(
+        stock_info.get("pe_fair_value"),
+        val_fair_value * 1.10,
     )
 
-    # เรียง lower / upper เพื่อให้กราฟและ card ดูถูกต้องเสมอ
-    lo = min(val_bear, val_bull)
-    hi = max(val_bear, val_bull)
-
-    val_bear = lo
-    val_bull = hi
+    # ให้ lower <= upper เสมอ
+    val_lower = min(val_bear_raw, val_bull_raw)
+    val_upper = max(val_bear_raw, val_bull_raw)
 
     # ========================================================
-    # STARS
+    # OTHER VALUES
     # ========================================================
+
     val_stars = min(
         5,
         max(
@@ -144,50 +223,129 @@ def render(ctx):
         ),
     )
 
+    safety_score = int(
+        min(
+            100,
+            max(
+                20,
+                int(val_mos + 50),
+            ),
+        )
+    )
+
+    safety_score = max(0, min(100, safety_score))
+
+    if abs(val_mos) > 15:
+        conf = "High"
+    elif abs(val_mos) > 5:
+        conf = "Medium"
+    else:
+        conf = "Low"
+
+    conf_color = (
+        "#10B981"
+        if conf == "High"
+        else (
+            "#F59E0B"
+            if conf == "Medium"
+            else "#EF4444"
+        )
+    )
+
+    # ========================================================
+    # SAFE DISPLAY VALUES
+    # ========================================================
+
+    latest_date = stock_info.get(
+        "latest_date",
+        "-",
+    )
+
+    ticker = getattr(
+        ctx,
+        "selected_ticker",
+        "-",
+    )
+
+    sector = stock_info.get(
+        "sector",
+        "-",
+    )
+
+    pe_ratio = stock_info.get(
+        "pe_ratio",
+        None,
+    )
+
+    eps_value = stock_info.get(
+        "eps",
+        "-",
+    )
+
+    dcf_fair_value = _safe_float(
+        stock_info.get("dcf_fair_value"),
+        val_lower,
+    )
+
+    pe_fair_value = _safe_float(
+        stock_info.get("pe_fair_value"),
+        val_upper,
+    )
+
+    wacc_used = stock_info.get(
+        "wacc_used",
+        None,
+    )
+
+    terminal_growth = stock_info.get(
+        "terminal_growth_used",
+        None,
+    )
+
+    fcf_growth = stock_info.get(
+        "fcf_growth_assumed",
+        None,
+    )
+
     # ========================================================
     # PAGE HEADER
     # ========================================================
+
     st.markdown(
         _html(
             """
-            <div
-                style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:flex-end;
-                    margin-bottom:15px;
-                "
-            >
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:flex-end;
+                margin-bottom:15px;
+            ">
                 <div>
-                    <div
-                        style="
-                            display:flex;
-                            align-items:center;
-                            gap:8px;
-                        "
-                    >
-                        <h2
-                            style="
-                                margin:0;
-                                font-size:23px;
-                                font-weight:bold;
-                                color:#0F172A;
-                                letter-spacing:0.5px;
-                            "
-                        >
+
+                    <div style="
+                        display:flex;
+                        align-items:center;
+                        gap:8px;
+                    ">
+                        <h2 style="
+                            margin:0;
+                            font-size:23px;
+                            font-weight:bold;
+                            color:#0F172A;
+                            letter-spacing:0.5px;
+                        ">
                             FAIR VALUE
                         </h2>
                     </div>
 
-                    <div
-                        style="
-                            font-size:15px;
-                            color:#64748B;
-                            margin-top:2px;
-                        "
-                    >
+                    <div style="
+                        font-size:15px;
+                        color:#64748B;
+                        margin-top:2px;
+                    ">
                         ประเมินมูลค่าที่เหมาะสมของหุ้นโดยใช้แบบจำลอง DCF ผสาน P/E Relative
                     </div>
+
                 </div>
             </div>
             """
@@ -198,146 +356,125 @@ def render(ctx):
     # ========================================================
     # ROW 1
     # ========================================================
+
     r1_c1, r1_c2, r1_c3, r1_c4, r1_c5, r1_c6 = st.columns(
         [1.5, 0.9, 0.9, 0.9, 0.9, 1.1]
     )
 
     # ========================================================
-    # FAIR VALUE SUMMARY
+    # CARD 1 — FAIR VALUE SUMMARY
     # ========================================================
+
     with r1_c1:
 
         st.markdown(
             _html(
                 f"""
-                <div
-                    style="
-                        background-color:#FFFFFF;
-                        border:2px solid {val_border};
-                        border-radius:16px;
-                        padding:14px;
-                        min-height:170px;
-                        display:flex;
-                        flex-direction:column;
-                        justify-content:space-between;
-                        box-shadow:
-                            0 4px 14px rgba(15,23,42,0.06);
-                    "
-                >
+                <div style="
+                    background-color:#FFFFFF;
+                    border:2px solid {val_color};
+                    border-radius:16px;
+                    padding:14px;
+                    min-height:170px;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:space-between;
+                    box-shadow:0 4px 14px rgba(15,23,42,0.06);
+                ">
 
-                    <div
-                        style="
-                            font-size:13.5px;
-                            font-weight:bold;
-                            color:#64748B;
-                            letter-spacing:0.5px;
-                        "
-                    >
+                    <div style="
+                        font-size:13.5px;
+                        font-weight:bold;
+                        color:#64748B;
+                        letter-spacing:0.5px;
+                    ">
                         FAIR VALUE SUMMARY
                     </div>
 
-                    <div
-                        style="
-                            display:flex;
-                            align-items:center;
-                            gap:12px;
-                            margin-top:10px;
-                        "
-                    >
+                    <div style="
+                        display:flex;
+                        align-items:center;
+                        gap:12px;
+                        margin-top:10px;
+                    ">
 
                         <!-- SCORE RING -->
-                        <div
-                            style="
-                                width:76px;
-                                height:76px;
-                                min-width:76px;
+                        <div style="
+                            width:76px;
+                            height:76px;
+                            border-radius:50%;
+                            background:conic-gradient(
+                                {val_color} 0% {val_score}%,
+                                #E2E8F0 {val_score}% 100%
+                            );
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            flex-shrink:0;
+                        ">
+
+                            <div style="
+                                width:62px;
+                                height:62px;
                                 border-radius:50%;
-                                background:
-                                    conic-gradient(
-                                        {val_color} 0% {val_score}%,
-                                        #E2E8F0 {val_score}% 100%
-                                    );
+                                background-color:#FFFFFF;
                                 display:flex;
+                                flex-direction:column;
                                 align-items:center;
                                 justify-content:center;
-                            "
-                        >
+                            ">
 
-                            <div
-                                style="
-                                    width:62px;
-                                    height:62px;
-                                    border-radius:50%;
-                                    background-color:#FFFFFF;
-                                    display:flex;
-                                    flex-direction:column;
-                                    align-items:center;
-                                    justify-content:center;
-                                "
-                            >
-                                <span
-                                    style="
-                                        font-size:19px;
-                                        font-weight:bold;
-                                        color:#0F172A;
-                                        line-height:1;
-                                    "
-                                >
+                                <span style="
+                                    font-size:19px;
+                                    font-weight:bold;
+                                    color:#0F172A;
+                                    line-height:1;
+                                ">
                                     {val_score}
                                 </span>
 
-                                <span
-                                    style="
-                                        font-size:12px;
-                                        color:#64748B;
-                                        margin-top:3px;
-                                    "
-                                >
+                                <span style="
+                                    font-size:12px;
+                                    color:#64748B;
+                                ">
                                     /100
                                 </span>
-                            </div>
 
+                            </div>
                         </div>
 
-                        <!-- SUMMARY TEXT -->
-                        <div
-                            style="
-                                min-width:0;
-                                flex:1;
-                            "
-                        >
+                        <!-- STATUS -->
+                        <div style="
+                            min-width:0;
+                            flex:1;
+                        ">
 
-                            <div
-                                style="
-                                    color:{val_color};
-                                    font-size:16.5px;
-                                    font-weight:bold;
-                                    line-height:1.2;
-                                "
-                            >
+                            <div style="
+                                color:{val_color};
+                                font-size:16.5px;
+                                font-weight:bold;
+                                line-height:1.2;
+                            ">
                                 {val_status}
                             </div>
 
-                            <div
-                                style="
-                                    font-size:13px;
-                                    color:#475569;
-                                    line-height:1.35;
-                                    margin-top:3px;
-                                "
-                            >
-                                Margin of Safety อยู่ที่ {val_mos:.1f}%
+                            <div style="
+                                font-size:13px;
+                                color:#475569;
+                                line-height:1.35;
+                                margin-top:3px;
+                            ">
+                                Margin of Safety อยู่ที่
+                                {val_mos:.1f}%
                                 เมื่อเทียบกับมูลค่าพื้นฐานที่แท้จริง
                             </div>
 
-                            <div
-                                style="
-                                    color:{val_color};
-                                    font-size:14.5px;
-                                    letter-spacing:1px;
-                                    margin-top:4px;
-                                "
-                            >
+                            <div style="
+                                color:{val_color};
+                                font-size:14.5px;
+                                letter-spacing:1px;
+                                margin-top:4px;
+                            ">
                                 {"★" * val_stars}{"☆" * (5 - val_stars)}
                             </div>
 
@@ -352,65 +489,57 @@ def render(ctx):
         )
 
     # ========================================================
-    # CURRENT PRICE
+    # CARD 2 — CURRENT PRICE
     # ========================================================
+
     with r1_c2:
 
         st.markdown(
             _html(
                 f"""
-                <div
-                    style="
-                        background-color:#FFFFFF;
-                        border:1px solid #E2E8F0;
-                        border-radius:12px;
-                        padding:12px;
-                        min-height:170px;
-                        display:flex;
-                        flex-direction:column;
-                        justify-content:space-between;
-                    "
-                >
+                <div style="
+                    background-color:#FFFFFF;
+                    border:1px solid #E2E8F0;
+                    border-radius:12px;
+                    padding:12px;
+                    min-height:170px;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:space-between;
+                ">
 
-                    <div
-                        style="
-                            font-size:13px;
-                            font-weight:bold;
-                            color:#64748B;
-                        "
-                    >
+                    <div style="
+                        font-size:13px;
+                        font-weight:bold;
+                        color:#64748B;
+                    ">
                         CURRENT PRICE
                     </div>
 
                     <div>
 
-                        <div
-                            style="
-                                font-size:21px;
-                                font-weight:bold;
-                                color:#0F172A;
-                                line-height:1;
-                            "
-                        >
+                        <div style="
+                            font-size:21px;
+                            font-weight:bold;
+                            color:#0F172A;
+                            line-height:1;
+                        ">
                             {val_cur_price:.2f}
-                            <span
-                                style="
-                                    font-size:13.5px;
-                                    color:#64748B;
-                                "
-                            >
+
+                            <span style="
+                                font-size:13.5px;
+                                color:#64748B;
+                            ">
                                 THB
                             </span>
                         </div>
 
-                        <div
-                            style="
-                                font-size:12px;
-                                color:#64748B;
-                                margin-top:2px;
-                            "
-                        >
-                            ({ctx.stock_info.get("latest_date", "-")})
+                        <div style="
+                            font-size:12px;
+                            color:#64748B;
+                            margin-top:2px;
+                        ">
+                            ({latest_date})
                         </div>
 
                     </div>
@@ -422,63 +551,56 @@ def render(ctx):
         )
 
     # ========================================================
-    # ESTIMATED FAIR VALUE
+    # CARD 3 — ESTIMATED FAIR VALUE
     # ========================================================
+
     with r1_c3:
 
         st.markdown(
             _html(
                 f"""
-                <div
-                    style="
-                        background-color:#FFFFFF;
-                        border:1px solid #E2E8F0;
-                        border-radius:12px;
-                        padding:12px;
-                        min-height:170px;
-                        display:flex;
-                        flex-direction:column;
-                        justify-content:space-between;
-                    "
-                >
+                <div style="
+                    background-color:#FFFFFF;
+                    border:1px solid #E2E8F0;
+                    border-radius:12px;
+                    padding:12px;
+                    min-height:170px;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:space-between;
+                ">
 
-                    <div
-                        style="
-                            font-size:13px;
-                            font-weight:bold;
-                            color:#64748B;
-                            line-height:1.35;
-                        "
-                    >
+                    <div style="
+                        font-size:13px;
+                        font-weight:bold;
+                        color:#64748B;
+                    ">
                         ESTIMATED FAIR VALUE
+
                         <br>
-                        <span
-                            style="
-                                font-size:12px;
-                                color:#64748B;
-                            "
-                        >
+
+                        <span style="
+                            font-size:12px;
+                            color:#64748B;
+                        ">
                             (BLENDED: 55% DCF + 45% P/E)
                         </span>
                     </div>
 
                     <div>
 
-                        <div
-                            style="
-                                font-size:21px;
-                                font-weight:bold;
-                                color:#0F172A;
-                                line-height:1;
-                            "
-                        >
+                        <div style="
+                            font-size:21px;
+                            font-weight:bold;
+                            color:#0F172A;
+                            line-height:1;
+                        ">
                             {val_base:.2f}
-                            <span
-                                style="
-                                    font-size:13.5px;
-                                    color:#64748B;
-                                "
-                            >
+
+                            <span style="
+                                font-size:13.5px;
+                                color:#64748B;
+                            ">
                                 THB
                             </span>
                         </div>
@@ -492,75 +614,69 @@ def render(ctx):
         )
 
     # ========================================================
-    # MARGIN OF SAFETY
+    # CARD 4 — MARGIN OF SAFETY
     # ========================================================
+
     with r1_c4:
 
         st.markdown(
             _html(
                 f"""
-                <div
-                    style="
-                        background-color:#FFFFFF;
-                        border:1px solid #E2E8F0;
-                        border-radius:12px;
-                        padding:12px;
-                        min-height:170px;
-                        display:flex;
-                        flex-direction:column;
-                        justify-content:space-between;
-                        text-align:center;
-                    "
-                >
+                <div style="
+                    background-color:#FFFFFF;
+                    border:1px solid #E2E8F0;
+                    border-radius:12px;
+                    padding:12px;
+                    min-height:170px;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:space-between;
+                    text-align:center;
+                ">
 
-                    <div
-                        style="
-                            font-size:13px;
-                            font-weight:bold;
-                            color:#64748B;
-                            text-align:left;
-                        "
-                    >
+                    <div style="
+                        font-size:13px;
+                        font-weight:bold;
+                        color:#64748B;
+                        text-align:left;
+                    ">
                         MARGIN OF SAFETY
                     </div>
 
                     <div>
 
-                        <div
-                            style="
-                                font-size:21px;
-                                font-weight:bold;
-                                color:{val_color};
-                                line-height:1;
-                            "
-                        >
+                        <div style="
+                            font-size:21px;
+                            font-weight:bold;
+                            color:{val_color};
+                            line-height:1;
+                        ">
                             {val_mos:.1f}%
                         </div>
 
                     </div>
 
-                    <div
-                        style="
-                            margin-top:auto;
+                    <div style="
+                        margin-top:auto;
+                        display:flex;
+                        justify-content:center;
+                    ">
+
+                        <div style="
+                            background:{val_color_bg};
+                            border:1px solid {val_color};
+                            border-radius:50%;
+                            width:36px;
+                            height:36px;
                             display:flex;
+                            align-items:center;
                             justify-content:center;
-                        "
-                    >
-                        <div
-                            style="
-                                background:{val_bg};
-                                border:1px solid {val_color};
-                                border-radius:50%;
-                                width:36px;
-                                height:36px;
-                                display:flex;
-                                align-items:center;
-                                justify-content:center;
-                                font-size:15px;
-                            "
-                        >
+                            font-size:15px;
+                            color:{val_color};
+                        ">
                             🛡️
                         </div>
+
                     </div>
 
                 </div>
@@ -570,64 +686,43 @@ def render(ctx):
         )
 
     # ========================================================
-    # CONFIDENCE
+    # CARD 5 — CONFIDENCE
     # ========================================================
+
     with r1_c5:
-
-        conf = (
-            "High"
-            if abs(val_mos) > 15
-            else ("Medium" if abs(val_mos) > 5 else "Low")
-        )
-
-        conf_color = (
-            "#10B981"
-            if conf == "High"
-            else (
-                "#F59E0B"
-                if conf == "Medium"
-                else "#EF4444"
-            )
-        )
 
         st.markdown(
             _html(
                 f"""
-                <div
-                    style="
-                        background-color:#FFFFFF;
-                        border:1px solid #E2E8F0;
-                        border-radius:12px;
-                        padding:12px;
-                        min-height:170px;
-                        display:flex;
-                        flex-direction:column;
-                        justify-content:space-between;
-                        text-align:center;
-                    "
-                >
+                <div style="
+                    background-color:#FFFFFF;
+                    border:1px solid #E2E8F0;
+                    border-radius:12px;
+                    padding:12px;
+                    min-height:170px;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:space-between;
+                    text-align:center;
+                ">
 
-                    <div
-                        style="
-                            font-size:13px;
-                            font-weight:bold;
-                            color:#64748B;
-                            text-align:left;
-                        "
-                    >
+                    <div style="
+                        font-size:13px;
+                        font-weight:bold;
+                        color:#64748B;
+                        text-align:left;
+                    ">
                         CONFIDENCE LEVEL
                     </div>
 
                     <div>
 
-                        <div
-                            style="
-                                font-size:18.5px;
-                                font-weight:bold;
-                                color:{conf_color};
-                                line-height:1;
-                            "
-                        >
+                        <div style="
+                            font-size:18.5px;
+                            font-weight:bold;
+                            color:{conf_color};
+                            line-height:1;
+                        ">
                             {conf.upper()}
                         </div>
 
@@ -640,48 +735,43 @@ def render(ctx):
         )
 
     # ========================================================
-    # RECOMMENDATION
+    # CARD 6 — RECOMMENDATION
     # ========================================================
+
     with r1_c6:
 
         st.markdown(
             _html(
                 f"""
-                <div
-                    style="
-                        background-color:#FFFFFF;
-                        border:1px solid #E2E8F0;
-                        border-radius:12px;
-                        padding:12px;
-                        min-height:170px;
-                        display:flex;
-                        flex-direction:column;
-                        justify-content:space-between;
-                        text-align:center;
-                    "
-                >
+                <div style="
+                    background-color:#FFFFFF;
+                    border:1px solid #E2E8F0;
+                    border-radius:12px;
+                    padding:12px;
+                    min-height:170px;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:space-between;
+                    text-align:center;
+                ">
 
-                    <div
-                        style="
-                            font-size:13px;
-                            font-weight:bold;
-                            color:#64748B;
-                            text-align:left;
-                        "
-                    >
+                    <div style="
+                        font-size:13px;
+                        font-weight:bold;
+                        color:#64748B;
+                        text-align:left;
+                    ">
                         RECOMMENDATION
                     </div>
 
                     <div>
 
-                        <div
-                            style="
-                                font-size:17.5px;
-                                font-weight:bold;
-                                color:{val_color};
-                                line-height:1.1;
-                            "
-                        >
+                        <div style="
+                            font-size:17.5px;
+                            font-weight:bold;
+                            color:{val_color};
+                            line-height:1.1;
+                        ">
                             {val_rec_label}
                         </div>
 
@@ -694,8 +784,9 @@ def render(ctx):
         )
 
     # ========================================================
-    # SPACING
+    # SPACE
     # ========================================================
+
     st.markdown(
         "<div style='margin-top:22px;'></div>",
         unsafe_allow_html=True,
@@ -704,250 +795,236 @@ def render(ctx):
     # ========================================================
     # ROW 2
     # ========================================================
+
     r2_c1, r2_c2, r2_c3 = st.columns(
         [1.3, 1.3, 1.4]
     )
 
     # ========================================================
-    # FAIR VALUE RANGE
+    # ROW 2 CARD 1 — FAIR VALUE RANGE
     # ========================================================
+
     with r2_c1:
 
-        latest_year = (
-            int(ctx.fin_stock["year"].max())
-            if (
-                not ctx.fin_stock.empty
-                and "year" in ctx.fin_stock.columns
+        try:
+            fin_stock = getattr(
+                ctx,
+                "fin_stock",
+                pd.DataFrame(),
             )
-            else "-"
-        )
+
+            if (
+                isinstance(fin_stock, pd.DataFrame)
+                and not fin_stock.empty
+                and "year" in fin_stock.columns
+            ):
+                latest_fin_year = int(
+                    pd.to_numeric(
+                        fin_stock["year"],
+                        errors="coerce",
+                    ).max()
+                )
+            else:
+                latest_fin_year = "-"
+
+        except Exception:
+            latest_fin_year = "-"
 
         st.markdown(
             _html(
                 f"""
-                <div
-                    style="
-                        background-color:#FFFFFF;
-                        border:1px solid #E2E8F0;
-                        border-radius:12px;
-                        padding:14px;
-                        min-height:315px;
-                        display:flex;
-                        flex-direction:column;
-                        justify-content:space-between;
-                    "
-                >
+                <div style="
+                    background-color:#FFFFFF;
+                    border:1px solid #E2E8F0;
+                    border-radius:12px;
+                    padding:14px;
+                    min-height:315px;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:space-between;
+                ">
 
-                    <div
-                        style="
-                            font-size:14px;
-                            font-weight:bold;
-                            color:#64748B;
-                            letter-spacing:0.5px;
-                        "
-                    >
+                    <div style="
+                        font-size:14px;
+                        font-weight:bold;
+                        color:#64748B;
+                        letter-spacing:0.5px;
+                    ">
                         FAIR VALUE RANGE — DCF vs P/E RELATIVE
                     </div>
 
-                    <div
-                        style="
-                            display:grid;
-                            grid-template-columns:1fr 1.1fr 1fr;
-                            gap:6px;
-                            margin-top:6px;
-                        "
-                    >
+                    <div style="
+                        display:grid;
+                        grid-template-columns:1fr 1.1fr 1fr;
+                        gap:6px;
+                        margin-top:6px;
+                    ">
 
-                        <div
-                            style="
-                                background:#F8FAFC;
-                                border:1px solid #E2E8F0;
-                                border-radius:8px;
-                                padding:8px 4px;
-                                text-align:center;
-                            "
-                        >
-                            <div
-                                style="
-                                    color:#38BDF8;
-                                    font-size:13.5px;
-                                    font-weight:bold;
-                                "
-                            >
+                        <!-- LOWER -->
+                        <div style="
+                            background:#F8FAFC;
+                            border:1px solid #E2E8F0;
+                            border-radius:8px;
+                            padding:8px 4px;
+                            text-align:center;
+                        ">
+
+                            <div style="
+                                color:#38BDF8;
+                                font-size:13.5px;
+                                font-weight:bold;
+                            ">
                                 Lower Estimate
                             </div>
 
-                            <div
-                                style="
-                                    color:#64748B;
-                                    font-size:12px;
-                                "
-                            >
+                            <div style="
+                                color:#64748B;
+                                font-size:12px;
+                            ">
                                 Min(DCF, P/E)
                             </div>
 
-                            <div
-                                style="
-                                    color:#0F172A;
-                                    font-size:16px;
-                                    font-weight:bold;
-                                    margin-top:4px;
-                                "
-                            >
-                                {val_bear:.2f}
-                                <span
-                                    style="
-                                        font-size:12px;
-                                        color:#64748B;
-                                    "
-                                >
+                            <div style="
+                                color:#0F172A;
+                                font-size:16px;
+                                font-weight:bold;
+                                margin-top:4px;
+                            ">
+                                {val_lower:.2f}
+
+                                <span style="
+                                    font-size:12px;
+                                    color:#64748B;
+                                ">
                                     THB
                                 </span>
                             </div>
+
                         </div>
 
-                        <div
-                            style="
-                                background:#F8FAFC;
-                                border:1.5px solid #8B5CF6;
-                                border-radius:8px;
-                                padding:8px 4px;
-                                text-align:center;
-                            "
-                        >
-                            <div
-                                style="
-                                    color:#C084FC;
-                                    font-size:13.5px;
-                                    font-weight:bold;
-                                "
-                            >
+                        <!-- BLENDED -->
+                        <div style="
+                            background:#F8FAFC;
+                            border:1.5px solid {val_color};
+                            border-radius:8px;
+                            padding:8px 4px;
+                            text-align:center;
+                            box-shadow:0 2px 8px {val_color_bg};
+                        ">
+
+                            <div style="
+                                color:{val_color};
+                                font-size:13.5px;
+                                font-weight:bold;
+                            ">
                                 Blended Fair Value
                             </div>
 
-                            <div
-                                style="
-                                    color:#64748B;
-                                    font-size:12px;
-                                "
-                            >
+                            <div style="
+                                color:#64748B;
+                                font-size:12px;
+                            ">
                                 55% DCF + 45% P/E
                             </div>
 
-                            <div
-                                style="
-                                    color:#0F172A;
-                                    font-size:16.5px;
-                                    font-weight:bold;
-                                    margin-top:4px;
-                                "
-                            >
+                            <div style="
+                                color:#0F172A;
+                                font-size:16.5px;
+                                font-weight:bold;
+                                margin-top:4px;
+                            ">
                                 {val_base:.2f}
-                                <span
-                                    style="
-                                        font-size:12px;
-                                        color:#64748B;
-                                    "
-                                >
+
+                                <span style="
+                                    font-size:12px;
+                                    color:#64748B;
+                                ">
                                     THB
                                 </span>
                             </div>
+
                         </div>
 
-                        <div
-                            style="
-                                background:#F8FAFC;
-                                border:1px solid #E2E8F0;
-                                border-radius:8px;
-                                padding:8px 4px;
-                                text-align:center;
-                            "
-                        >
-                            <div
-                                style="
-                                    color:#10B981;
-                                    font-size:13.5px;
-                                    font-weight:bold;
-                                "
-                            >
+                        <!-- UPPER -->
+                        <div style="
+                            background:#F8FAFC;
+                            border:1px solid #E2E8F0;
+                            border-radius:8px;
+                            padding:8px 4px;
+                            text-align:center;
+                        ">
+
+                            <div style="
+                                color:#10B981;
+                                font-size:13.5px;
+                                font-weight:bold;
+                            ">
                                 Upper Estimate
                             </div>
 
-                            <div
-                                style="
-                                    color:#64748B;
-                                    font-size:12px;
-                                "
-                            >
+                            <div style="
+                                color:#64748B;
+                                font-size:12px;
+                            ">
                                 Max(DCF, P/E)
                             </div>
 
-                            <div
-                                style="
-                                    color:#0F172A;
-                                    font-size:16px;
-                                    font-weight:bold;
-                                    margin-top:4px;
-                                "
-                            >
-                                {val_bull:.2f}
-                                <span
-                                    style="
-                                        font-size:12px;
-                                        color:#64748B;
-                                    "
-                                >
+                            <div style="
+                                color:#0F172A;
+                                font-size:16px;
+                                font-weight:bold;
+                                margin-top:4px;
+                            ">
+                                {val_upper:.2f}
+
+                                <span style="
+                                    font-size:12px;
+                                    color:#64748B;
+                                ">
                                     THB
                                 </span>
                             </div>
+
                         </div>
 
                     </div>
 
-                    <div
-                        style="
-                            background:rgba(16,185,129,0.08);
-                            border-radius:6px;
-                            padding:6px 8px;
-                            display:flex;
-                            align-items:flex-start;
-                            gap:6px;
-                            margin-top:10px;
-                        "
-                    >
+                    <div style="
+                        background:{val_color_bg};
+                        border-radius:6px;
+                        padding:6px 8px;
+                        display:flex;
+                        align-items:flex-start;
+                        gap:6px;
+                        margin-top:10px;
+                    ">
 
-                        <span
-                            style="
-                                color:#10B981;
-                                font-size:14.5px;
-                            "
-                        >
+                        <span style="
+                            color:{val_color};
+                            font-size:14.5px;
+                        ">
                             ✔
                         </span>
 
-                        <div
-                            style="
-                                font-size:12.5px;
-                                color:#475569;
-                                line-height:1.3;
-                            "
-                        >
+                        <div style="
+                            font-size:12.5px;
+                            color:#475569;
+                            line-height:1.3;
+                        ">
 
                             <b>
-                                DCF Fair Value:
-                                {safe(ctx.stock_info.get("dcf_fair_value"), 0):.2f}
-                                THB
+                                DCF Fair Value: {dcf_fair_value:.2f} THB
                                 &nbsp;|&nbsp;
-                                P/E Fair Value:
-                                {safe(ctx.stock_info.get("pe_fair_value"), 0):.2f}
-                                THB
+                                P/E Fair Value: {pe_fair_value:.2f} THB
                             </b>
 
                             <br>
 
-                            <span style="color:#64748B;">
+                            <span style="
+                                color:#64748B;
+                            ">
                                 คำนวณจากงบการเงินปีล่าสุด
-                                (FY{latest_year})
+                                (FY{latest_fin_year})
                                 เทียบราคาตลาดปัจจุบัน
                                 {val_cur_price:.2f} THB
                             </span>
@@ -963,66 +1040,51 @@ def render(ctx):
         )
 
     # ========================================================
-    # VALUATION DRIVERS
+    # ROW 2 CARD 2 — VALUATION DRIVERS
     # ========================================================
+
     with r2_c2:
-
-        pe_ratio_display = fmt_ratio(
-            ctx.stock_info.get("pe_ratio"),
-            suffix="",
-        )
-
-        eps_display = ctx.stock_info.get(
-            "eps",
-            "-",
-        )
 
         st.markdown(
             _html(
                 f"""
-                <div
-                    style="
-                        background-color:#FFFFFF;
-                        border:1px solid #E2E8F0;
-                        border-radius:12px;
-                        padding:14px;
-                        min-height:315px;
-                        display:flex;
-                        flex-direction:column;
-                        justify-content:space-between;
-                    "
-                >
+                <div style="
+                    background-color:#FFFFFF;
+                    border:1px solid #E2E8F0;
+                    border-radius:12px;
+                    padding:14px;
+                    min-height:315px;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:space-between;
+                ">
 
-                    <div
-                        style="
-                            font-size:14px;
-                            font-weight:bold;
-                            color:#64748B;
-                            letter-spacing:0.5px;
-                        "
-                    >
-                        VALUATION DRIVERS ({ctx.selected_ticker})
+                    <div style="
+                        font-size:14px;
+                        font-weight:bold;
+                        color:#64748B;
+                        letter-spacing:0.5px;
+                    ">
+                        VALUATION DRIVERS ({ticker})
                     </div>
 
-                    <div
-                        style="
-                            font-size:13px;
-                            color:#475569;
-                            line-height:1.45;
-                            display:flex;
-                            flex-direction:column;
-                            gap:6px;
-                            margin:auto 0;
-                        "
-                    >
+                    <div style="
+                        font-size:13px;
+                        color:#475569;
+                        line-height:1.45;
+                        display:flex;
+                        flex-direction:column;
+                        gap:6px;
+                        margin:auto 0;
+                    ">
 
-                        <div
-                            style="
-                                display:flex;
-                                gap:6px;
-                            "
-                        >
-                            <span style="color:#10B981;">
+                        <div style="
+                            display:flex;
+                            gap:6px;
+                        ">
+                            <span style="
+                                color:{val_color};
+                            ">
                                 ✔
                             </span>
 
@@ -1034,24 +1096,22 @@ def render(ctx):
 
                                 <br>
 
-                                <span
-                                    style="
-                                        color:#64748B;
-                                        font-size:12.5px;
-                                    "
-                                >
+                                <span style="
+                                    color:#64748B;
+                                    font-size:12.5px;
+                                ">
                                     ประเมินแบบผสมผสาน DCF + Relative P/E
                                 </span>
                             </div>
                         </div>
 
-                        <div
-                            style="
-                                display:flex;
-                                gap:6px;
-                            "
-                        >
-                            <span style="color:#10B981;">
+                        <div style="
+                            display:flex;
+                            gap:6px;
+                        ">
+                            <span style="
+                                color:{val_color};
+                            ">
                                 ✔
                             </span>
 
@@ -1063,72 +1123,63 @@ def render(ctx):
 
                                 <br>
 
-                                <span
-                                    style="
-                                        color:#64748B;
-                                        font-size:12.5px;
-                                    "
-                                >
+                                <span style="
+                                    color:#64748B;
+                                    font-size:12.5px;
+                                ">
                                     ส่วนต่างความปลอดภัยจากราคาตลาดปัจจุบัน
                                 </span>
                             </div>
                         </div>
 
-                        <div
-                            style="
-                                display:flex;
-                                gap:6px;
-                            "
-                        >
-                            <span style="color:#10B981;">
+                        <div style="
+                            display:flex;
+                            gap:6px;
+                        ">
+                            <span style="
+                                color:{val_color};
+                            ">
                                 ✔
                             </span>
 
                             <div>
                                 <b>
                                     P/E Ratio ปัจจุบัน:
-                                    {pe_ratio_display} เท่า
+                                    {fmt_ratio(pe_ratio, suffix='')} เท่า
                                 </b>
 
                                 <br>
 
-                                <span
-                                    style="
-                                        color:#64748B;
-                                        font-size:12.5px;
-                                    "
-                                >
-                                    เทียบ EPS ล่าสุด
-                                    {eps_display}
-                                    บาท/หุ้น
+                                <span style="
+                                    color:#64748B;
+                                    font-size:12.5px;
+                                ">
+                                    เทียบ EPS ล่าสุด {eps_value} บาท/หุ้น
                                 </span>
                             </div>
                         </div>
 
-                        <div
-                            style="
-                                display:flex;
-                                gap:6px;
-                            "
-                        >
-                            <span style="color:#10B981;">
+                        <div style="
+                            display:flex;
+                            gap:6px;
+                        ">
+                            <span style="
+                                color:{val_color};
+                            ">
                                 ✔
                             </span>
 
                             <div>
                                 <b>
-                                    สถานะมูลค่า:
-                                    {val_status}
+                                    สถานะมูลค่า: {val_status}
                                 </b>
 
                                 <br>
 
-                                <span
-                                    style="
-                                        color:#64748B;
-                                        font-size:12.5px;
-                                    "
-                                >
+                                <span style="
+                                    color:#64748B;
+                                    font-size:12.5px;
+                                ">
                                     ระดับความน่าดึงดูดเชิงมูลค่าพื้นฐาน
                                 </span>
                             </div>
@@ -1143,105 +1194,86 @@ def render(ctx):
         )
 
     # ========================================================
-    # FAIR VALUE SCORE BY DIMENSION
+    # ROW 2 CARD 3 — SCORE BY DIMENSION
     # ========================================================
-    with r2_c3:
 
-        safety_score = int(
-            min(
-                100,
-                max(
-                    20,
-                    int(val_mos + 50),
-                ),
-            )
-        )
+    with r2_c3:
 
         st.markdown(
             _html(
                 f"""
-                <div
-                    style="
-                        background-color:#FFFFFF;
-                        border:1px solid #E2E8F0;
-                        border-radius:12px;
-                        padding:14px;
-                        min-height:315px;
-                        display:flex;
-                        flex-direction:column;
-                        justify-content:space-between;
-                    "
-                >
+                <div style="
+                    background-color:#FFFFFF;
+                    border:1px solid #E2E8F0;
+                    border-radius:12px;
+                    padding:14px;
+                    min-height:315px;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:space-between;
+                ">
 
-                    <div
-                        style="
-                            font-size:14px;
-                            font-weight:bold;
-                            color:#64748B;
-                            letter-spacing:0.5px;
-                        "
-                    >
+                    <div style="
+                        font-size:14px;
+                        font-weight:bold;
+                        color:#64748B;
+                        letter-spacing:0.5px;
+                    ">
                         FAIR VALUE SCORE BY DIMENSION
                     </div>
 
-                    <div
-                        style="
-                            display:flex;
-                            flex-direction:column;
-                            gap:10px;
-                            margin:auto 0;
-                        "
-                    >
+                    <div style="
+                        display:flex;
+                        flex-direction:column;
+                        gap:10px;
+                        margin:auto 0;
+                    ">
 
-                        <!-- P/E -->
+                        <!-- PE -->
                         <div>
 
-                            <div
-                                style="
-                                    display:flex;
-                                    justify-content:space-between;
-                                    font-size:13px;
-                                    color:#475569;
-                                    margin-bottom:3px;
-                                "
-                            >
+                            <div style="
+                                display:flex;
+                                justify-content:space-between;
+                                font-size:13px;
+                                color:#475569;
+                                margin-bottom:3px;
+                            ">
+
                                 <span>
                                     📊 Relative Valuation (P/E)
                                 </span>
 
-                                <span
-                                    style="
-                                        font-weight:bold;
-                                        color:#0F172A;
-                                    "
-                                >
+                                <span style="
+                                    font-weight:bold;
+                                    color:#0F172A;
+                                ">
                                     {val_score}
-                                    <span
-                                        style="
-                                            font-size:12px;
-                                            color:#64748B;
-                                        "
-                                    >
+
+                                    <span style="
+                                        font-size:12px;
+                                        color:#64748B;
+                                    ">
                                         /100
                                     </span>
                                 </span>
+
                             </div>
 
-                            <div
-                                style="
-                                    background:#E2E8F0;
-                                    height:9px;
+                            <div style="
+                                background:#E2E8F0;
+                                height:9px;
+                                border-radius:4px;
+                                overflow:hidden;
+                            ">
+
+                                <div style="
+                                    background:{val_color};
+                                    width:{val_score}%;
+                                    height:100%;
                                     border-radius:4px;
-                                    overflow:hidden;
-                                "
-                            >
-                                <div
-                                    style="
-                                        background:#10B981;
-                                        width:{val_score}%;
-                                        height:100%;
-                                    "
-                                ></div>
+                                "></div>
+
                             </div>
 
                         </div>
@@ -1249,52 +1281,48 @@ def render(ctx):
                         <!-- DCF -->
                         <div>
 
-                            <div
-                                style="
-                                    display:flex;
-                                    justify-content:space-between;
-                                    font-size:13px;
-                                    color:#475569;
-                                    margin-bottom:3px;
-                                "
-                            >
+                            <div style="
+                                display:flex;
+                                justify-content:space-between;
+                                font-size:13px;
+                                color:#475569;
+                                margin-bottom:3px;
+                            ">
+
                                 <span>
                                     🎯 Intrinsic Valuation (DCF)
                                 </span>
 
-                                <span
-                                    style="
-                                        font-weight:bold;
-                                        color:#0F172A;
-                                    "
-                                >
+                                <span style="
+                                    font-weight:bold;
+                                    color:#0F172A;
+                                ">
                                     {val_score}
-                                    <span
-                                        style="
-                                            font-size:12px;
-                                            color:#64748B;
-                                        "
-                                    >
+
+                                    <span style="
+                                        font-size:12px;
+                                        color:#64748B;
+                                    ">
                                         /100
                                     </span>
                                 </span>
+
                             </div>
 
-                            <div
-                                style="
-                                    background:#E2E8F0;
-                                    height:9px;
+                            <div style="
+                                background:#E2E8F0;
+                                height:9px;
+                                border-radius:4px;
+                                overflow:hidden;
+                            ">
+
+                                <div style="
+                                    background:{val_color};
+                                    width:{val_score}%;
+                                    height:100%;
                                     border-radius:4px;
-                                    overflow:hidden;
-                                "
-                            >
-                                <div
-                                    style="
-                                        background:#10B981;
-                                        width:{val_score}%;
-                                        height:100%;
-                                    "
-                                ></div>
+                                "></div>
+
                             </div>
 
                         </div>
@@ -1302,92 +1330,81 @@ def render(ctx):
                         <!-- MOS -->
                         <div>
 
-                            <div
-                                style="
-                                    display:flex;
-                                    justify-content:space-between;
-                                    font-size:13px;
-                                    color:#475569;
-                                    margin-bottom:3px;
-                                "
-                            >
+                            <div style="
+                                display:flex;
+                                justify-content:space-between;
+                                font-size:13px;
+                                color:#475569;
+                                margin-bottom:3px;
+                            ">
+
                                 <span>
                                     🛡️ Margin of Safety
                                 </span>
 
-                                <span
-                                    style="
-                                        font-weight:bold;
-                                        color:#0F172A;
-                                    "
-                                >
+                                <span style="
+                                    font-weight:bold;
+                                    color:#0F172A;
+                                ">
                                     {safety_score}
-                                    <span
-                                        style="
-                                            font-size:12px;
-                                            color:#64748B;
-                                        "
-                                    >
+
+                                    <span style="
+                                        font-size:12px;
+                                        color:#64748B;
+                                    ">
                                         /100
                                     </span>
                                 </span>
+
                             </div>
 
-                            <div
-                                style="
-                                    background:#E2E8F0;
-                                    height:9px;
+                            <div style="
+                                background:#E2E8F0;
+                                height:9px;
+                                border-radius:4px;
+                                overflow:hidden;
+                            ">
+
+                                <div style="
+                                    background:{val_color};
+                                    width:{safety_score}%;
+                                    height:100%;
                                     border-radius:4px;
-                                    overflow:hidden;
-                                "
-                            >
-                                <div
-                                    style="
-                                        background:{val_color};
-                                        width:{safety_score}%;
-                                        height:100%;
-                                    "
-                                ></div>
+                                "></div>
+
                             </div>
 
                         </div>
 
                     </div>
 
-                    <div
-                        style="
-                            display:flex;
-                            justify-content:space-between;
-                            align-items:center;
-                            border-top:1px solid #E2E8F0;
-                            padding-top:8px;
-                        "
-                    >
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                        border-top:1px solid #E2E8F0;
+                        padding-top:8px;
+                    ">
 
-                        <span
-                            style="
-                                font-size:13.5px;
-                                font-weight:bold;
-                                color:#475569;
-                            "
-                        >
+                        <span style="
+                            font-size:13.5px;
+                            font-weight:bold;
+                            color:#475569;
+                        ">
                             OVERALL FAIR VALUE SCORE
                         </span>
 
-                        <span
-                            style="
-                                font-size:18.5px;
-                                font-weight:bold;
-                                color:{val_color};
-                            "
-                        >
+                        <span style="
+                            font-size:18.5px;
+                            font-weight:bold;
+                            color:{val_color};
+                        ">
                             {val_score}
-                            <span
-                                style="
-                                    font-size:13px;
-                                    color:#64748B;
-                                "
-                            >
+
+                            <span style="
+                                font-size:13px;
+                                color:#64748B;
+                            ">
                                 /100
                             </span>
                         </span>
@@ -1401,8 +1418,9 @@ def render(ctx):
         )
 
     # ========================================================
-    # DETAIL BREAKDOWN
+    # DETAIL BREAKDOWN HEADER
     # ========================================================
+
     st.markdown(
         "<div style='margin-top:22px;'></div>",
         unsafe_allow_html=True,
@@ -1411,15 +1429,13 @@ def render(ctx):
     st.markdown(
         _html(
             """
-            <div
-                style="
-                    font-size:14.5px;
-                    font-weight:bold;
-                    color:#64748B;
-                    letter-spacing:0.5px;
-                    margin-bottom:8px;
-                "
-            >
+            <div style="
+                font-size:14.5px;
+                font-weight:bold;
+                color:#64748B;
+                letter-spacing:0.5px;
+                margin-bottom:8px;
+            ">
                 DETAIL BREAKDOWN
             </div>
             """
@@ -1427,95 +1443,97 @@ def render(ctx):
         unsafe_allow_html=True,
     )
 
+    # ========================================================
+    # DETAIL BREAKDOWN
+    # ========================================================
+
     d_c1, d_c2, d_c3, d_c4 = st.columns(4)
 
     # ========================================================
-    # RELATIVE VALUATION
+    # DETAIL 1 — P/E
     # ========================================================
+
     with d_c1:
 
         st.markdown(
             _html(
                 f"""
-                <div
-                    style="
-                        background-color:#FFFFFF;
-                        border:1px solid #E2E8F0;
-                        border-radius:10px;
-                        padding:12px;
-                        min-height:190px;
-                        display:flex;
-                        flex-direction:column;
-                        justify-content:space-between;
-                    "
-                >
+                <div style="
+                    background-color:#FFFFFF;
+                    border:1px solid #E2E8F0;
+                    border-radius:10px;
+                    padding:12px;
+                    min-height:190px;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:space-between;
+                ">
 
                     <div>
 
-                        <div
-                            style="
-                                font-size:13px;
-                                font-weight:bold;
-                                color:#475569;
-                            "
-                        >
+                        <div style="
+                            font-size:13px;
+                            font-weight:bold;
+                            color:#475569;
+                        ">
                             RELATIVE VALUATION (P/E)
                         </div>
 
-                        <table
-                            style="
-                                width:100%;
-                                font-size:13px;
-                                color:#475569;
-                                border-collapse:collapse;
-                                margin-top:6px;
-                            "
-                        >
+                        <table style="
+                            width:100%;
+                            font-size:13px;
+                            color:#475569;
+                            border-collapse:collapse;
+                            margin-top:6px;
+                        ">
 
-                            <tr
-                                style="
-                                    border-bottom:1px solid #E2E8F0;
-                                    color:#64748B;
-                                    font-size:12.5px;
-                                "
-                            >
-                                <th
-                                    style="
-                                        text-align:left;
-                                        padding:2px 0;
-                                    "
-                                >
+                            <tr style="
+                                border-bottom:1px solid #E2E8F0;
+                                color:#64748B;
+                                font-size:12.5px;
+                            ">
+
+                                <th style="
+                                    text-align:left;
+                                    padding:2px 0;
+                                ">
                                     Metric
                                 </th>
 
                                 <th>
                                     Value
                                 </th>
+
                             </tr>
 
-                            <tr
-                                style="
-                                    border-bottom:1px solid #E2E8F0;
-                                "
-                            >
-                                <td style="padding:3px 0;">
+                            <tr style="
+                                border-bottom:1px solid #E2E8F0;
+                            ">
+
+                                <td style="
+                                    padding:3px 0;
+                                ">
                                     P/E Ratio ปัจจุบัน
                                 </td>
 
                                 <td>
-                                    {fmt_ratio(ctx.stock_info.get("pe_ratio"))}
+                                    {fmt_ratio(pe_ratio)}
                                 </td>
+
                             </tr>
 
                             <tr>
-                                <td style="padding:3px 0;">
+
+                                <td style="
+                                    padding:3px 0;
+                                ">
                                     P/E Fair Value
                                 </td>
 
                                 <td>
-                                    {safe(ctx.stock_info.get("pe_fair_value"), 0):.2f}
-                                    THB
+                                    {pe_fair_value:.2f} THB
                                 </td>
+
                             </tr>
 
                         </table>
@@ -1529,99 +1547,94 @@ def render(ctx):
         )
 
     # ========================================================
-    # DCF
+    # DETAIL 2 — DCF
     # ========================================================
+
     with d_c2:
 
         st.markdown(
             _html(
                 f"""
-                <div
-                    style="
-                        background-color:#FFFFFF;
-                        border:1px solid #E2E8F0;
-                        border-radius:10px;
-                        padding:12px;
-                        min-height:190px;
-                        display:flex;
-                        flex-direction:column;
-                        justify-content:space-between;
-                    "
-                >
+                <div style="
+                    background-color:#FFFFFF;
+                    border:1px solid #E2E8F0;
+                    border-radius:10px;
+                    padding:12px;
+                    min-height:190px;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:space-between;
+                ">
 
                     <div>
 
-                        <div
-                            style="
-                                font-size:13px;
-                                font-weight:bold;
-                                color:#475569;
-                            "
-                        >
+                        <div style="
+                            font-size:13px;
+                            font-weight:bold;
+                            color:#475569;
+                        ">
                             INTRINSIC VALUATION (DCF)
                         </div>
 
-                        <table
-                            style="
-                                width:100%;
-                                font-size:13px;
-                                color:#475569;
-                                border-collapse:collapse;
-                                margin-top:6px;
-                            "
-                        >
+                        <table style="
+                            width:100%;
+                            font-size:13px;
+                            color:#475569;
+                            border-collapse:collapse;
+                            margin-top:6px;
+                        ">
 
-                            <tr
-                                style="
-                                    border-bottom:1px solid #E2E8F0;
-                                    color:#64748B;
-                                    font-size:12.5px;
-                                "
-                            >
-                                <th
-                                    style="
-                                        text-align:left;
-                                        padding:2px 0;
-                                    "
-                                >
+                            <tr style="
+                                border-bottom:1px solid #E2E8F0;
+                                color:#64748B;
+                                font-size:12.5px;
+                            ">
+
+                                <th style="
+                                    text-align:left;
+                                    padding:2px 0;
+                                ">
                                     Metric
                                 </th>
 
                                 <th>
                                     Value
                                 </th>
+
                             </tr>
 
-                            <tr
-                                style="
-                                    border-bottom:1px solid #E2E8F0;
-                                "
-                            >
-                                <td style="padding:3px 0;">
+                            <tr style="
+                                border-bottom:1px solid #E2E8F0;
+                            ">
+
+                                <td style="
+                                    padding:3px 0;
+                                ">
                                     WACC
                                 </td>
 
                                 <td>
                                     {fmt_ratio(
-                                        ctx.stock_info.get("wacc_used"),
+                                        wacc_used,
                                         suffix="%",
-                                        decimals=1,
+                                        decimals=1
                                     )}
                                 </td>
+
                             </tr>
 
                             <tr>
-                                <td style="padding:3px 0;">
+
+                                <td style="
+                                    padding:3px 0;
+                                ">
                                     DCF Fair Value
                                 </td>
 
                                 <td>
-                                    {safe(
-                                        ctx.stock_info.get("dcf_fair_value"),
-                                        0,
-                                    ):.2f}
-                                    THB
+                                    {dcf_fair_value:.2f} THB
                                 </td>
+
                             </tr>
 
                         </table>
@@ -1635,91 +1648,92 @@ def render(ctx):
         )
 
     # ========================================================
-    # PRICE COMPARISON
+    # DETAIL 3 — PRICE COMPARISON
     # ========================================================
+
     with d_c3:
 
-        difference = val_base - val_cur_price
+        price_difference = val_base - val_cur_price
 
         st.markdown(
             _html(
                 f"""
-                <div
-                    style="
-                        background-color:#FFFFFF;
-                        border:1px solid #E2E8F0;
-                        border-radius:10px;
-                        padding:12px;
-                        min-height:190px;
-                        display:flex;
-                        flex-direction:column;
-                        justify-content:space-between;
-                    "
-                >
+                <div style="
+                    background-color:#FFFFFF;
+                    border:1px solid #E2E8F0;
+                    border-radius:10px;
+                    padding:12px;
+                    min-height:190px;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:space-between;
+                ">
 
                     <div>
 
-                        <div
-                            style="
-                                font-size:13px;
-                                font-weight:bold;
-                                color:#475569;
-                            "
-                        >
+                        <div style="
+                            font-size:13px;
+                            font-weight:bold;
+                            color:#475569;
+                        ">
                             PRICE COMPARISON
                         </div>
 
-                        <table
-                            style="
-                                width:100%;
-                                font-size:13px;
-                                color:#475569;
-                                border-collapse:collapse;
-                                margin-top:6px;
-                            "
-                        >
+                        <table style="
+                            width:100%;
+                            font-size:13px;
+                            color:#475569;
+                            border-collapse:collapse;
+                            margin-top:6px;
+                        ">
 
-                            <tr
-                                style="
-                                    border-bottom:1px solid #E2E8F0;
-                                "
-                            >
-                                <td style="padding:3px 0;">
+                            <tr style="
+                                border-bottom:1px solid #E2E8F0;
+                            ">
+
+                                <td style="
+                                    padding:3px 0;
+                                ">
                                     Current
                                 </td>
 
                                 <td>
                                     {val_cur_price:.2f}
                                 </td>
+
                             </tr>
 
-                            <tr
-                                style="
-                                    border-bottom:1px solid #E2E8F0;
-                                "
-                            >
-                                <td style="padding:3px 0;">
+                            <tr style="
+                                border-bottom:1px solid #E2E8F0;
+                            ">
+
+                                <td style="
+                                    padding:3px 0;
+                                ">
                                     Fair Value
                                 </td>
 
                                 <td>
                                     {val_base:.2f}
                                 </td>
+
                             </tr>
 
                             <tr>
-                                <td style="padding:3px 0;">
+
+                                <td style="
+                                    padding:3px 0;
+                                ">
                                     Difference
                                 </td>
 
-                                <td
-                                    style="
-                                        color:{val_color};
-                                        font-weight:bold;
-                                    "
-                                >
-                                    {difference:+.2f}
+                                <td style="
+                                    color:{val_color};
+                                    font-weight:bold;
+                                ">
+                                    {price_difference:+.2f}
                                 </td>
+
                             </tr>
 
                         </table>
@@ -1733,61 +1747,58 @@ def render(ctx):
         )
 
     # ========================================================
-    # MARGIN OF SAFETY DETAIL
+    # DETAIL 4 — MOS
     # ========================================================
+
     with d_c4:
 
         st.markdown(
             _html(
                 f"""
-                <div
-                    style="
-                        background-color:#FFFFFF;
-                        border:1px solid #E2E8F0;
-                        border-radius:10px;
-                        padding:12px;
-                        min-height:190px;
-                        display:flex;
-                        flex-direction:column;
-                        justify-content:space-between;
-                    "
-                >
+                <div style="
+                    background-color:#FFFFFF;
+                    border:1px solid #E2E8F0;
+                    border-radius:10px;
+                    padding:12px;
+                    min-height:190px;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:space-between;
+                ">
 
                     <div>
 
-                        <div
-                            style="
-                                font-size:13px;
-                                font-weight:bold;
-                                color:#475569;
-                            "
-                        >
+                        <div style="
+                            font-size:13px;
+                            font-weight:bold;
+                            color:#475569;
+                        ">
                             MARGIN OF SAFETY
                         </div>
 
-                        <table
-                            style="
-                                width:100%;
-                                font-size:13px;
-                                color:#475569;
-                                border-collapse:collapse;
-                                margin-top:6px;
-                            "
-                        >
+                        <table style="
+                            width:100%;
+                            font-size:13px;
+                            color:#475569;
+                            border-collapse:collapse;
+                            margin-top:6px;
+                        ">
 
                             <tr>
-                                <td style="padding:3px 0;">
+
+                                <td style="
+                                    padding:3px 0;
+                                ">
                                     Margin of Safety
                                 </td>
 
-                                <td
-                                    style="
-                                        color:{val_color};
-                                        font-weight:bold;
-                                    "
-                                >
+                                <td style="
+                                    color:{val_color};
+                                    font-weight:bold;
+                                ">
                                     {val_mos:.1f}%
                                 </td>
+
                             </tr>
 
                         </table>
@@ -1803,6 +1814,7 @@ def render(ctx):
     # ========================================================
     # ROW 4
     # ========================================================
+
     st.markdown(
         "<div style='margin-top:22px;'></div>",
         unsafe_allow_html=True,
@@ -1815,162 +1827,174 @@ def render(ctx):
     # ========================================================
     # DCF ASSUMPTIONS
     # ========================================================
+
     with r4_c1:
 
         wacc_disp = fmt_ratio(
-            ctx.stock_info.get("wacc_used"),
+            wacc_used,
             suffix="%",
             decimals=1,
         )
 
         g_disp = fmt_ratio(
-            ctx.stock_info.get("terminal_growth_used"),
+            terminal_growth,
             suffix="%",
             decimals=1,
         )
 
         fcf_g_disp = fmt_ratio(
-            ctx.stock_info.get("fcf_growth_assumed"),
+            fcf_growth,
             suffix="%",
             decimals=1,
-        )
-
-        sector_name = ctx.stock_info.get(
-            "sector",
-            "-",
         )
 
         st.markdown(
             _html(
                 f"""
-                <div
-                    style="
-                        background-color:#FFFFFF;
-                        border:1px solid #E2E8F0;
-                        border-radius:12px;
-                        padding:14px;
-                        min-height:220px;
-                        display:flex;
-                        flex-direction:column;
-                        justify-content:space-between;
-                    "
-                >
+                <div style="
+                    background-color:#FFFFFF;
+                    border:1px solid #E2E8F0;
+                    border-radius:12px;
+                    padding:14px;
+                    min-height:220px;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:space-between;
+                ">
 
-                    <div
-                        style="
-                            font-size:13.5px;
-                            font-weight:bold;
-                            color:#64748B;
-                            letter-spacing:0.5px;
-                        "
-                    >
+                    <div style="
+                        font-size:13.5px;
+                        font-weight:bold;
+                        color:#64748B;
+                        letter-spacing:0.5px;
+                    ">
+
                         DCF ASSUMPTIONS
 
-                        <span
-                            style="
-                                font-size:11.5px;
-                                color:#64748B;
-                                font-weight:normal;
-                            "
-                        >
-                            ({sector_name})
+                        <span style="
+                            font-size:11.5px;
+                            color:#64748B;
+                            font-weight:normal;
+                        ">
+                            ({sector})
                         </span>
+
                     </div>
 
-                    <div
-                        style="
-                            display:grid;
-                            grid-template-columns:1fr 1fr;
-                            gap:6px;
-                            font-size:13px;
-                            color:#475569;
-                            margin:auto 0;
-                        "
-                    >
+                    <div style="
+                        display:grid;
+                        grid-template-columns:1fr 1fr;
+                        gap:6px;
+                        font-size:13px;
+                        color:#475569;
+                        margin:auto 0;
+                    ">
 
                         <div>
-                            <span style="color:#64748B;">
+                            <span style="
+                                color:#64748B;
+                            ">
                                 WACC
                             </span>
 
                             <br>
 
-                            <b style="color:#0F172A;">
+                            <b style="
+                                color:#0F172A;
+                            ">
                                 {wacc_disp}
                             </b>
                         </div>
 
                         <div>
-                            <span style="color:#64748B;">
+                            <span style="
+                                color:#64748B;
+                            ">
                                 Terminal Growth
                             </span>
 
                             <br>
 
-                            <b style="color:#0F172A;">
+                            <b style="
+                                color:#0F172A;
+                            ">
                                 {g_disp}
                             </b>
                         </div>
 
                         <div>
-                            <span style="color:#64748B;">
+                            <span style="
+                                color:#64748B;
+                            ">
                                 FCF Growth (Yr 1)
                             </span>
 
                             <br>
 
-                            <b style="color:#0F172A;">
+                            <b style="
+                                color:#0F172A;
+                            ">
                                 {fcf_g_disp}
                             </b>
                         </div>
 
                         <div>
-                            <span style="color:#64748B;">
+                            <span style="
+                                color:#64748B;
+                            ">
                                 Target P/E
                             </span>
 
                             <br>
 
-                            <b style="color:#0F172A;">
+                            <b style="
+                                color:#0F172A;
+                            ">
                                 18-22x (by sector)
                             </b>
                         </div>
 
                         <div>
-                            <span style="color:#64748B;">
+                            <span style="
+                                color:#64748B;
+                            ">
                                 DCF Weight
                             </span>
 
                             <br>
 
-                            <b style="color:#0F172A;">
+                            <b style="
+                                color:#0F172A;
+                            ">
                                 55%
                             </b>
                         </div>
 
                         <div>
-                            <span style="color:#64748B;">
+                            <span style="
+                                color:#64748B;
+                            ">
                                 P/E Weight
                             </span>
 
                             <br>
 
-                            <b style="color:#0F172A;">
+                            <b style="
+                                color:#0F172A;
+                            ">
                                 45%
                             </b>
                         </div>
 
                     </div>
 
-                    <div
-                        style="
-                            font-size:11px;
-                            color:#64748B;
-                            border-top:1px solid #E2E8F0;
-                            padding-top:6px;
-                            margin-top:4px;
-                        "
-                    >
+                    <div style="
+                        font-size:11px;
+                        color:#64748B;
+                        border-top:1px solid #E2E8F0;
+                        padding-top:6px;
+                        margin-top:4px;
+                    ">
                         WACC/Growth ปรับตามกลุ่มอุตสาหกรรม
                         (ไม่ใช่ค่าคงที่เดียวทุกหุ้นแล้ว)
                         &bull;
@@ -1984,30 +2008,27 @@ def render(ctx):
         )
 
     # ========================================================
-    # HISTORICAL FAIR VALUE VS PRICE
+    # HISTORICAL FAIR VALUE
     # ========================================================
+
     with r4_c2:
 
         st.markdown(
             _html(
                 """
-                <div
-                    style="
-                        background-color:#FFFFFF;
-                        border:1px solid #E2E8F0;
-                        border-radius:12px 12px 0 0;
-                        padding:12px 16px 0 16px;
-                    "
-                >
+                <div style="
+                    background-color:#FFFFFF;
+                    border:1px solid #E2E8F0;
+                    border-radius:12px 12px 0 0;
+                    padding:12px 16px 0 16px;
+                ">
 
-                    <div
-                        style="
-                            font-size:13.5px;
-                            font-weight:bold;
-                            color:#64748B;
-                            letter-spacing:0.5px;
-                        "
-                    >
+                    <div style="
+                        font-size:13.5px;
+                        font-weight:bold;
+                        color:#64748B;
+                        letter-spacing:0.5px;
+                    ">
                         HISTORICAL FAIR VALUE VS PRICE
                         (Actual, year-end 2023-2025)
                     </div>
@@ -2018,65 +2039,82 @@ def render(ctx):
             unsafe_allow_html=True,
         )
 
-        # ====================================================
-        # HISTORICAL DATA
-        # ====================================================
+        # ----------------------------------------------------
+        # Historical dataframe
+        # ----------------------------------------------------
+
+        fair_value_yearly_df = getattr(
+            ctx,
+            "fair_value_yearly_df",
+            pd.DataFrame(),
+        )
+
         if (
-            hasattr(ctx, "fair_value_yearly_df")
-            and not ctx.fair_value_yearly_df.empty
+            isinstance(fair_value_yearly_df, pd.DataFrame)
+            and not fair_value_yearly_df.empty
+            and "ticker" in fair_value_yearly_df.columns
         ):
 
-            fv_hist = ctx.fair_value_yearly_df[
-                ctx.fair_value_yearly_df["ticker"]
-                == ctx.selected_ticker
-            ].sort_values("year")
+            fv_hist = (
+                fair_value_yearly_df[
+                    fair_value_yearly_df["ticker"]
+                    == ticker
+                ]
+                .sort_values("year")
+                .copy()
+            )
 
         else:
+
             fv_hist = pd.DataFrame()
 
-        # ====================================================
-        # HISTORICAL CHART
-        # ====================================================
+        # ----------------------------------------------------
+        # Chart
+        # ----------------------------------------------------
+
         if not fv_hist.empty:
 
             fig_hist_val = go.Figure()
 
             # FAIR VALUE
-            fig_hist_val.add_trace(
-                go.Scatter(
-                    x=fv_hist["year"].astype(str),
-                    y=fv_hist["fair_value"],
-                    mode="lines+markers",
-                    name="Fair Value",
-                    line=dict(
-                        color="#A855F7",
-                        width=1.8,
-                        dash="dash",
-                    ),
-                    marker=dict(
-                        size=8,
-                        color="#A855F7",
-                    ),
+            if "fair_value" in fv_hist.columns:
+
+                fig_hist_val.add_trace(
+                    go.Scatter(
+                        x=fv_hist["year"].astype(str),
+                        y=fv_hist["fair_value"],
+                        mode="lines+markers",
+                        name="Fair Value",
+                        line=dict(
+                            color="#A855F7",
+                            width=1.8,
+                            dash="dash",
+                        ),
+                        marker=dict(
+                            size=7,
+                        ),
+                    )
                 )
-            )
 
             # ACTUAL PRICE
-            fig_hist_val.add_trace(
-                go.Scatter(
-                    x=fv_hist["year"].astype(str),
-                    y=fv_hist["price"],
-                    mode="lines+markers",
-                    name="Actual Price",
-                    line=dict(
-                        color="#38BDF8",
-                        width=2,
-                    ),
-                    marker=dict(
-                        size=9,
-                        color="#38BDF8",
-                    ),
+            if "price" in fv_hist.columns:
+
+                fig_hist_val.add_trace(
+                    go.Scatter(
+                        x=fv_hist["year"].astype(str),
+                        y=fv_hist["price"],
+                        mode="lines+markers",
+                        name="Actual Price",
+                        line=dict(
+                            color="#38BDF8",
+                            width=2,
+                        ),
+                        marker=dict(
+                            size=9,
+                            color="#38BDF8",
+                        ),
+                    )
                 )
-            )
 
             fig_hist_val.update_layout(
                 height=150,
@@ -2131,6 +2169,7 @@ def render(ctx):
     # ========================================================
     # FOOTER NAVIGATION
     # ========================================================
+
     render_nav_footer(
         "m2",
         prev_page=" Company Health",
