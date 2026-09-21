@@ -38,30 +38,47 @@ def render(ctx):
     m6_s = int(round(safe(ctx.stock_info.get('industry_score'), 50)))
     n_sector = len(ctx.sector_peers)
 
-    if m1_s >= 70: m1_badge, m1_desc = "EXCELLENT", "Strong balance sheet and sustainable quality"
-    elif m1_s >= 45: m1_badge, m1_desc = "MODERATE", "Stable financial position with sound liquidity"
-    else: m1_badge, m1_desc = "WEAK", "Elevated debt leverage or margin pressure"
+    if m1_s >= 70:
+        m1_badge, m1_desc = "EXCELLENT", "ฐานะการเงินแข็งแกร่งและมีคุณภาพทางธุรกิจที่ดี"
+    elif m1_s >= 45:
+        m1_badge, m1_desc = "MODERATE", "ฐานะการเงินมั่นคงและมีสภาพคล่องอยู่ในระดับเหมาะสม"
+    else:
+        m1_badge, m1_desc = "WEAK", "มีความเสี่ยงจากภาระหนี้หรือแรงกดดันด้านอัตรากำไร"
 
-    if m2_s >= 70: m2_badge, m2_desc = "UNDERVALUED", "Attractive valuation with high margin of safety"
-    elif m2_s >= 45: m2_badge, m2_desc = "FAIR VALUE", "Trading near assessed fundamental value"
-    else: m2_badge, m2_desc = "OVERVALUED", "Price trades at premium to fair valuation"
+    if m2_s >= 70:
+        m2_badge, m2_desc = "UNDERVALUED", "ราคาหุ้นน่าสนใจเมื่อเทียบกับมูลค่าพื้นฐาน"
+    elif m2_s >= 45:
+        m2_badge, m2_desc = "FAIR VALUE", "ราคาซื้อขายอยู่ใกล้เคียงกับมูลค่าพื้นฐาน"
+    else:
+        m2_badge, m2_desc = "OVERVALUED", "ราคาหุ้นสูงกว่ามูลค่าพื้นฐานที่ประเมินได้"
 
-    if m3_s >= 67: m3_badge, m3_desc = "BULLISH", "Strong upward momentum across moving averages"
-    elif m3_s >= 34: m3_badge, m3_desc = "NEUTRAL", "Consolidating near key technical support"
-    else: m3_badge, m3_desc = "BEARISH", "Downtrend momentum; elevated pullback risk"
+    if m3_s >= 67:
+        m3_badge, m3_desc = "BULLISH", "แนวโน้มราคาเป็นขาขึ้นและมีโมเมนตัมแข็งแกร่ง"
+    elif m3_s >= 34:
+        m3_badge, m3_desc = "NEUTRAL", "ราคากำลังแกว่งตัวใกล้แนวรับสำคัญ"
+    else:
+        m3_badge, m3_desc = "BEARISH", "แนวโน้มเป็นขาลงและมีความเสี่ยงต่อการปรับตัวลดลง"
 
-    if m4_s >= 70: m4_badge, m4_desc = "POSITIVE", "AI model forecasts favorable upside probability"
-    elif m4_s >= 50: m4_badge, m4_desc = "NEUTRAL", "AI predicts range-bound price consolidation"
-    else: m4_badge, m4_desc = "CAUTION", "Low upside probability under current features"
+    if m4_s >= 70:
+        m4_badge, m4_desc = "POSITIVE", "โมเดล AI ประเมินโอกาสปรับตัวขึ้นในระดับที่ดี"
+    elif m4_s >= 50:
+        m4_badge, m4_desc = "NEUTRAL", "โมเดล AI คาดว่าราคามีแนวโน้มเคลื่อนไหวในกรอบ"
+    else:
+        m4_badge, m4_desc = "CAUTION", "โมเดล AI ประเมินโอกาสปรับตัวขึ้นในระดับต่ำ"
 
-    if m5_s >= 65: m5_badge, m5_desc = "LOW RISK", "High resilience with stable volatility"
-    elif m5_s >= 45: m5_badge, m5_desc = "MODERATE", "Balanced market risk profile"
-    else: m5_badge, m5_desc = "HIGH RISK", "Higher volatility and deeper drawdown risk"
+    if m5_s >= 65:
+        m5_badge, m5_desc = "LOW RISK", "มีความสามารถในการรับมือความผันผวนและความเสี่ยงได้ดี"
+    elif m5_s >= 45:
+        m5_badge, m5_desc = "MODERATE", "มีระดับความเสี่ยงโดยรวมอยู่ในระดับสมดุล"
+    else:
+        m5_badge, m5_desc = "HIGH RISK", "มีความผันผวนสูงและความเสี่ยงจากการปรับตัวลงแรง"
 
-    if m6_s >= 70: m6_badge, m6_desc = "OUTPERFORM", "Leading peer group across key industry metrics"
-    elif m6_s >= 45: m6_badge, m6_desc = "PARITY", "Performing on par with sectoral median"
-    else: m6_badge, m6_desc = "LAGGING", "Trailing behind sectoral benchmark"
-
+    if m6_s >= 70:
+        m6_badge, m6_desc = "OUTPERFORM", "มีผลการดำเนินงานโดดเด่นเมื่อเทียบกับบริษัทในกลุ่ม"
+    elif m6_s >= 45:
+        m6_badge, m6_desc = "PARITY", "มีผลการดำเนินงานใกล้เคียงกับค่ากลางของกลุ่ม"
+    else:
+        m6_badge, m6_desc = "LAGGING", "มีผลการดำเนินงานต่ำกว่าบริษัทอื่นในกลุ่ม"
     def score_color(score, green_at, yellow_at):
         if score >= green_at: return "#10B981"
         elif score >= yellow_at: return "#F59E0B"
