@@ -76,7 +76,10 @@ def render(ctx):
                 display:flex;
                 align-items:center;
                 gap:12px;
+                margin-top:10px;
             ">
+
+                <!-- SCORE RING -->
                 <div style="
                     width:76px;
                     height:76px;
@@ -117,6 +120,7 @@ def render(ctx):
                     </div>
                 </div>
 
+                <!-- STATUS -->
                 <div>
                     <div style="
                         color:{val_color};
@@ -146,10 +150,11 @@ def render(ctx):
                         {'★' * val_stars}{'☆' * (5 - val_stars)}
                     </div>
                 </div>
+
             </div>
         </div>
         """,
-        unsafe_allow_html=True,
+        unsafe_allow_html=True
     )
 
     with r1_c2:
