@@ -1538,4 +1538,4 @@ def render(ctx):
         "m1",
         prev_page=" Overview",
         next_page=" Fair Value"
-    )                                                                                                                                                                                            เห้นกรอบอันแรกปะ มันไม่รวมกันเหมือนอันอื่นอ่ะ
+    )
