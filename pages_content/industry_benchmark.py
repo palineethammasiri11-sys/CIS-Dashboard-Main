@@ -518,18 +518,15 @@ def render(ctx):
     <div><span style="color:#10B981;">✔</span> Risk Score: {safe(ctx.stock_info.get('risk_score')):.1f} ({avg_label} {compare_df['risk_score'].mean():.1f})</div>
     </div></div>""", unsafe_allow_html=True)
 
-    with r3_c3:
-        rec = ctx.stock_info.get('recommendation', 'ACCUMULATE')
 
-        rec_color2 = "#FFFFFF"
     with r3_c3:
         rec = ctx.stock_info.get('recommendation', 'ACCUMULATE')
 
         rec_color2 = "#FFFFFF"
         rec_bg = (
-            "#10B981" if pos_stars == 5
-            else "#F59E0B" if pos_stars >= 4
-            else "#EF4444"
+            "#5ACFA8" if pos_stars == 5
+            else "#F8BB55" if pos_stars >= 4
+            else "#F35F5F"
         )
 
         conf_lvl = (
@@ -548,22 +545,6 @@ def render(ctx):
     <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#CBD5E1;">Sector Rank</span><span style="color:#FFFFFF; font-weight:bold;">{sector_rank} / {n_sector}</span></div>
     </div></div>""", unsafe_allow_html=True)
 
-        conf_lvl = (
-            "High"
-            if abs(safe(ctx.stock_info.get('margin_of_safety'))) > 15
-            else "Medium"
-        )
-
-        st.markdown(f"""<div style="background-color:{rec_bg}; border:1px solid {rec_bg}; border-radius:8px; padding:14px; height:275px; text-align:center;">
-    <div style="font-size:14.5px; color:#CBD5E1; font-weight:bold; margin-bottom:4px; text-align:left;">FINAL RECOMMENDATION</div>
-    <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin:4px 0;">
-    <div><h1 style="color:{rec_color2}; margin:0; font-size:24px; line-height:1.1;">{rec}</h1></div></div>
-    <div style="text-align:left; font-size:13.5px; margin-top:8px; border-top:1px dashed rgba(255,255,255,0.6); padding-top:6px;">
-    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#CBD5E1;">Confidence Level</span><span style="color:#FFFFFF; font-weight:bold;">{conf_lvl}</span></div>
-    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#CBD5E1;">Overall Score</span><span style="color:#FFFFFF; font-weight:bold;">{safe(ctx.stock_info.get('overall_score')):.1f}/100</span></div>
-    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#CBD5E1;">Sector Rank</span><span style="color:#FFFFFF; font-weight:bold;">{sector_rank} / {n_sector}</span></div>
-    </div></div>""", unsafe_allow_html=True)
-        
     import base64
 
     csv_text = ctx.scores_df[
