@@ -283,7 +283,7 @@ def render(ctx):
             name_c = star_color if is_sel else "#0F172A"
 
             rows_html += f"""<tr style="border-bottom:1px solid #E2E8F0; {row_bg}">
-    <td style="text-align:left; padding:6px 0; color:{name_c}; font-weight:bold;">{name_disp}</td>
+    <td style="text-align:left; padding:6px 0; color:{name_c}; font-weight:bold; min-width:0; overflow-wrap:anywhere; word-break:break-word;">{name_disp}</td>
     <td>{health_b}</td>
     <td><span style="color:{val_c};">{val_b}</span></td>
     <td>{timing_b}</td>
