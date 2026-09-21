@@ -134,11 +134,11 @@ def render(ctx):
     <div style="font-size:14px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">FAIR VALUE SCORE BY DIMENSION</div>
     <div style="display:flex; flex-direction:column; gap:10px; margin:auto 0;">
     <div><div style="display:flex; justify-content:space-between; font-size:13px; color:#475569; margin-bottom:3px;"><span>📊 Relative Valuation (P/E)</span><span style="font-weight:bold; color:#0F172A;">{val_score} <span style="font-size:12px; color:#64748B;">/100</span></span></div>
-    <div style="background:#E2E8F0; height:9px; border-radius:4px; overflow:hidden;"><div style="background:#10B981; width:{val_score}%; height:100%;"></div></div></div>
+    <div style="background:#E2E8F0; height:9px; border-radius:4px; overflow:hidden;"><div style="background:{val_color}; width:{val_score}%; height:100%;"></div></div></div>
     <div><div style="display:flex; justify-content:space-between; font-size:13px; color:#475569; margin-bottom:3px;"><span>🎯 Intrinsic Valuation (DCF)</span><span style="font-weight:bold; color:#0F172A;">{val_score} <span style="font-size:12px; color:#64748B;">/100</span></span></div>
-    <div style="background:#E2E8F0; height:9px; border-radius:4px; overflow:hidden;"><div style="background:#10B981; width:{val_score}%; height:100%;"></div></div></div>
+    <div style="background:#E2E8F0; height:9px; border-radius:4px; overflow:hidden;"><div style="background:{val_color}; width:{val_score}%; height:100%;"></div></div></div>
     <div><div style="display:flex; justify-content:space-between; font-size:13px; color:#475569; margin-bottom:3px;"><span>🛡️ Margin of Safety</span><span style="font-weight:bold; color:#0F172A;">{safety_score} <span style="font-size:12px; color:#64748B;">/100</span></span></div>
-    <div style="background:#E2E8F0; height:9px; border-radius:4px; overflow:hidden;"><div style="background:#10B981; width:{safety_score}%; height:100%;"></div></div></div>
+    <div style="background:#E2E8F0; height:9px; border-radius:4px; overflow:hidden;"><div style="background:{val_color}; width:{safety_score}%; height:100%;"></div></div></div>
     </div>
     <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #E2E8F0; padding-top:8px;">
     <span style="font-size:13.5px; font-weight:bold; color:#475569;">OVERALL FAIR VALUE SCORE</span><span style="font-size:18.5px; font-weight:bold; color:{val_color};">{val_score} <span style="font-size:13px; color:#64748B;">/100</span></span>
