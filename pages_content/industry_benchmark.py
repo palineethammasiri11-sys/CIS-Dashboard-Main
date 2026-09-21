@@ -523,16 +523,17 @@ def render(ctx):
 
         rec_color2 = star_color
 
+        rec_color2 = "#FFFFFF"
+        rec_bg = (
+            "#10B981" if pos_stars == 5
+            else "#F59E0B" if pos_stars >= 4
+            else "#EF4444"
+        )
+
         conf_lvl = (
             "High"
             if abs(safe(ctx.stock_info.get('margin_of_safety'))) > 15
             else "Medium"
-        )
-
-        rec_bg = (
-            "#D1FAE5" if pos_stars == 5
-            else "#FEF3C7" if pos_stars >= 4
-            else "#FEE2E2"
         )
 
         st.markdown(f"""<div style="background-color:{rec_bg}; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:275px; text-align:center;">
