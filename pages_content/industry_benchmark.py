@@ -289,7 +289,7 @@ def render(ctx):
         }.get(pos_stars, "#64748B")
 
         color_map = {
-            t: (star_color if t == ctx.selected_ticker else "#94A3B8")
+            t: (star_color if t == ctx.selected_ticker else "#CBD5E1")
             for t in matrix_df['Company']
         }
 
