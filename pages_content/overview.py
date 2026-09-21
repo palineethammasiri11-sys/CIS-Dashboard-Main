@@ -529,7 +529,8 @@ def render(ctx):
 
             return f"""
             <div style="background-color:#FFFFFF;border:1px solid #E2E8F0;
-                        border-radius:10px;padding:16px 14px;text-align:center;position:relative;">
+                        border-radius:10px;padding:16px 14px;text-align:center;position:relative;
+                        width:100%;min-width:0;max-width:100%;box-sizing:border-box;">
 
                 <div style="position:absolute;top:10px;left:10px;
                             background:{badge_bg};color:{color};font-size:14px;
@@ -644,6 +645,25 @@ def render(ctx):
         # CENTER MAIN CARD
         # ========================================================
 
+        st.markdown("""
+        <style>
+        @media (max-width: 768px) {
+            .overview-module-grid {
+                grid-template-columns: 1fr !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .overview-module-grid > div {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                box-sizing: border-box !important;
+            }
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
         st.html(f"""
         <div style="background-color:#FFFFFF;border:1px solid #E2E8F0;
                     border-radius:12px;padding:16px;">
@@ -654,7 +674,7 @@ def render(ctx):
             </div>
 
             <div class="overview-module-grid"
-                 style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                 style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:100%;min-width:0;">
                 {cards_html}
             </div>
 
@@ -677,7 +697,8 @@ def render(ctx):
         return f"""
         <div style="background-color:#F8FAFC;border:1px solid #E2E8F0;
                     border-radius:8px;padding:10px 12px;display:flex;
-                    align-items:center;gap:10px;">
+                    align-items:center;gap:10px;
+                    width:100%;min-width:0;max-width:100%;box-sizing:border-box;">
 
             <div style="background:{bg};width:40px;height:40px;border-radius:8px;
                         display:flex;align-items:center;justify-content:center;
@@ -753,6 +774,25 @@ def render(ctx):
         )
     ])
 
+    st.markdown("""
+    <style>
+    @media (max-width: 768px) {
+        .key-highlights-grid {
+            grid-template-columns: 1fr !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        .key-highlights-grid > div {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     st.html(f"""
     <div style="background-color:#FFFFFF;border:1px solid #E2E8F0;
                 border-radius:12px;padding:14px 16px;">
@@ -762,7 +802,8 @@ def render(ctx):
             KEY HIGHLIGHTS
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;">
+        <div class="key-highlights-grid"
+            style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;width:100%;min-width:0;">
             {hl_html}
         </div>
 
