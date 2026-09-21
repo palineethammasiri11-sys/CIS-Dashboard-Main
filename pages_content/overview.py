@@ -500,17 +500,13 @@ def render(ctx):
         unsafe_allow_html=True
     )
 
-    col_space, col_next = st.columns([3.7, 1.3])
+    col_next, col_space = st.columns([1.3, 3.7])
 
     with col_next:
         if st.button(
             "หน้าถัดไป ➡",
-            key="btn_next_overview",
+            key="btn_next_m1",
             use_container_width=True
         ):
-            st.session_state["pending_nav"] = " Company Health"
-            st.rerun()
-            use_container_width=True
-        ):
-            st.session_state["pending_nav"] = " Fair Value"
+            st.session_state["pending_nav"] = " Company Health "
             st.rerun()
