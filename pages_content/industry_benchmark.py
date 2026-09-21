@@ -153,73 +153,50 @@ def render(ctx):
     r2_c1, r2_c2, r2_c3 = st.columns([2.0, 1.0, 1.1])
 
     with r2_c1:
-        peer_df = ctx.sector_peers.sort_values('overall_score', ascending=False).copy()
+        peers_sorted = ctx.sector_peers.sort_values('overall_score', ascending=False)
+
+        def badge(val, thresholds, labels, colors):
+            for th, lab, col in zip(thresholds, labels, colors):
+                if val >= th:
+                    return f'<span style="color:{col}; font-weight:bold;">{lab}</span>'
+            return f'<span style="color:{colors[-1]};">{labels[-1]}</span>'
 
         rows_html = ""
-
-        for _, row in peer_df.iterrows():
-            ticker = row['ticker']
-            star_n = int(round(row.get('stars', 0)))
+        for _, p in peers_sorted.iterrows():
+            is_sel = p['ticker'] == ctx.selected_ticker
+            star_n = min(5, max(1, round(safe(p['overall_score']) / 20)))
 
             star_color = (
-                "#10B981" if star_n >= 5
-                else "#F59E0B" if star_n >= 3
+                "#10B981" if star_n == 5
+                else "#F59E0B" if star_n >= 4
                 else "#EF4444"
             )
+            row_bg = f"background:rgba({ '16,185,129' if star_n == 5 else '245,158,11' if star_n >= 4 else '239,68,68' },0.08);" if is_sel else ""
 
-            row_bg = (
-                f"rgba(16,185,129,0.10)" if star_n >= 5
-                else f"rgba(245,158,11,0.10)" if star_n >= 3
-                else f"rgba(239,68,68,0.10)"
-            )
+            health_b = badge(p['health_score'], [70, 45, 0], ["Excellent", "Good", "Weak"], ["#10B981", "#3B82F6", "#EF4444"])
+            val_b = "Undervalued" if p['margin_of_safety'] > 10 else ("Overvalued" if p['margin_of_safety'] < -10 else "Fair Value")
+            val_c = "#10B981" if p['margin_of_safety'] > 10 else ("#EF4444" if p['margin_of_safety'] < -10 else "#64748B")
+            timing_b = badge(p['timing_score'], [65, 45, 0], ["Good Entry", "Neutral", "Bad Entry"], ["#10B981", "#F59E0B", "#EF4444"])
+            ai_b = badge(p['ai_score'], [65, 45, 0], ["Bullish", "Neutral", "Bearish"], ["#10B981", "#64748B", "#EF4444"])
+            risk_b = "Low" if p['risk_score'] >= 65 else ("Medium" if p['risk_score'] >= 40 else "High")
+            risk_c = "#10B981" if p['risk_score'] >= 65 else ("#F59E0B" if p['risk_score'] >= 40 else "#EF4444")
+            name_disp = f"⭐ {p['ticker']}" if is_sel else p['ticker']
+            name_c = star_color if is_sel else "#0F172A"
 
-            if ticker == ctx.selected_ticker:
-                row_style = f"background:{row_bg};"
-            else:
-                row_style = "background:#FFFFFF;"
+            rows_html += f"""<tr style="border-bottom:1px solid #E2E8F0; {row_bg}">
+    <td style="text-align:left; padding:6px 0; color:{name_c}; font-weight:bold;">{name_disp}</td>
+    <td>{health_b}</td><td><span style="color:{val_c};">{val_b}</span></td><td>{timing_b}</td><td>{ai_b}</td>
+    <td><span style="color:{risk_c};">{risk_b}</span></td><td style="color:{star_color}; letter-spacing:1px;">{'★'*star_n}{'☆'*(5-star_n)}</td></tr>"""
 
-            rows_html += f"""
-            <tr style="{row_style}">
-                <td><b>{ticker}</b></td>
-                <td>{row.get('health','-')}</td>
-                <td>{row.get('fair_value_label','-')}</td>
-                <td>{row.get('timing','-')}</td>
-                <td>{row.get('ai_prediction','-')}</td>
-                <td>{row.get('risk','-')}</td>
-                <td style="color:{star_color}; font-weight:bold;">
-                    {'★'*star_n}{'☆'*(5-star_n)}
-                </td>
-            </tr>
-            """
-
-        st.markdown(f"""
-        <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:14px; height:360px; box-sizing:border-box; overflow:hidden;">
-            <div style="font-size:14.5px; color:#334E68; font-weight:bold; margin-bottom:8px;">
-                PEER COMPARISON — {ctx.stock_info.get('sector','-')} ({len(peer_df)} หุ้น)
-            </div>
-
-            <table style="width:100%; border-collapse:collapse; font-size:14px;">
-                <thead>
-                    <tr style="color:#334E68;">
-                        <th style="padding:8px; border:1px solid #E2E8F0; text-align:left;">Company</th>
-                        <th style="padding:8px; border:1px solid #E2E8F0;">Health</th>
-                        <th style="padding:8px; border:1px solid #E2E8F0;">Fair Value</th>
-                        <th style="padding:8px; border:1px solid #E2E8F0;">Entry Timing</th>
-                        <th style="padding:8px; border:1px solid #E2E8F0;">AI Prediction</th>
-                        <th style="padding:8px; border:1px solid #E2E8F0;">Risk</th>
-                        <th style="padding:8px; border:1px solid #E2E8F0;">Overall</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows_html}
-                </tbody>
-            </table>
-
-            <p style="color:#64748B; font-size:13px; margin-top:20px;">
-                *จัดอันดับจาก Overall Score ที่คำนวณจริงจากข้อมูลใน cis_summary_scores
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:350px;">
+    <div style="font-size:14.5px; color:#64748B; font-weight:bold; margin-bottom:6px;">PEER COMPARISON — {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
+    <table style="width:100%; text-align:center; font-size:14px; color:#475569; border-collapse:collapse;">
+    <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:13px;"><th style="text-align:left; padding:5px 0;">Company</th><th>Health</th><th>Fair Value</th><th>Entry Timing</th><th>AI Prediction</th><th>Risk</th><th>Overall</th></tr>
+    {rows_html}
+    </table>
+    <div style="font-size:12.5px; color:#64748B; margin-top:6px;">*จัดอันดับจาก Overall Score ที่คำนวณจริงจากข้อมูลใน cis_summary_scores</div>
+    </div>""", unsafe_allow_html=True)
+        
     with r2_c2:
         cats = ['Health', 'Valuation', 'Timing', 'AI Pred.', 'Risk', 'Industry']
         stock_vals = [
