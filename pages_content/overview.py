@@ -1,19 +1,7 @@
 """
 pages_content/overview.py
----------------------
+-------------------------
 หน้า "Overview" ของ CIS Dashboard
-
-วิธีทดสอบหน้านี้แบบเดี่ยว (ไม่ต้องรอทีมคนอื่น):
-    streamlit run preview_my_page.py
-    (แล้วเลือกโมดูลนี้จาก dropdown ในไฟล์ preview_my_page.py)
-
-ข้อมูลที่ใช้ได้ใน ctx (ดูนิยามเต็มใน common.py -> class PageContext):
-    ctx.selected_ticker, ctx.stock_info, ctx.stock_daily, ctx.fin_stock, ctx.sector_peers,
-    ctx.scores_df, ctx.fin_df, ctx.feat_imp_df, ctx.backtest_df, ctx.risk_hist_df,
-    ctx.health_yearly_df, ctx.fair_value_yearly_df,
-    ctx.current_price, ctx.change_pct, ctx.change_val, ctx.change_color, ctx.change_sign, ctx.arrow_sign
-
-ห้ามแก้ CSS ส่วนกลางหรือ helper function ใน common.py จากไฟล์นี้ — ถ้าจำเป็นต้องแก้ ให้แจ้ง Layout Lead ก่อน
 """
 
 import streamlit as st
@@ -24,13 +12,8 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 
 from common import (
-    fmt_mb,
-    fmt_ratio,
-    safe,
-    show_chart,
-    render_nav_footer,
-    COMPANY_NAMES,
-    SECTOR_MAP
+    fmt_mb, fmt_ratio, safe, show_chart, render_nav_footer,
+    COMPANY_NAMES, SECTOR_MAP
 )
 
 
@@ -41,23 +24,11 @@ def render(ctx):
     # ============================================================
 
     st.html("""
-    <div style="
-        margin-bottom:20px;
-    ">
-        <div style="
-            font-size:23px;
-            font-weight:700;
-            color:#0F172A;
-            letter-spacing:0.3px;
-        ">
+    <div style="margin-bottom:20px;">
+        <div style="font-size:23px;font-weight:700;color:#0F172A;letter-spacing:0.3px;">
             OVERVIEW DASHBOARD
         </div>
-
-        <div style="
-            font-size:15px;
-            color:#64748B;
-            margin-top:4px;
-        ">
+        <div style="font-size:15px;color:#64748B;margin-top:4px;">
             ภาพรวมข้อมูลและการวิเคราะห์เพื่อสนับสนุนการตัดสินใจลงทุน
         </div>
     </div>
@@ -65,12 +36,9 @@ def render(ctx):
 
     # ============================================================
     # TOP SECTION
-    # LEFT = STOCK INFORMATION
-    # RIGHT = SCORE MODULES
     # ============================================================
 
     col_left, col_center = st.columns([1.1, 2.3])
-
 
     # ============================================================
     # LEFT COLUMN
@@ -78,344 +46,137 @@ def render(ctx):
 
     with col_left:
 
-        # --------------------------------------------------------
         # Stock Header Card
-        # --------------------------------------------------------
-
         st.html(f"""
-        <div style="
-            background-color:#FFFFFF;
-            border:1px solid #E2E8F0;
-            border-radius:12px 12px 0 0;
-            padding:16px 16px 8px 16px;
-        ">
+        <div style="background-color:#FFFFFF;border:1px solid #E2E8F0;
+                    border-radius:12px 12px 0 0;padding:16px 16px 8px 16px;">
 
-            <div style="
-                display:flex;
-                justify-content:space-between;
-                align-items:center;
-            ">
-
-                <span style="
-                    font-size:23px;
-                    font-weight:bold;
-                    color:#0F172A;
-                ">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:23px;font-weight:bold;color:#0F172A;">
                     {ctx.selected_ticker}
                 </span>
-
-                <span style="
-                    color:#64748B;
-                    font-size:18.5px;
-                ">
-                    ☆
-                </span>
-
+                <span style="color:#64748B;font-size:18.5px;">☆</span>
             </div>
 
-            <div style="
-                font-size:14.5px;
-                color:#64748B;
-                margin-top:2px;
-            ">
+            <div style="font-size:14.5px;color:#64748B;margin-top:2px;">
                 {COMPANY_NAMES.get(ctx.selected_ticker,'-')}
             </div>
 
-            <div style="
-                display:flex;
-                align-items:baseline;
-                gap:8px;
-                margin-top:10px;
-            ">
-
-                <span style="
-                    font-size:28px;
-                    font-weight:bold;
-                    color:#0F172A;
-                    line-height:1;
-                ">
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:10px;">
+                <span style="font-size:28px;font-weight:bold;color:#0F172A;line-height:1;">
                     {ctx.current_price:.2f}
                 </span>
-
-                <span style="
-                    font-size:14.5px;
-                    color:#64748B;
-                ">
-                    THB
-                </span>
-
+                <span style="font-size:14.5px;color:#64748B;">THB</span>
             </div>
 
-            <div style="
-                font-size:15px;
-                font-weight:bold;
-                color:{ctx.change_color};
-                margin-top:4px;
-            ">
+            <div style="font-size:15px;font-weight:bold;color:{ctx.change_color};margin-top:4px;">
                 {ctx.change_sign}{ctx.change_val:.2f}
                 ({ctx.change_sign}{ctx.change_pct:.2f}%)
                 {ctx.arrow_sign}
             </div>
 
-            <div style="
-                font-size:13px;
-                color:#64748B;
-                margin-top:4px;
-            ">
+            <div style="font-size:13px;color:#64748B;margin-top:4px;">
                 Dataset close &bull; {ctx.stock_info.get('latest_date','-')}
             </div>
 
         </div>
         """)
 
-
-        # --------------------------------------------------------
         # Sparkline
-        # --------------------------------------------------------
-
         spark = ctx.stock_daily.tail(90)
 
         fig_mini = go.Figure()
 
-        fig_mini.add_trace(
-            go.Scatter(
-                x=spark['date'],
-                y=spark['close'],
-                mode='lines',
-                line=dict(
-                    color='#10B981',
-                    width=1.5
-                ),
-                fill='tozeroy',
-                fillcolor='rgba(16, 185, 129, 0.08)',
-                hoverinfo='skip'
-            )
-        )
+        fig_mini.add_trace(go.Scatter(
+            x=spark['date'],
+            y=spark['close'],
+            mode='lines',
+            line=dict(color='#10B981', width=1.5),
+            fill='tozeroy',
+            fillcolor='rgba(16,185,129,0.08)',
+            hoverinfo='skip'
+        ))
 
         fig_mini.update_layout(
             height=125,
-            margin=dict(
-                l=8,
-                r=8,
-                t=0,
-                b=0
-            ),
+            margin=dict(l=8, r=8, t=0, b=0),
             paper_bgcolor="#FFFFFF",
             plot_bgcolor="#FFFFFF",
-
             xaxis=dict(
                 showgrid=False,
                 showticklabels=True,
-                tickfont=dict(
-                    size=11,
-                    color="#64748B"
-                ),
+                tickfont=dict(size=11, color="#64748B"),
                 nticks=4,
                 linecolor="#E2E8F0"
             ),
-
-            yaxis=dict(
-                showgrid=False,
-                showticklabels=False
-            )
+            yaxis=dict(showgrid=False, showticklabels=False)
         )
 
         st.plotly_chart(
             fig_mini,
             use_container_width=True,
-            config={
-                'displayModeBar': False
-            }
+            config={'displayModeBar': False}
         )
 
-
-        # --------------------------------------------------------
         # Stock Statistics
-        # --------------------------------------------------------
-
         n_sector = len(ctx.sector_peers)
-
-        fcf_yield = (
-            safe(
-                ctx.stock_info.get(
-                    'free_cash_flow_latest'
-                )
-            )
-            /
-            (
-                safe(
-                    ctx.stock_info.get(
-                        'market_cap_mb'
-                    )
-                )
-                * 1e6
-            )
-            * 100
-        ) if safe(
-            ctx.stock_info.get(
-                'market_cap_mb'
-            )
-        ) > 0 else 0
-
+        market_cap = safe(ctx.stock_info.get('market_cap_mb'))
+        fcf_latest = safe(ctx.stock_info.get('free_cash_flow_latest'))
+        fcf_yield = fcf_latest / (market_cap * 1e6) * 100 if market_cap > 0 else 0
 
         st.html(f"""
-        <div style="
-            background-color:#FFFFFF;
-            border:1px solid #E2E8F0;
-            border-top:none;
-            border-radius:0 0 12px 12px;
-            padding:8px 16px 16px 16px;
-        ">
+        <div style="background-color:#FFFFFF;border:1px solid #E2E8F0;
+                    border-top:none;border-radius:0 0 12px 12px;padding:8px 16px 16px 16px;">
 
-            <div style="
-                display:grid;
-                grid-template-columns:1fr 1fr;
-                gap:10px;
-                border-top:1px solid #E2E8F0;
-                padding-top:10px;
-            ">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;
+                        border-top:1px solid #E2E8F0;padding-top:10px;">
 
                 <div>
-                    <div style="
-                        font-size:13px;
-                        color:#64748B;
-                    ">
-                        Market Cap
-                    </div>
-
-                    <div style="
-                        font-size:15px;
-                        font-weight:bold;
-                        color:#0F172A;
-                        margin-top:2px;
-                    ">
-                        {fmt_mb(
-                            safe(
-                                ctx.stock_info.get(
-                                    'market_cap_mb'
-                                )
-                            ) * 1e6
-                        )}
+                    <div style="font-size:13px;color:#64748B;">Market Cap</div>
+                    <div style="font-size:15px;font-weight:bold;color:#0F172A;margin-top:2px;">
+                        {fmt_mb(safe(ctx.stock_info.get('market_cap_mb')) * 1e6)}
                     </div>
                 </div>
 
-
                 <div>
-                    <div style="
-                        font-size:13px;
-                        color:#64748B;
-                    ">
-                        P/E (TTM)
-                    </div>
-
-                    <div style="
-                        font-size:15px;
-                        font-weight:bold;
-                        color:#0F172A;
-                        margin-top:2px;
-                    ">
-                        {fmt_ratio(
-                            ctx.stock_info.get(
-                                'pe_ratio'
-                            )
-                        )}
+                    <div style="font-size:13px;color:#64748B;">P/E (TTM)</div>
+                    <div style="font-size:15px;font-weight:bold;color:#0F172A;margin-top:2px;">
+                        {fmt_ratio(ctx.stock_info.get('pe_ratio'))}
                     </div>
                 </div>
 
-
                 <div>
-                    <div style="
-                        font-size:13px;
-                        color:#64748B;
-                    ">
-                        Sector
-                    </div>
-
-                    <div style="
-                        font-size:15px;
-                        font-weight:bold;
-                        color:#0F172A;
-                        margin-top:2px;
-                    ">
-                        {ctx.stock_info.get(
-                            'sector',
-                            '-'
-                        ).split(' ')[0]}
+                    <div style="font-size:13px;color:#64748B;">Sector</div>
+                    <div style="font-size:15px;font-weight:bold;color:#0F172A;margin-top:2px;">
+                        {ctx.stock_info.get('sector','-').split(' ')[0]}
                     </div>
                 </div>
 
-
                 <div>
-                    <div style="
-                        font-size:13px;
-                        color:#64748B;
-                    ">
-                        P/B (TTM)
-                    </div>
-
-                    <div style="
-                        font-size:15px;
-                        font-weight:bold;
-                        color:#0F172A;
-                        margin-top:2px;
-                    ">
-                        {fmt_ratio(
-                            ctx.stock_info.get(
-                                'pb_ratio'
-                            )
-                        )}
+                    <div style="font-size:13px;color:#64748B;">P/B (TTM)</div>
+                    <div style="font-size:15px;font-weight:bold;color:#0F172A;margin-top:2px;">
+                        {fmt_ratio(ctx.stock_info.get('pb_ratio'))}
                     </div>
                 </div>
 
-
                 <div>
-                    <div style="
-                        font-size:13px;
-                        color:#64748B;
-                    ">
-                        Industry
-                    </div>
-
-                    <div style="
-                        font-size:14.5px;
-                        font-weight:bold;
-                        color:#0F172A;
-                        margin-top:2px;
-                        white-space:nowrap;
-                        overflow:hidden;
-                        text-overflow:ellipsis;
-                    ">
-                        {ctx.stock_info.get(
-                            'sector',
-                            '-'
-                        )}
+                    <div style="font-size:13px;color:#64748B;">Industry</div>
+                    <div style="font-size:14.5px;font-weight:bold;color:#0F172A;margin-top:2px;
+                                white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        {ctx.stock_info.get('sector','-')}
                     </div>
                 </div>
 
-
                 <div>
-                    <div style="
-                        font-size:13px;
-                        color:#64748B;
-                    ">
-                        FCF Yield
-                    </div>
-
-                    <div style="
-                        font-size:15px;
-                        font-weight:bold;
-                        color:#10B981;
-                        margin-top:2px;
-                    ">
+                    <div style="font-size:13px;color:#64748B;">FCF Yield</div>
+                    <div style="font-size:15px;font-weight:bold;color:#10B981;margin-top:2px;">
                         {fcf_yield:.2f}%
                     </div>
                 </div>
 
             </div>
-
         </div>
         """)
-
 
     # ============================================================
     # CENTER COLUMN
@@ -423,880 +184,361 @@ def render(ctx):
 
     with col_center:
 
-        m1_s = int(
-            round(
-                safe(
-                    ctx.stock_info.get(
-                        'health_score'
-                    ),
-                    50
-                )
-            )
-        )
-
-        m2_s = int(
-            round(
-                safe(
-                    ctx.stock_info.get(
-                        'valuation_score'
-                    ),
-                    50
-                )
-            )
-        )
-
-        m3_s = int(
-            round(
-                safe(
-                    ctx.stock_info.get(
-                        'timing_score'
-                    ),
-                    50
-                )
-            )
-        )
-
-        m4_s = int(
-            round(
-                safe(
-                    ctx.stock_info.get(
-                        'ai_score'
-                    ),
-                    50
-                )
-            )
-        )
-
-        m5_s = int(
-            round(
-                safe(
-                    ctx.stock_info.get(
-                        'risk_score'
-                    ),
-                    50
-                )
-            )
-        )
-
-        m6_s = int(
-            round(
-                safe(
-                    ctx.stock_info.get(
-                        'industry_score'
-                    ),
-                    50
-                )
-            )
-        )
-
+        m1_s = int(round(safe(ctx.stock_info.get('health_score'), 50)))
+        m2_s = int(round(safe(ctx.stock_info.get('valuation_score'), 50)))
+        m3_s = int(round(safe(ctx.stock_info.get('timing_score'), 50)))
+        m4_s = int(round(safe(ctx.stock_info.get('ai_score'), 50)))
+        m5_s = int(round(safe(ctx.stock_info.get('risk_score'), 50)))
+        m6_s = int(round(safe(ctx.stock_info.get('industry_score'), 50)))
 
         # --------------------------------------------------------
         # Company Health
         # --------------------------------------------------------
 
         if m1_s >= 70:
-            m1_badge = "EXCELLENT"
-            m1_desc = "Strong balance sheet and sustainable quality"
-
+            m1_badge, m1_desc = "EXCELLENT", "Strong balance sheet and sustainable quality"
         elif m1_s >= 45:
-            m1_badge = "MODERATE"
-            m1_desc = "Stable financial position with sound liquidity"
-
+            m1_badge, m1_desc = "MODERATE", "Stable financial position with sound liquidity"
         else:
-            m1_badge = "WEAK"
-            m1_desc = "Elevated debt leverage or margin pressure"
-
+            m1_badge, m1_desc = "WEAK", "Elevated debt leverage or margin pressure"
 
         # --------------------------------------------------------
         # Fair Value
         # --------------------------------------------------------
 
         if m2_s >= 70:
-            m2_badge = "UNDERVALUED"
-            m2_desc = "Attractive valuation with high margin of safety"
-
+            m2_badge, m2_desc = "UNDERVALUED", "Attractive valuation with high margin of safety"
         elif m2_s >= 45:
-            m2_badge = "FAIR VALUE"
-            m2_desc = "Trading near assessed fundamental value"
-
+            m2_badge, m2_desc = "FAIR VALUE", "Trading near assessed fundamental value"
         else:
-            m2_badge = "OVERVALUED"
-            m2_desc = "Price trades at premium to fair valuation"
-
+            m2_badge, m2_desc = "OVERVALUED", "Price trades at premium to fair valuation"
 
         # --------------------------------------------------------
         # Entry Timing
         # --------------------------------------------------------
 
         if m3_s >= 65:
-            m3_badge = "BULLISH"
-            m3_desc = "Strong upward momentum across moving averages"
-
+            m3_badge, m3_desc = "BULLISH", "Strong upward momentum across moving averages"
         elif m3_s >= 45:
-            m3_badge = "NEUTRAL"
-            m3_desc = "Consolidating near key technical support"
-
+            m3_badge, m3_desc = "NEUTRAL", "Consolidating near key technical support"
         else:
-            m3_badge = "BEARISH"
-            m3_desc = "Downtrend momentum; elevated pullback risk"
-
+            m3_badge, m3_desc = "BEARISH", "Downtrend momentum; elevated pullback risk"
 
         # --------------------------------------------------------
         # AI Prediction
         # --------------------------------------------------------
 
         if m4_s >= 65:
-            m4_badge = "POSITIVE"
-            m4_desc = "AI model forecasts favorable upside probability"
-
+            m4_badge, m4_desc = "POSITIVE", "AI model forecasts favorable upside probability"
         elif m4_s >= 45:
-            m4_badge = "NEUTRAL"
-            m4_desc = "AI predicts range-bound price consolidation"
-
+            m4_badge, m4_desc = "NEUTRAL", "AI predicts range-bound price consolidation"
         else:
-            m4_badge = "CAUTION"
-            m4_desc = "Low upside probability under current features"
-
+            m4_badge, m4_desc = "CAUTION", "Low upside probability under current features"
 
         # --------------------------------------------------------
         # Risk Analysis
         # --------------------------------------------------------
 
         if m5_s >= 65:
-            m5_badge = "LOW RISK"
-            m5_desc = "High resilience with stable volatility"
-
+            m5_badge, m5_desc = "LOW RISK", "High resilience with stable volatility"
         elif m5_s >= 45:
-            m5_badge = "MODERATE"
-            m5_desc = "Balanced market risk profile"
-
+            m5_badge, m5_desc = "MODERATE", "Balanced market risk profile"
         else:
-            m5_badge = "HIGH RISK"
-            m5_desc = "Higher volatility and deeper drawdown risk"
-
+            m5_badge, m5_desc = "HIGH RISK", "Higher volatility and deeper drawdown risk"
 
         # --------------------------------------------------------
         # Industry Benchmark
         # --------------------------------------------------------
 
         if m6_s >= 70:
-            m6_badge = "OUTPERFORM"
-            m6_desc = "Leading peer group across key industry metrics"
-
+            m6_badge, m6_desc = "OUTPERFORM", "Leading peer group across key industry metrics"
         elif m6_s >= 45:
-            m6_badge = "PARITY"
-            m6_desc = "Performing on par with sectoral median"
-
+            m6_badge, m6_desc = "PARITY", "Performing on par with sectoral median"
         else:
-            m6_badge = "LAGGING"
-            m6_desc = "Trailing behind sectoral benchmark"
-
+            m6_badge, m6_desc = "LAGGING", "Trailing behind sectoral benchmark"
 
         # ========================================================
         # SCORE COLOR
+        # 0-33 RED / 34-66 YELLOW / 67-100 GREEN
         # ========================================================
 
         def score_color(score):
-            if score >= 70:
-                return "#10B981"
-            elif score >= 40:
-                return "#F59E0B"
-            else:
-                return "#EF4444"
+            return "#EF4444" if score <= 33 else "#F59E0B" if score <= 66 else "#10B981"
 
+        def score_bg(score):
+            return (
+                "rgba(239,68,68,0.20)"
+                if score <= 33
+                else "rgba(245,158,11,0.20)"
+                if score <= 66
+                else "rgba(16,185,129,0.20)"
+            )
 
         # ========================================================
         # MODULE CARD
         # ========================================================
 
-        def module_card(
-            num,
-            label,
-            score,
-            color,
-            badge,
-            desc,
-            badge_bg
-        ):
+        def module_card(num, label, score, color, badge, desc, badge_bg):
 
-            # ใช้สีตามคะแนนจริงแทนสีประจำหมวด
             color = score_color(score)
+            badge_bg = score_bg(score)
 
             return f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:10px;
-                padding:16px 14px;
-                text-align:center;
-                position:relative;
-            ">
+            <div style="background-color:#FFFFFF;border:1px solid #E2E8F0;
+                        border-radius:10px;padding:16px 14px;text-align:center;position:relative;">
 
-                <div style="
-                    position:absolute;
-                    top:10px;
-                    left:10px;
-                    background:{badge_bg};
-                    color:{color};
-                    font-size:14px;
-                    font-weight:bold;
-                    padding:3px 7px;
-                    border-radius:5px;
-                ">
+                <div style="position:absolute;top:10px;left:10px;
+                            background:{badge_bg};color:{color};font-size:14px;
+                            font-weight:bold;padding:3px 7px;border-radius:5px;">
                     {num}
                 </div>
 
-
-                <div style="
-                    display:flex;
-                    justify-content:center;
-                    align-items:center;
-                    margin-bottom:10px;
-                ">
-
-                    <span style="
-                        font-size:15px;
-                        font-weight:bold;
-                        color:#0F172A;
-                    ">
+                <div style="display:flex;justify-content:center;align-items:center;margin-bottom:10px;">
+                    <span style="font-size:15px;font-weight:bold;color:#0F172A;">
                         {label}
                     </span>
-
                 </div>
 
+                <div style="margin:0 auto 10px auto;width:88px;height:88px;border-radius:50%;
+                            background:conic-gradient({color} 0% {score}%,#E2E8F0 {score}% 100%);
+                            display:flex;align-items:center;justify-content:center;">
 
-                <div style="
-                    margin:0 auto 10px auto;
-                    width:88px;
-                    height:88px;
-                    border-radius:50%;
-                    background:conic-gradient(
-                        {color} 0% {score}%,
-                        #E2E8F0 {score}% 100%
-                    );
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                ">
+                    <div style="width:72px;height:72px;border-radius:50%;background-color:#FFFFFF;
+                                display:flex;flex-direction:column;align-items:center;
+                                justify-content:center;">
 
-                    <div style="
-                        width:72px;
-                        height:72px;
-                        border-radius:50%;
-                        background-color:#FFFFFF;
-                        display:flex;
-                        flex-direction:column;
-                        align-items:center;
-                        justify-content:center;
-                    ">
-
-                        <span style="
-                            font-size:20px;
-                            font-weight:bold;
-                            color:#0F172A;
-                            line-height:1;
-                        ">
+                        <span style="font-size:20px;font-weight:bold;color:#0F172A;line-height:1;">
                             {score}
                         </span>
 
-                        <span style="
-                            font-size:13.5px;
-                            color:#64748B;
-                        ">
+                        <span style="font-size:13.5px;color:#64748B;">
                             100
                         </span>
 
                     </div>
-
                 </div>
 
-
-                <div style="
-                    color:{color};
-                    font-size:15.5px;
-                    font-weight:bold;
-                    margin-bottom:5px;
-                ">
+                <div style="color:{color};font-size:15.5px;font-weight:bold;margin-bottom:5px;">
                     {badge}
                 </div>
 
-
-                <div style="
-                    font-size:14.5px;
-                    color:#475569;
-                    line-height:1.4;
-                ">
+                <div style="font-size:14.5px;color:#475569;line-height:1.4;">
                     {desc}
                 </div>
 
             </div>
             """
 
-
         # ========================================================
         # ALL MODULE CARDS
-        # 01 02 03
-        # 04 05 06
         # ========================================================
 
         cards_html = "".join([
-
-            module_card(
-                "01",
-                "COMPANY HEALTH",
-                m1_s,
-                "#34D399",
-                m1_badge,
-                m1_desc,
-                "rgba(16,185,129,0.2)"
-            ),
-
-            module_card(
-                "02",
-                "FAIR VALUE",
-                m2_s,
-                "#FBBF24",
-                m2_badge,
-                m2_desc,
-                "rgba(245,158,11,0.2)"
-            ),
-
-            module_card(
-                "03",
-                "ENTRY TIMING",
-                m3_s,
-                "#38BDF8",
-                m3_badge,
-                m3_desc,
-                "rgba(56,189,248,0.2)"
-            ),
-
-            module_card(
-                "04",
-                "AI PREDICTION",
-                m4_s,
-                "#C084FC",
-                m4_badge,
-                m4_desc,
-                "rgba(168,85,247,0.2)"
-            ),
-
-            module_card(
-                "05",
-                "RISK ANALYSIS",
-                m5_s,
-                "#FB923C",
-                m5_badge,
-                m5_desc,
-                "rgba(249,115,22,0.2)"
-            ),
-
-            module_card(
-                "06",
-                "INDUSTRY BENCHMARK",
-                m6_s,
-                "#2DD4BF",
-                m6_badge,
-                m6_desc,
-                "rgba(20,184,166,0.2)"
-            )
-
+            module_card("01", "COMPANY HEALTH", m1_s, "#34D399", m1_badge, m1_desc, ""),
+            module_card("02", "FAIR VALUE", m2_s, "#FBBF24", m2_badge, m2_desc, ""),
+            module_card("03", "ENTRY TIMING", m3_s, "#38BDF8", m3_badge, m3_desc, ""),
+            module_card("04", "AI PREDICTION", m4_s, "#C084FC", m4_badge, m4_desc, ""),
+            module_card("05", "RISK ANALYSIS", m5_s, "#FB923C", m5_badge, m5_desc, ""),
+            module_card("06", "INDUSTRY BENCHMARK", m6_s, "#2DD4BF", m6_badge, m6_desc, "")
         ])
-
 
         # ========================================================
         # CENTER MAIN CARD
         # ========================================================
 
         st.html(f"""
-        <div style="
-            background-color:#FFFFFF;
-            border:1px solid #E2E8F0;
-            border-radius:12px;
-            padding:16px;
-        ">
+        <div style="background-color:#FFFFFF;border:1px solid #E2E8F0;
+                    border-radius:12px;padding:16px;">
 
-            <div style="
-                font-size:15px;
-                font-weight:bold;
-                color:#0F172A;
-                letter-spacing:0.5px;
-                margin-bottom:12px;
-            ">
+            <div style="font-size:15px;font-weight:bold;color:#0F172A;
+                        letter-spacing:0.5px;margin-bottom:12px;">
                 INVESTMENT DECISION OVERVIEW ({ctx.selected_ticker})
             </div>
 
-
-            <div
-                class="overview-module-grid"
-                style="
-                    display:grid;
-                    grid-template-columns:repeat(3, 1fr);
-                    gap:12px;
-                "
-            >
+            <div class="overview-module-grid"
+                 style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
                 {cards_html}
             </div>
 
         </div>
         """)
 
-
     # ============================================================
-    # AI INVESTMENT SUMMARY — FULL WIDTH BELOW
+    # AI INVESTMENT SUMMARY
     # ============================================================
 
-    overall = safe(
-        ctx.stock_info.get(
-            'overall_score'
-        ),
-        50
-    )
-
-    rec = ctx.stock_info.get(
-        'recommendation',
-        'ACCUMULATE'
-    )
+    overall = safe(ctx.stock_info.get('overall_score'), 50)
+    rec = ctx.stock_info.get('recommendation', 'ACCUMULATE')
 
     rec_color = {
         "STRONG BUY": "#10B981",
         "BUY": "#10B981",
         "ACCUMULATE": "#84CC16",
         "REDUCE / SELL": "#EF4444"
-    }.get(
-        rec,
-        "#F59E0B"
-    )
+    }.get(rec, "#F59E0B")
 
-    stars = min(
-        5,
-        max(
-            1,
-            round(
-                overall / 20
-            )
-        )
-    )
+    stars = min(5, max(1, round(overall / 20)))
+    arc_frac = min(1.0, overall / 100)
+    dash_len = round(119.38 * arc_frac, 2)
 
-    arc_frac = min(
-        1.0,
-        overall / 100
-    )
-
-    dash_len = round(
-        119.38 * arc_frac,
-        2
-    )
-
-    label = (
-        "ATTRACTIVE"
-        if overall >= 65
-        else (
-            "FAIR"
-            if overall >= 45
-            else "CAUTION"
-        )
-    )
+    label = "ATTRACTIVE" if overall >= 65 else "FAIR" if overall >= 45 else "CAUTION"
 
     top_strength = (
         "financial health"
-        if m1_s == max(
-            m1_s,
-            m2_s,
-            m3_s,
-            m4_s,
-            m5_s,
-            m6_s
-        )
+        if m1_s == max(m1_s, m2_s, m3_s, m4_s, m5_s, m6_s)
         else "fair value"
     )
 
-
-    # ============================================================
-    # AI INVESTMENT SUMMARY
-    # ============================================================
-
     st.html(f"""
-    <div style="
-        background-color:#FFFFFF;
-        border:1px solid #E2E8F0;
-        border-radius:12px;
-        padding:16px;
-        margin-top:12px;
-    ">
+    <div style="background-color:#FFFFFF;border:1px solid #E2E8F0;
+                border-radius:12px;padding:16px;margin-top:12px;">
 
-        <div style="
-            font-size:14.5px;
-            font-weight:bold;
-            color:#64748B;
-            letter-spacing:0.5px;
-            margin-bottom:12px;
-        ">
+        <div style="font-size:14.5px;font-weight:bold;color:#64748B;
+                    letter-spacing:0.5px;margin-bottom:12px;">
             AI INVESTMENT SUMMARY
         </div>
 
+        <div style="display:grid;grid-template-columns:180px 1fr 1.3fr;
+                    gap:24px;align-items:center;">
 
-        <div style="
-            display:grid;
-            grid-template-columns:180px 1fr 1.3fr;
-            gap:24px;
-            align-items:center;
-        ">
+            <div style="text-align:center;">
 
+                <div style="margin:0 auto;width:140px;">
+                    <svg viewBox="0 0 100 58"
+                         style="width:130px;height:83px;display:block;margin:0 auto;">
 
-            <!-- SCORE -->
+                        <path d="M 12 50 A 38 38 0 0 1 88 50"
+                              fill="none"stroke="#E2E8F0"stroke-width="10"
+                              stroke-linecap="round"/>
 
-            <div style="
-                text-align:center;
-            ">
+                        <path d="M 12 50 A 38 38 0 0 1 88 50"
+                              fill="none"stroke="#10B981"stroke-width="10"
+                              stroke-linecap="round"
+                              stroke-dasharray="{dash_len} 119.38"/>
 
-                <div style="
-                    margin:0 auto;
-                    width:140px;
-                ">
-
-                    <svg
-                        viewBox="0 0 100 58"
-                        style="
-                            width:130px;
-                            height:83px;
-                            display:block;
-                            margin:0 auto;
-                        "
-                    >
-
-                        <path
-                            d="M 12 50 A 38 38 0 0 1 88 50"
-                            fill="none"
-                            stroke="#E2E8F0"
-                            stroke-width="10"
-                            stroke-linecap="round"
-                        />
-
-
-                        <path
-                            d="M 12 50 A 38 38 0 0 1 88 50"
-                            fill="none"
-                            stroke="#10B981"
-                            stroke-width="10"
-                            stroke-linecap="round"
-                            stroke-dasharray="{dash_len} 119.38"
-                        />
-
-
-                        <text
-                            x="50"
-                            y="38"
-                            text-anchor="middle"
-                            font-size="21"
-                            font-weight="bold"
-                            fill="#0F172A"
-                        >
+                        <text x="50" y="38" text-anchor="middle"
+                              font-size="21" font-weight="bold" fill="#0F172A">
                             {overall:.0f}
                         </text>
 
-
-                        <text
-                            x="50"
-                            y="49"
-                            text-anchor="middle"
-                            font-size="11.5"
-                            fill="#64748B"
-                        >
+                        <text x="50" y="49" text-anchor="middle"
+                              font-size="11.5" fill="#64748B">
                             100
                         </text>
-
                     </svg>
-
                 </div>
 
-
-                <div style="
-                    font-size:13px;
-                    font-weight:bold;
-                    color:#64748B;
-                ">
+                <div style="font-size:13px;font-weight:bold;color:#64748B;">
                     OVERALL SCORE
                 </div>
 
-
-                <div style="
-                    color:#F59E0B;
-                    font-size:14.5px;
-                    letter-spacing:2px;
-                    margin:2px 0;
-                ">
+                <div style="color:#F59E0B;font-size:14.5px;letter-spacing:2px;margin:2px 0;">
                     {'★' * stars}{'☆' * (5-stars)}
                 </div>
 
-
-                <div style="
-                    color:{rec_color};
-                    font-size:16px;
-                    font-weight:bold;
-                ">
+                <div style="color:{rec_color};font-size:16px;font-weight:bold;">
                     {label}
                 </div>
 
             </div>
 
+            <div style="text-align:center;">
+                <div style="font-size:14px;color:#475569;line-height:1.6;">
 
-            <!-- AI DESCRIPTION -->
-
-            <div style="
-                text-align:center;
-            ">
-
-                <div style="
-                    font-size:14px;
-                    color:#475569;
-                    line-height:1.6;
-                ">
-
-                    <b style="
-                        color:#0F172A;
-                    ">
-                        {ctx.selected_ticker}
-                    </b>
-
+                    <b style="color:#0F172A;">{ctx.selected_ticker}</b>
                     ได้คะแนนภาพรวม
-                    <b>
-                        {overall:.1f}/100
-                    </b>
+                    <b>{overall:.1f}/100</b>
 
                     <br>
 
                     จุดเด่นหลักอยู่ที่
-                    <b>
-                        {top_strength}
-                    </b>
+                    <b>{top_strength}</b>
 
                     <br>
 
                     อันดับ
-                    <b>
-                        {int(ctx.stock_info.get('sector_rank',1))}
-                        / {n_sector}
-                    </b>
+                    <b>{int(ctx.stock_info.get('sector_rank',1))} / {n_sector}</b>
 
                     จากบริษัทในกลุ่ม
-                    <b>
-                        {ctx.stock_info.get('sector','-')}
-                    </b>
+                    <b>{ctx.stock_info.get('sector','-')}</b>
 
                 </div>
-
             </div>
 
+            <div style="background-color:#F8FAFC;border:1px solid #E2E8F0;
+                        border-radius:8px;padding:12px 14px;text-align:left;">
 
-            <!-- RECOMMENDATION -->
-
-            <div style="
-                background-color:#F8FAFC;
-                border:1px solid #E2E8F0;
-                border-radius:8px;
-                padding:12px 14px;
-                text-align:left;
-            ">
-
-                <div style="
-                    font-size:12.5px;
-                    color:#64748B;
-                    font-weight:bold;
-                    margin-bottom:4px;
-                ">
+                <div style="font-size:12.5px;color:#64748B;font-weight:bold;margin-bottom:4px;">
                     RECOMMENDATION
                 </div>
 
+                <div style="display:flex;justify-content:space-between;align-items:center;">
 
-                <div style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                ">
-
-                    <div style="
-                        display:flex;
-                        align-items:center;
-                        gap:8px;
-                    ">
-
-                        <span style="
-                            color:{rec_color};
-                            font-size:18px;
-                        ">
-                            📈
-                        </span>
-
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="color:{rec_color};font-size:18px;">📈</span>
 
                         <div>
-
-                            <b style="
-                                color:{rec_color};
-                                font-size:16px;
-                            ">
+                            <b style="color:{rec_color};font-size:16px;">
                                 {rec}
                             </b>
 
-                            <div style="
-                                color:#64748B;
-                                font-size:11.5px;
-                            ">
+                            <div style="color:#64748B;font-size:11.5px;">
                                 Based on Overall Score
                             </div>
-
                         </div>
-
                     </div>
 
-
-                    <div style="
-                        text-align:right;
-                    ">
-
-                        <div style="
-                            color:#64748B;
-                            font-size:11.5px;
-                        ">
+                    <div style="text-align:right;">
+                        <div style="color:#64748B;font-size:11.5px;">
                             Sector Rank:
                         </div>
 
-                        <b style="
-                            color:{rec_color};
-                            font-size:13px;
-                        ">
-                            {int(ctx.stock_info.get('sector_rank',1))}
-                            / {n_sector}
+                        <b style="color:{rec_color};font-size:13px;">
+                            {int(ctx.stock_info.get('sector_rank',1))} / {n_sector}
                         </b>
-
                     </div>
 
                 </div>
-
             </div>
 
         </div>
-
     </div>
     """)
-
 
     # ============================================================
     # KEY HIGHLIGHTS
     # ============================================================
 
-    st.html("""
-    <div style="
-        margin-top:22px;
-    ">
-    </div>
-    """)
+    rev_g = ctx.stock_info.get('revenue_growth_yoy')
+    ni_g = ctx.stock_info.get('net_income_growth_yoy')
+    fcf_val = ctx.stock_info.get('free_cash_flow_latest')
+    de_val = safe(ctx.stock_info.get('de_ratio'))
+    roe_val = safe(ctx.stock_info.get('roe'))
 
+    industry_rank_txt = f"{int(ctx.stock_info.get('sector_rank',1))} / {n_sector}"
 
-    rev_g = ctx.stock_info.get(
-        'revenue_growth_yoy'
-    )
-
-    ni_g = ctx.stock_info.get(
-        'net_income_growth_yoy'
-    )
-
-    fcf_val = ctx.stock_info.get(
-        'free_cash_flow_latest'
-    )
-
-    de_val = safe(
-        ctx.stock_info.get(
-            'de_ratio'
-        )
-    )
-
-    roe_val = safe(
-        ctx.stock_info.get(
-            'roe'
-        )
-    )
-
-    industry_rank_txt = (
-        f"{int(ctx.stock_info.get('sector_rank',1))}"
-        f" / {n_sector}"
-    )
-
-
-    # ============================================================
-    # HIGHLIGHT CARD
-    # ============================================================
-
-    def hl_card(
-        icon,
-        bg,
-        label,
-        value,
-        sub,
-        val_color="#0F172A"
-    ):
-
+    def hl_card(icon, bg, label, value, sub, val_color="#0F172A"):
         return f"""
-        <div style="
-            background-color:#F8FAFC;
-            border:1px solid #E2E8F0;
-            border-radius:8px;
-            padding:10px 12px;
-            display:flex;
-            align-items:center;
-            gap:10px;
-        ">
+        <div style="background-color:#F8FAFC;border:1px solid #E2E8F0;
+                    border-radius:8px;padding:10px 12px;display:flex;
+                    align-items:center;gap:10px;">
 
-            <div style="
-                background:{bg};
-                width:40px;
-                height:40px;
-                border-radius:8px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                font-size:17.5px;
-            ">
+            <div style="background:{bg};width:40px;height:40px;border-radius:8px;
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:17.5px;">
                 {icon}
             </div>
 
-
             <div>
-
-                <div style="
-                    font-size:13px;
-                    color:#64748B;
-                ">
-                    {label}
-                </div>
-
-
-                <div style="
-                    font-size:16px;
-                    font-weight:bold;
-                    color:{val_color};
-                    margin-top:1px;
-                ">
+                <div style="font-size:13px;color:#64748B;">{label}</div>
+                <div style="font-size:16px;font-weight:bold;color:{val_color};margin-top:1px;">
                     {value}
                 </div>
-
-
-                <div style="
-                    font-size:12px;
-                    color:#64748B;
-                ">
-                    {sub}
-                </div>
-
+                <div style="font-size:12px;color:#64748B;">{sub}</div>
             </div>
 
         </div>
         """
-
-
-    # ============================================================
-    # HIGHLIGHT CARDS
-    # ============================================================
 
     hl_html = "".join([
 
@@ -1304,31 +546,19 @@ def render(ctx):
             "📊",
             "rgba(16,185,129,0.15)",
             "Revenue Growth",
-            f"""
-            {'+' if (rev_g or 0) >= 0 else ''}
-            {rev_g if rev_g is not None else 0:.1f}%
-            """,
+            f"{'+' if (rev_g or 0) >= 0 else ''}{rev_g if rev_g is not None else 0:.1f}%",
             "YoY (latest FY)",
-            "#10B981"
-            if (rev_g or 0) >= 0
-            else "#EF4444"
+            "#10B981" if (rev_g or 0) >= 0 else "#EF4444"
         ),
-
 
         hl_card(
             "💰",
             "rgba(245,158,11,0.15)",
             "Net Profit Growth",
-            f"""
-            {'+' if (ni_g or 0) >= 0 else ''}
-            {ni_g if ni_g is not None else 0:.1f}%
-            """,
+            f"{'+' if (ni_g or 0) >= 0 else ''}{ni_g if ni_g is not None else 0:.1f}%",
             "YoY (latest FY)",
-            "#10B981"
-            if (ni_g or 0) >= 0
-            else "#EF4444"
+            "#10B981" if (ni_g or 0) >= 0 else "#EF4444"
         ),
-
 
         hl_card(
             "⏱️",
@@ -1339,20 +569,14 @@ def render(ctx):
             "#38BDF8"
         ),
 
-
         hl_card(
             "💵",
             "rgba(168,85,247,0.15)",
             "Free Cash Flow",
-            fmt_mb(
-                safe(
-                    fcf_val
-                )
-            ),
+            fmt_mb(safe(fcf_val)),
             "Latest FY",
             "#0F172A"
         ),
-
 
         hl_card(
             "🛡️",
@@ -1363,7 +587,6 @@ def render(ctx):
             "#FB923C"
         ),
 
-
         hl_card(
             "🏆",
             "rgba(20,184,166,0.15)",
@@ -1372,50 +595,25 @@ def render(ctx):
             f"In {ctx.stock_info.get('sector','-')}",
             "#2DD4BF"
         )
-
     ])
 
-
-    # ============================================================
-    # KEY HIGHLIGHTS CONTAINER
-    # ============================================================
-
     st.html(f"""
-    <div style="
-        background-color:#FFFFFF;
-        border:1px solid #E2E8F0;
-        border-radius:12px;
-        padding:14px 16px;
-    ">
+    <div style="background-color:#FFFFFF;border:1px solid #E2E8F0;
+                border-radius:12px;padding:14px 16px;">
 
-        <div style="
-            font-size:14.5px;
-            font-weight:bold;
-            color:#64748B;
-            margin-bottom:10px;
-            letter-spacing:0.5px;
-        ">
+        <div style="font-size:14.5px;font-weight:bold;color:#64748B;
+                    margin-bottom:10px;letter-spacing:0.5px;">
             KEY HIGHLIGHTS
         </div>
 
-
-        <div style="
-            display:grid;
-            grid-template-columns:repeat(6, 1fr);
-            gap:10px;
-        ">
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;">
             {hl_html}
         </div>
 
     </div>
 
-
-    <div style="
-        font-size:12.5px;
-        color:#475569;
-        text-align:center;
-        margin-top:10px;
-    ">
-        Disclaimer: This dashboard is for informational purposes only and not intended as investment advice. Please conduct your own research before making investment decisions.
+    <div style="font-size:12.5px;color:#475569;text-align:center;margin-top:10px;">
+        Disclaimer: This dashboard is for informational purposes only and not intended as
+        investment advice. Please conduct your own research before making investment decisions.
     </div>
     """)
