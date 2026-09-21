@@ -103,7 +103,7 @@ def render(ctx):
     <div style="font-size:14px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">FAIR VALUE RANGE — DCF vs P/E RELATIVE</div>
     <div style="display:grid; grid-template-columns:1fr 1.1fr 1fr; gap:6px; margin-top:6px;">
     <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:8px 4px; text-align:center;">
-    <div style="color:#38BDF8; font-size:13.5px; font-weight:bold;">Lower Estimate</div><div style="color:#64748B; font-size:12px;">Min(DCF, P/E)</div>
+    <div style="color:#EF4444; font-size:13.5px; font-weight:bold;">Lower Estimate</div><div style="color:#64748B; font-size:12px;">Min(DCF, P/E)</div>
     <div style="color:#0F172A; font-size:16px; font-weight:bold; margin-top:4px;">{val_bear:.2f} <span style="font-size:12px; color:#64748B;">THB</span></div></div>
     <div style="background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:8px; padding:8px 4px; text-align:center;">
     <div style="color:#F59E0B; font-size:13.5px; font-weight:bold;">Blended Fair Value</div><div style="color:#64748B; font-size:12px;">55% DCF + 45% P/E</div>
