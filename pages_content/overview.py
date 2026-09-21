@@ -228,9 +228,9 @@ def render(ctx):
         # AI Prediction
         # --------------------------------------------------------
 
-        if m4_s >= 65:
+        if m4_s >= 70:
             m4_badge, m4_desc = "POSITIVE", "AI model forecasts favorable upside probability"
-        elif m4_s >= 45:
+        elif m4_s >= 50:
             m4_badge, m4_desc = "NEUTRAL", "AI predicts range-bound price consolidation"
         else:
             m4_badge, m4_desc = "CAUTION", "Low upside probability under current features"
