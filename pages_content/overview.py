@@ -495,4 +495,4 @@ def render(ctx):
     </div>
     """)
 
-    render_nav_footer("m1", next_page=" Company Health")
+    render_nav_footer(next_page=" Company Health")
