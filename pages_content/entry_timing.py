@@ -75,24 +75,24 @@ def _render_html(markup):
 
 def _metric_card(label, value, sub="", value_color=TEXT_WHITE, is_summary=False):
     content_style = (
-        "font-size:11px;font-weight:700;color:#334155;margin-top:4px;"
+        "font-size:12px;font-weight:700;color:#334155;margin-top:4px;"
         "overflow:hidden;text-overflow:ellipsis;display:-webkit-box;"
         "-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35;"
         if is_summary
         else
-        f"font-size:17px;font-weight:900;color:{value_color};margin-top:4px;"
+        f"font-size:19px;font-weight:900;color:{value_color};margin-top:4px;"
         "white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
     )
 
     return f"""
     <div style="{_card_style('height:100%;box-sizing:border-box;')}">
-        <div style="font-size:10px;font-weight:800;color:{TEXT_MUTED};letter-spacing:.5px;">
+        <div style="font-size:12px;font-weight:800;color:{TEXT_MUTED};letter-spacing:.5px;">
             {label}
         </div>
         <div style="{content_style}">
             {value}
         </div>
-        <div style="font-size:10px;color:{TEXT_MUTED};margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        <div style="font-size:12px;color:{TEXT_MUTED};margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             {sub}
         </div>
     </div>
@@ -130,6 +130,12 @@ def render(ctx):
 
     status_label = sig["status_label"]
     status_color = sig["status_color"]
+
+    # Keep the existing status_label.
+    # Only change the color of NEUTRAL.
+    if status_label == "NEUTRAL":
+        status_color = AMBER
+
     action_th = sig["action_th"]
     readiness = sig["readiness"]
 
@@ -378,7 +384,7 @@ def render(ctx):
         <div style="{_card_style('height:100%;box-sizing:border-box;')}">
 
             <div style="
-                font-size:10px;
+                font-size:12px;
                 font-weight:800;
                 color:{TEXT_MUTED};
                 letter-spacing:.5px;
@@ -387,7 +393,7 @@ def render(ctx):
             </div>
 
             <div style="
-                font-size:17px;
+                font-size:19px;
                 font-weight:900;
                 color:{TEXT_WHITE};
                 margin-top:4px;
@@ -449,7 +455,7 @@ def render(ctx):
                 <div style="
                     border-bottom:2px solid {ACCENT};
                     padding-bottom:5px;
-                    font-size:12px;
+                    font-size:13px;
                     font-weight:800;
                     color:{TEXT_WHITE};
                 ">
@@ -488,6 +494,18 @@ def render(ctx):
                             stroke-dasharray="{score_fill} {total_arc}"
                         />
 
+                        <rect
+                            x="34"
+                            y="20"
+                            width="32"
+                            height="18"
+                            rx="5"
+                            fill="{status_color}"
+                            fill-opacity="0.12"
+                            stroke="{status_color}"
+                            stroke-width="1.5"
+                        />
+
                         <text
                             x="50"
                             y="33"
@@ -513,7 +531,7 @@ def render(ctx):
                     </svg>
 
                     <div style="
-                        font-size:14px;
+                        font-size:15px;
                         font-weight:900;
                         color:{status_color};
                         margin-top:2px;
@@ -522,7 +540,7 @@ def render(ctx):
                     </div>
 
                     <div style="
-                        font-size:9.5px;
+                        font-size:11px;
                         color:{TEXT_MUTED};
                     ">
                         {action_th}
@@ -536,7 +554,7 @@ def render(ctx):
                     padding-top:5px;
                     display:flex;
                     justify-content:space-between;
-                    font-size:10px;
+                    font-size:12px;
                     font-weight:800;
                 ">
                     <span style="color:{TEXT_WHITE};">
@@ -603,7 +621,7 @@ def render(ctx):
                         <div style="min-width:0;">
 
                             <div style="
-                                font-size:10px;
+                                font-size:12px;
                                 color:{TEXT_WHITE};
                                 font-weight:700;
                             ">
@@ -611,7 +629,7 @@ def render(ctx):
                             </div>
 
                             <div style="
-                                font-size:8.5px;
+                                font-size:10.5px;
                                 color:{TEXT_MUTED};
                             ">
                                 {sub}
@@ -624,7 +642,7 @@ def render(ctx):
                     <span style="
                         background:rgba({badge_bg},.15);
                         color:{badge_color};
-                        font-size:9px;
+                        font-size:10px;
                         font-weight:800;
                         padding:2px 5px;
                         border-radius:4px;
@@ -643,7 +661,7 @@ def render(ctx):
             <div style="{_card_style()}">
 
                 <div style="
-                    font-size:11.5px;
+                    font-size:14px;
                     font-weight:800;
                     color:{TEXT_WHITE};
                     margin-bottom:6px;
@@ -667,7 +685,7 @@ def render(ctx):
 
                 <div style="
                     margin-top:8px;
-                    font-size:11.5px;
+                    font-size:14px;
                     font-weight:900;
                     color:{status_color};
                     display:flex;
@@ -703,7 +721,7 @@ def render(ctx):
             _render_html(
                 f"""
                 <div style="
-                    font-size:12px;
+                    font-size:13px;
                     font-weight:800;
                     color:{TEXT_WHITE};
                     padding-top:4px;
@@ -1033,7 +1051,7 @@ def render(ctx):
                 ">
 
                     <span style="
-                        font-size:12px;
+                        font-size:13px;
                         font-weight:800;
                         color:{TEXT_WHITE};
                     ">
@@ -1043,7 +1061,7 @@ def render(ctx):
                     <span style="
                         background:rgba(56,189,248,.15);
                         color:{ACCENT};
-                        font-size:9.5px;
+                        font-size:10px;
                         font-weight:800;
                         padding:2px 6px;
                         border-radius:4px;
@@ -1060,7 +1078,7 @@ def render(ctx):
                         justify-content:space-between;
                         padding:5px 0;
                         border-bottom:1px solid {BORDER_SOFT};
-                        font-size:11px;
+                        font-size:12px;
                     ">
 
                         <span style="color:{TEXT_MUTED};">
@@ -1078,7 +1096,7 @@ def render(ctx):
                         justify-content:space-between;
                         padding:5px 0;
                         border-bottom:1px solid {BORDER_SOFT};
-                        font-size:11px;
+                        font-size:12px;
                     ">
 
                         <span style="color:{GREEN};">
@@ -1096,7 +1114,7 @@ def render(ctx):
                         justify-content:space-between;
                         padding:5px 0;
                         border-bottom:1px solid {BORDER_SOFT};
-                        font-size:11px;
+                        font-size:12px;
                     ">
 
                         <span style="color:{AMBER};">
@@ -1114,7 +1132,7 @@ def render(ctx):
                         justify-content:space-between;
                         padding:5px 0;
                         border-bottom:1px solid {BORDER_SOFT};
-                        font-size:11px;
+                        font-size:12px;
                     ">
 
                         <span style="color:{RED};">
@@ -1132,7 +1150,7 @@ def render(ctx):
                         justify-content:space-between;
                         padding:5px 0;
                         border-bottom:1px solid {BORDER_SOFT};
-                        font-size:11px;
+                        font-size:12px;
                     ">
 
                         <span style="color:{TEXT_WHITE};">
@@ -1149,7 +1167,7 @@ def render(ctx):
                         display:flex;
                         justify-content:space-between;
                         padding:5px 0;
-                        font-size:11px;
+                        font-size:12px;
                     ">
 
                         <span style="color:{TEXT_WHITE};">
@@ -1173,7 +1191,7 @@ def render(ctx):
             <div style="{_card_style()}">
 
                 <div style="
-                    font-size:11.5px;
+                    font-size:12.5px;
                     font-weight:800;
                     color:{TEXT_WHITE};
                     margin-bottom:6px;
@@ -1184,7 +1202,7 @@ def render(ctx):
                 </div>
 
                 <div style="
-                    font-size:10.5px;
+                    font-size:12px;
                     color:{TEXT_MUTED};
                     line-height:1.45;
                 ">
