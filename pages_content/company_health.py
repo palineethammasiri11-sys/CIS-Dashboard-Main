@@ -2,6 +2,14 @@
 pages_content/company_health.py
 ---------------------------
 หน้า "Company Health" ของ CIS Dashboard
+
+วิธีทดสอบ:
+    streamlit run preview_my_page.py
+
+หมายเหตุ:
+- ไม่แก้ CSS ส่วนกลาง
+- ไม่แก้ helper ใน common.py
+- แก้เฉพาะ layout ของหน้า Company Health
 """
 
 import streamlit as st
@@ -27,186 +35,161 @@ def render(ctx):
     # LIGHT THEME - COMPANY HEALTH
     # ============================================================
 
-    st.markdown("""
-    <style>
+    st.markdown(
+        """
+        <style>
 
-    /* =========================================================
-       SELECTBOX : เทียบกับคู่แข่ง
-       ========================================================= */
+        /* =====================================================
+           SELECTBOX
+        ===================================================== */
 
-    [data-testid="stSelectbox"] [data-baseweb="select"] {
-        background-color: #FFFFFF !important;
-        color: #0F172A !important;
-        border-radius: 10px !important;
-    }
+        [data-testid="stSelectbox"] [data-baseweb="select"] {
+            background-color: #FFFFFF !important;
+            color: #0F172A !important;
+            border-radius: 10px !important;
+        }
 
-    [data-testid="stSelectbox"] [data-baseweb="select"] > div {
-        background-color: #FFFFFF !important;
-        border: 1px solid #CBD5E1 !important;
-        border-radius: 10px !important;
-        color: #0F172A !important;
-        box-shadow: none !important;
-    }
+        [data-testid="stSelectbox"] [data-baseweb="select"] > div {
+            background-color: #FFFFFF !important;
+            border: 1px solid #CBD5E1 !important;
+            border-radius: 10px !important;
+            color: #0F172A !important;
+            box-shadow: none !important;
+        }
 
-    [data-testid="stSelectbox"] [data-baseweb="select"] div {
-        color: #0F172A !important;
-    }
+        [data-testid="stSelectbox"] [data-baseweb="select"] div {
+            color: #0F172A !important;
+        }
 
-    [data-testid="stSelectbox"] [data-baseweb="select"] span {
-        color: #0F172A !important;
-    }
+        [data-testid="stSelectbox"] [data-baseweb="select"] span {
+            color: #0F172A !important;
+        }
 
-    [data-testid="stSelectbox"] [data-baseweb="select"] svg {
-        fill: #0F172A !important;
-        color: #0F172A !important;
-    }
+        [data-testid="stSelectbox"] [data-baseweb="select"] svg {
+            fill: #0F172A !important;
+            color: #0F172A !important;
+        }
 
-    /* =========================================================
-       SELECTBOX DROPDOWN
-       ========================================================= */
+        /* =====================================================
+           SELECTBOX DROPDOWN
+        ===================================================== */
 
-    [data-baseweb="popover"] {
-        background-color: #FFFFFF !important;
-    }
+        [data-baseweb="popover"] {
+            background-color: #FFFFFF !important;
+        }
 
-    [data-baseweb="popover"] [role="listbox"] {
-        background-color: #FFFFFF !important;
-        border: 1px solid #CBD5E1 !important;
-    }
+        [data-baseweb="popover"] [role="listbox"] {
+            background-color: #FFFFFF !important;
+            border: 1px solid #CBD5E1 !important;
+        }
 
-    [data-baseweb="popover"] [role="option"] {
-        background-color: #FFFFFF !important;
-        color: #0F172A !important;
-    }
+        [data-baseweb="popover"] [role="option"] {
+            background-color: #FFFFFF !important;
+            color: #0F172A !important;
+        }
 
-    [data-baseweb="popover"] [role="option"] * {
-        color: #0F172A !important;
-    }
+        [data-baseweb="popover"] [role="option"] * {
+            color: #0F172A !important;
+        }
 
-    [data-baseweb="popover"] [role="option"]:hover {
-        background-color: #F1F5F9 !important;
-    }
+        [data-baseweb="popover"] [role="option"]:hover {
+            background-color: #F1F5F9 !important;
+        }
 
-    /* =========================================================
-       DATE INPUT
-       ========================================================= */
+        /* =====================================================
+           DATE INPUT
+        ===================================================== */
 
-    [data-testid="stDateInput"] {
-        color: #0F172A !important;
-    }
+        [data-testid="stDateInput"] {
+            color: #0F172A !important;
+        }
 
-    [data-testid="stDateInput"] > div {
-        color: #0F172A !important;
-    }
+        [data-testid="stDateInput"] > div {
+            color: #0F172A !important;
+        }
 
-    [data-testid="stDateInput"] [data-baseweb="input"] {
-        background-color: #FFFFFF !important;
-        border: 1px solid #CBD5E1 !important;
-        border-radius: 10px !important;
-        box-shadow: none !important;
-    }
+        [data-testid="stDateInput"] [data-baseweb="input"] {
+            background-color: #FFFFFF !important;
+            border: 1px solid #CBD5E1 !important;
+            border-radius: 10px !important;
+            box-shadow: none !important;
+        }
 
-    [data-testid="stDateInput"] [data-baseweb="input"] > div {
-        background-color: #FFFFFF !important;
-        color: #0F172A !important;
-    }
+        [data-testid="stDateInput"] [data-baseweb="input"] > div {
+            background-color: #FFFFFF !important;
+            color: #0F172A !important;
+        }
 
-    [data-testid="stDateInput"] input {
-        background-color: #FFFFFF !important;
-        color: #0F172A !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
+        [data-testid="stDateInput"] input {
+            background-color: #FFFFFF !important;
+            color: #0F172A !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
 
-    [data-testid="stDateInput"] input::placeholder {
-        color: #64748B !important;
-    }
+        [data-testid="stDateInput"] input::placeholder {
+            color: #64748B !important;
+        }
 
-    [data-testid="stDateInput"] svg {
-        fill: #0F172A !important;
-        color: #0F172A !important;
-    }
+        [data-testid="stDateInput"] svg {
+            fill: #0F172A !important;
+            color: #0F172A !important;
+        }
 
-    [data-testid="stDateInput"] label {
-        color: #0F172A !important;
-    }
+        [data-testid="stDateInput"] label {
+            color: #0F172A !important;
+        }
 
-    [data-testid="stDateInput"] label p {
-        color: #0F172A !important;
-    }
+        [data-testid="stDateInput"] label p {
+            color: #0F172A !important;
+        }
 
-    /* =========================================================
-       DATE PICKER
-       ========================================================= */
+        /* =====================================================
+           DATE PICKER
+        ===================================================== */
 
-    [data-baseweb="calendar"] {
-        background-color: #FFFFFF !important;
-        color: #0F172A !important;
-        border: 1px solid #CBD5E1 !important;
-    }
+        [data-baseweb="calendar"] {
+            background-color: #FFFFFF !important;
+            color: #0F172A !important;
+            border: 1px solid #CBD5E1 !important;
+        }
 
-    [data-baseweb="calendar"] * {
-        color: #0F172A !important;
-    }
+        [data-baseweb="calendar"] * {
+            color: #0F172A !important;
+        }
 
-    [data-baseweb="calendar"] button {
-        background-color: #FFFFFF !important;
-        color: #0F172A !important;
-    }
+        [data-baseweb="calendar"] button {
+            background-color: #FFFFFF !important;
+            color: #0F172A !important;
+        }
 
-    [data-baseweb="calendar"] button:hover {
-        background-color: #F1F5F9 !important;
-    }
+        [data-baseweb="calendar"] button:hover {
+            background-color: #F1F5F9 !important;
+        }
 
-    /* =========================================================
-       TOP 3 CARDS
-       ทำให้ 3 card ต่อกันเป็นกรอบเดียว
-       ========================================================= */
+        /* =====================================================
+           TOP ROW
+           ทำให้ 3 cards อยู่ในกรอบเดียวกัน
+        ===================================================== */
 
-    .health-top-card {
-        background-color: #FFFFFF;
-        min-height: 235px;
-        height: 235px;
-        padding: 16px;
-        box-sizing: border-box;
-    }
+        div[data-testid="stHorizontalBlock"] {
+            align-items: stretch;
+        }
 
-    .health-top-card-left {
-        border: 1px solid #E2E8F0;
-        border-right: none;
-        border-radius: 12px 0 0 12px;
-    }
-
-    .health-top-card-middle {
-        border-top: 1px solid #E2E8F0;
-        border-bottom: 1px solid #E2E8F0;
-    }
-
-    .health-top-card-right {
-        border: 1px solid #E2E8F0;
-        border-left: none;
-        border-radius: 0 12px 12px 0;
-    }
-
-    /* ลบ spacing ระหว่าง Streamlit columns ของ top section */
-    .health-top-row [data-testid="column"] {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-    }
-
-    </style>
-    """, unsafe_allow_html=True)
-
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # ============================================================
-    # FUNCTIONS
+    # GET FINANCIAL VALUES
     # ============================================================
 
     def get_fin_val(
         target_yr,
         col_name,
         default="-",
-        fmt="{:.1f}"
+        fmt="{:.1f}",
     ):
         match = ctx.fin_stock[
             ctx.fin_stock["year"] == target_yr
@@ -226,11 +209,6 @@ def render(ctx):
 
         return str(default)
 
-
-    # ============================================================
-    # FINANCIAL VALUES
-    # ============================================================
-
     roe_23 = get_fin_val(2023, "roe")
     roe_24 = get_fin_val(2024, "roe")
     roe_25 = get_fin_val(2025, "roe")
@@ -246,39 +224,38 @@ def render(ctx):
     de_23 = get_fin_val(
         2023,
         "de_ratio",
-        fmt="{:.2f}"
+        fmt="{:.2f}",
     )
 
     de_24 = get_fin_val(
         2024,
         "de_ratio",
-        fmt="{:.2f}"
+        fmt="{:.2f}",
     )
 
     de_25 = get_fin_val(
         2025,
         "de_ratio",
-        fmt="{:.2f}"
+        fmt="{:.2f}",
     )
 
     cr_23 = get_fin_val(
         2023,
         "current_ratio",
-        fmt="{:.2f}"
+        fmt="{:.2f}",
     )
 
     cr_24 = get_fin_val(
         2024,
         "current_ratio",
-        fmt="{:.2f}"
+        fmt="{:.2f}",
     )
 
     cr_25 = get_fin_val(
         2025,
         "current_ratio",
-        fmt="{:.2f}"
+        fmt="{:.2f}",
     )
-
 
     # ============================================================
     # DATE
@@ -291,18 +268,17 @@ def render(ctx):
         raw_date = pd.to_datetime(
             ctx.stock_info.get(
                 "latest_date",
-                "2025-12-30"
+                "2025-12-30",
             )
         ).date()
 
         default_date = max(
             min_limit,
-            min(max_limit, raw_date)
+            min(max_limit, raw_date),
         )
 
     except Exception:
         default_date = datetime.date(2025, 12, 30)
-
 
     # ============================================================
     # HEADER
@@ -312,30 +288,31 @@ def render(ctx):
 
     with col_title:
 
-        st.html("""
-        <div style="margin-bottom:10px;">
+        st.html(
+            """
+            <div style="margin-bottom:10px;">
 
-            <h2 style="
-                margin:0;
-                font-size:23px;
-                font-weight:bold;
-                color:#0F172A;
-                letter-spacing:0.5px;
-            ">
-                COMPANY HEALTH
-            </h2>
+                <h2 style="
+                    margin:0;
+                    font-size:23px;
+                    font-weight:bold;
+                    color:#0F172A;
+                    letter-spacing:0.5px;
+                ">
+                    COMPANY HEALTH
+                </h2>
 
-            <div style="
-                font-size:15px;
-                color:#64748B;
-                margin-top:2px;
-            ">
-                ประเมินสุขภาพทางการเงินของบริษัทจากมิติสำคัญตามงบการเงินจริง
+                <div style="
+                    font-size:15px;
+                    color:#64748B;
+                    margin-top:2px;
+                ">
+                    ประเมินสุขภาพทางการเงินของบริษัทจากมิติสำคัญตามงบการเงินจริง
+                </div>
+
             </div>
-
-        </div>
-        """)
-
+            """
+        )
 
     with col_date:
 
@@ -344,7 +321,7 @@ def render(ctx):
             value=default_date,
             min_value=min_limit,
             max_value=max_limit,
-            key="health_data_as_of"
+            key="health_data_as_of",
         )
 
         display_date_str = selected_date.strftime(
@@ -352,7 +329,6 @@ def render(ctx):
         )
 
         ctx.stock_info["latest_date"] = display_date_str
-
 
     # ============================================================
     # HEALTH SCORE
@@ -364,7 +340,7 @@ def render(ctx):
                 ctx.stock_info.get(
                     "health_score"
                 ),
-                75
+                75,
             )
         )
     )
@@ -393,369 +369,399 @@ def render(ctx):
         5,
         max(
             1,
-            round(h_score / 20)
-        )
+            round(h_score / 20),
+        ),
     )
-
 
     # ============================================================
     # TOP 3 CARDS
-    # ============================================================
     #
-    # เดิม:
-    #   แต่ละ column มี border ของตัวเอง
-    #
-    # ใหม่:
-    #   LEFT   = border ซ้าย + บน + ล่าง
-    #   MIDDLE = border บน + ล่าง
-    #   RIGHT  = border ขวา + บน + ล่าง
-    #
-    # ทำให้มองเป็นกรอบเดียวกัน
+    # จุดที่แก้:
+    # เดิมแต่ละ card มีกรอบแยกกันชัดเจน
+    # ตอนนี้สร้าง "กรอบใหญ่" ครอบทั้ง 3 cards
+    # แล้วใช้ border ของ card ด้านในแบบกลมต่อเนื่อง
     # ============================================================
 
-    st.markdown(
-        '<div class="health-top-row">',
-        unsafe_allow_html=True
-    )
+    top_wrapper = st.container()
 
-    r1_c1, r1_c2, r1_c3 = st.columns(
-        [1.1, 1.4, 1.5],
-        gap="small"
-    )
+    with top_wrapper:
 
-
-    # ============================================================
-    # 01 COMPANY HEALTH SCORE
-    # ============================================================
-
-    with r1_c1:
-
-        st.html(f"""
-        <div class="health-top-card health-top-card-left">
-
+        st.markdown(
+            """
             <div style="
-                font-size:14.5px;
-                font-weight:bold;
-                color:#64748B;
-                letter-spacing:0.5px;
+                background:#FFFFFF;
+                border:1px solid #E2E8F0;
+                border-radius:12px;
+                padding:0;
+                overflow:hidden;
+                margin-bottom:0;
             ">
-                COMPANY HEALTH SCORE
-            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
+        r1_c1, r1_c2, r1_c3 = st.columns(
+            [1.1, 1.4, 1.5],
+            gap="small",
+        )
 
-            <div style="
-                display:flex;
-                align-items:center;
-                gap:16px;
-                margin-top:34px;
-            ">
+        # ========================================================
+        # CARD 1 : COMPANY HEALTH SCORE
+        # ========================================================
 
+        with r1_c1:
+
+            st.html(
+                f"""
                 <div style="
-                    width:92px;
-                    height:92px;
-                    border-radius:50%;
-                    background:conic-gradient(
-                        {h_color} 0% {h_score}%,
-                        #E2E8F0 {h_score}% 100%
-                    );
+                    background:#FFFFFF;
+                    padding:16px;
+                    min-height:235px;
+                    height:100%;
+                    box-sizing:border-box;
                     display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    flex-shrink:0;
+                    flex-direction:column;
+                    justify-content:space-between;
                 ">
-
-                    <div style="
-                        width:76px;
-                        height:76px;
-                        border-radius:50%;
-                        background-color:#FFFFFF;
-                        display:flex;
-                        flex-direction:column;
-                        align-items:center;
-                        justify-content:center;
-                    ">
-
-                        <span style="
-                            font-size:23px;
-                            font-weight:bold;
-                            color:#0F172A;
-                            line-height:1;
-                        ">
-                            {h_score}
-                        </span>
-
-                        <span style="
-                            font-size:13px;
-                            color:#64748B;
-                        ">
-                            /100
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div>
-
-                    <div style="
-                        color:{h_color};
-                        font-size:18.5px;
-                        font-weight:bold;
-                        line-height:1.2;
-                    ">
-                        {h_badge}
-                    </div>
 
                     <div style="
                         font-size:14.5px;
-                        color:#475569;
-                        line-height:1.4;
-                        margin-top:4px;
+                        font-weight:bold;
+                        color:#64748B;
+                        letter-spacing:0.5px;
                     ">
-                        ประเมินจากอัตราส่วนทางการเงินจริงปี 2023-2025
+                        COMPANY HEALTH SCORE
                     </div>
 
                     <div style="
-                        color:{h_color};
-                        font-size:15px;
-                        letter-spacing:2px;
-                        margin-top:6px;
+                        display:flex;
+                        align-items:center;
+                        gap:16px;
+                        margin:auto 0;
                     ">
-                        {"★" * h_stars}{"☆" * (5 - h_stars)}
+
+                        <div style="
+                            width:92px;
+                            height:92px;
+                            border-radius:50%;
+                            background:conic-gradient(
+                                {h_color} 0% {h_score}%,
+                                #E2E8F0 {h_score}% 100%
+                            );
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            flex-shrink:0;
+                        ">
+
+                            <div style="
+                                width:76px;
+                                height:76px;
+                                border-radius:50%;
+                                background:#FFFFFF;
+                                display:flex;
+                                flex-direction:column;
+                                align-items:center;
+                                justify-content:center;
+                            ">
+
+                                <span style="
+                                    font-size:23px;
+                                    font-weight:bold;
+                                    color:#0F172A;
+                                    line-height:1;
+                                ">
+                                    {h_score}
+                                </span>
+
+                                <span style="
+                                    font-size:13px;
+                                    color:#64748B;
+                                ">
+                                    /100
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <div>
+
+                            <div style="
+                                color:{h_color};
+                                font-size:18.5px;
+                                font-weight:bold;
+                                line-height:1.2;
+                            ">
+                                {h_badge}
+                            </div>
+
+                            <div style="
+                                font-size:14.5px;
+                                color:#475569;
+                                line-height:1.4;
+                                margin-top:4px;
+                            ">
+                                ประเมินจากอัตราส่วนทางการเงินจริงปี 2023-2025
+                            </div>
+
+                            <div style="
+                                color:{h_color};
+                                font-size:15px;
+                                letter-spacing:2px;
+                                margin-top:6px;
+                            ">
+                                {"★" * h_stars}{"☆" * (5 - h_stars)}
+                            </div>
+
+                        </div>
+
                     </div>
 
                 </div>
+                """
+            )
 
-            </div>
+        # ========================================================
+        # CARD 2 : EXPLAINABLE FINANCIAL SUMMARY
+        # ========================================================
 
-        </div>
-        """)
+        with r1_c2:
 
-
-    # ============================================================
-    # 02 EXPLAINABLE FINANCIAL SUMMARY
-    # ============================================================
-
-    with r1_c2:
-
-        st.html(f"""
-        <div class="health-top-card health-top-card-middle">
-
-            <div style="
-                font-size:14.5px;
-                font-weight:bold;
-                color:#64748B;
-                letter-spacing:0.5px;
-                margin-bottom:8px;
-            ">
-                EXPLAINABLE FINANCIAL SUMMARY ({ctx.selected_ticker})
-            </div>
-
-
-            <p style="
-                font-size:15px;
-                color:#475569;
-                line-height:1.6;
-                margin:0;
-            ">
-                ผลการวิเคราะห์สุขภาพการเงินของ
-                <b>{ctx.selected_ticker}</b>
-                พบว่ามีอัตราส่วนผลตอบแทนต่อส่วนของผู้ถือหุ้น (ROE)
-                ล่าสุดอยู่ที่ {roe_25}% และความสามารถในการทำกำไรสุทธิ
-                (Net Margin) อยู่ที่ {npm_25}% ในขณะที่ภาระหนี้สินต่อทุน
-                (D/E Ratio) อยู่ที่ {de_25} เท่า และสภาพคล่องหมุนเวียน
-                (Current Ratio) อยู่ที่ {cr_25} เท่า
-            </p>
-
-
-            <div style="
-                margin-top:22px;
-            ">
-
-                <span style="
-                    display:inline-flex;
-                    align-items:center;
-                    gap:6px;
-                    background-color:#F8FAFC;
-                    border:1px solid #E2E8F0;
-                    color:#38BDF8;
-                    font-size:14px;
-                    padding:5px 12px;
-                    border-radius:6px;
+            st.html(
+                f"""
+                <div style="
+                    background:#FFFFFF;
+                    padding:16px;
+                    min-height:235px;
+                    height:100%;
+                    box-sizing:border-box;
+                    border-left:1px solid #E2E8F0;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:space-between;
                 ">
-                    Financial Health Benchmark:
-                    {ctx.stock_info.get("sector", "-")}
-                </span>
 
-            </div>
+                    <div>
 
-        </div>
-        """)
+                        <div style="
+                            font-size:14.5px;
+                            font-weight:bold;
+                            color:#64748B;
+                            letter-spacing:0.5px;
+                            margin-bottom:8px;
+                        ">
+                            EXPLAINABLE FINANCIAL SUMMARY ({ctx.selected_ticker})
+                        </div>
 
+                        <p style="
+                            font-size:15px;
+                            color:#475569;
+                            line-height:1.6;
+                            margin:0;
+                        ">
+                            ผลการวิเคราะห์สุขภาพการเงินของ
+                            <b>{ctx.selected_ticker}</b>
+                            พบว่ามีอัตราส่วนผลตอบแทนต่อส่วนของผู้ถือหุ้น
+                            (ROE) ล่าสุดอยู่ที่ {roe_25}%
+                            และความสามารถในการทำกำไรสุทธิ
+                            (Net Margin) อยู่ที่ {npm_25}%
+                            ในขณะที่ภาระหนี้สินต่อทุน
+                            (D/E Ratio) อยู่ที่ {de_25} เท่า
+                            และสภาพคล่องหมุนเวียน
+                            (Current Ratio) อยู่ที่ {cr_25} เท่า
+                        </p>
 
-    # ============================================================
-    # 03 HEALTH SCORE TREND
-    # ============================================================
+                    </div>
 
-    with r1_c3:
+                    <div>
 
-        st.html("""
-        <div class="health-top-card health-top-card-right">
+                        <span style="
+                            display:inline-flex;
+                            align-items:center;
+                            gap:6px;
+                            background:#F8FAFC;
+                            border:1px solid #E2E8F0;
+                            color:#38BDF8;
+                            font-size:14px;
+                            padding:5px 12px;
+                            border-radius:6px;
+                        ">
+                            Financial Health Benchmark:
+                            {ctx.stock_info.get("sector", "-")}
+                        </span>
 
-            <div style="
-                font-size:14.5px;
-                font-weight:bold;
-                color:#64748B;
-                letter-spacing:0.5px;
-                margin-bottom:2px;
-            ">
-                COMPANY HEALTH SCORE TREND (Actual, 2023-2025)
-            </div>
+                    </div>
 
-        </div>
-        """)
+                </div>
+                """
+            )
 
-        hy = (
-            ctx.health_yearly_df[
-                ctx.health_yearly_df["ticker"]
-                == ctx.selected_ticker
-            ].sort_values("year")
-            if not ctx.health_yearly_df.empty
-            else pd.DataFrame()
-        )
+        # ========================================================
+        # CARD 3 : HEALTH SCORE TREND
+        # ========================================================
 
-        trend_x = (
-            hy["year"].astype(int).tolist()
-            if not hy.empty
-            else [2023, 2024, 2025]
-        )
+        with r1_c3:
 
-        trend_y = (
-            hy["health_score"].tolist()
-            if not hy.empty
-            else [h_score, h_score, h_score]
-        )
+            st.html(
+                """
+                <div style="
+                    background:#FFFFFF;
+                    padding:12px 16px 0 16px;
+                    min-height:235px;
+                    height:100%;
+                    box-sizing:border-box;
+                    border-left:1px solid #E2E8F0;
+                ">
 
+                    <div style="
+                        font-size:14.5px;
+                        font-weight:bold;
+                        color:#64748B;
+                        letter-spacing:0.5px;
+                    ">
+                        COMPANY HEALTH SCORE TREND
+                        (Actual, 2023-2025)
+                    </div>
 
-        fig_health_trend = go.Figure()
+                </div>
+                """
+            )
 
+            hy = (
+                ctx.health_yearly_df[
+                    ctx.health_yearly_df["ticker"]
+                    == ctx.selected_ticker
+                ]
+                .sort_values("year")
+                if not ctx.health_yearly_df.empty
+                else pd.DataFrame()
+            )
 
-        fig_health_trend.add_trace(
-            go.Scatter(
-                x=trend_x,
-                y=trend_y,
-                mode="lines+markers+text",
-                text=trend_y,
-                textposition="top center",
-                textfont=dict(
-                    size=12.5,
-                    color="#0F172A"
-                ),
-                line=dict(
-                    color="#10B981",
-                    width=2
-                ),
-                marker=dict(
-                    size=10,
-                    color="#10B981",
+            trend_x = (
+                hy["year"].astype(int).tolist()
+                if not hy.empty
+                else [2023, 2024, 2025]
+            )
+
+            trend_y = (
+                hy["health_score"].tolist()
+                if not hy.empty
+                else [h_score, h_score, h_score]
+            )
+
+            fig_health_trend = go.Figure()
+
+            fig_health_trend.add_trace(
+                go.Scatter(
+                    x=trend_x,
+                    y=trend_y,
+                    mode="lines+markers+text",
+                    text=trend_y,
+                    textposition="top center",
+                    textfont=dict(
+                        size=12.5,
+                        color="#0F172A",
+                    ),
                     line=dict(
-                        width=1.5,
-                        color="#FFFFFF"
-                    )
+                        color="#10B981",
+                        width=2,
+                    ),
+                    marker=dict(
+                        size=10,
+                        color="#10B981",
+                        line=dict(
+                            width=1.5,
+                            color="#FFFFFF",
+                        ),
+                    ),
                 )
             )
-        )
 
-
-        fig_health_trend.update_layout(
-            height=168,
-
-            margin=dict(
-                l=25,
-                r=15,
-                t=10,
-                b=20
-            ),
-
-            paper_bgcolor="#FFFFFF",
-            plot_bgcolor="#FFFFFF",
-
-            yaxis=dict(
-                range=[0, 110],
-                tickvals=[
-                    0,
-                    25,
-                    50,
-                    75,
-                    100
-                ],
-                tickfont=dict(
-                    size=11.5,
-                    color="#64748B"
+            fig_health_trend.update_layout(
+                height=168,
+                margin=dict(
+                    l=25,
+                    r=15,
+                    t=10,
+                    b=20,
                 ),
-                gridcolor="#E2E8F0",
-                zeroline=False
-            ),
-
-            xaxis=dict(
-                type="linear",
-                tickfont=dict(
-                    size=12,
-                    color="#64748B"
+                paper_bgcolor="#FFFFFF",
+                plot_bgcolor="#FFFFFF",
+                yaxis=dict(
+                    range=[0, 110],
+                    tickvals=[
+                        0,
+                        25,
+                        50,
+                        75,
+                        100,
+                    ],
+                    tickfont=dict(
+                        size=11.5,
+                        color="#64748B",
+                    ),
+                    gridcolor="#E2E8F0",
+                    zeroline=False,
                 ),
-                gridcolor="#E2E8F0",
-                zeroline=False
-            ),
+                xaxis=dict(
+                    type="linear",
+                    tickfont=dict(
+                        size=12,
+                        color="#64748B",
+                    ),
+                    gridcolor="#E2E8F0",
+                    zeroline=False,
+                ),
+                showlegend=False,
+            )
 
-            showlegend=False
+            show_chart(
+                fig_health_trend,
+                key="health_trend",
+                expand_height=650,
+            )
+
+        st.markdown(
+            """
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
-
-
-        show_chart(
-            fig_health_trend,
-            key="health_trend",
-            expand_height=650
-        )
-
-
-    st.markdown(
-        "</div>",
-        unsafe_allow_html=True
-    )
-
 
     # ============================================================
     # 7 DIMENSIONS OVERVIEW
     # ============================================================
 
-    st.html("""
-    <div style="margin-top:22px;"></div>
-    """)
+    st.html(
+        """
+        <div style="margin-top:22px;"></div>
+        """
+    )
 
-
-    st.html("""
-    <div style="
-        font-size:15px;
-        font-weight:bold;
-        color:#0F172A;
-        letter-spacing:0.5px;
-        margin-bottom:8px;
-    ">
-        7 DIMENSIONS OVERVIEW
-
-        <span style="
-            font-size:14.5px;
-            color:#64748B;
-            font-weight:normal;
-            margin-left:6px;
+    st.html(
+        """
+        <div style="
+            font-size:15px;
+            font-weight:bold;
+            color:#0F172A;
+            letter-spacing:0.5px;
+            margin-bottom:8px;
         ">
-            ผลการประเมินสุขภาพทางการเงินในแต่ละมิติ
-            (คำนวณจากอัตราส่วนจริง)
-        </span>
-    </div>
-    """)
+            7 DIMENSIONS OVERVIEW
 
+            <span style="
+                font-size:14.5px;
+                color:#64748B;
+                font-weight:normal;
+                margin-left:6px;
+            ">
+                ผลการประเมินสุขภาพทางการเงินในแต่ละมิติ
+                (คำนวณจากอัตราส่วนจริง)
+            </span>
+        </div>
+        """
+    )
 
     latest_fin_row = (
         ctx.fin_stock.iloc[-1]
@@ -763,24 +769,20 @@ def render(ctx):
         else pd.Series(dtype=float)
     )
 
-
     ocf_ni = safe(
         latest_fin_row.get("ocf_to_ni"),
-        1.0
+        1.0,
     )
-
 
     int_cov = safe(
         latest_fin_row.get("interest_coverage"),
-        5.0
+        5.0,
     )
-
 
     rev_growth = safe(
         ctx.stock_info.get("revenue_growth_yoy"),
-        0.0
+        0.0,
     )
-
 
     dim_profit = int(
         round(
@@ -788,22 +790,20 @@ def render(ctx):
                 ctx.stock_info.get(
                     "s_profitability"
                 ),
-                50
+                50,
             )
         )
     )
-
 
     dim_growth = int(
         round(
             np.clip(
                 50 + rev_growth * 2,
                 0,
-                100
+                100,
             )
         )
     )
-
 
     dim_stability = int(
         round(
@@ -811,11 +811,10 @@ def render(ctx):
                 ctx.stock_info.get(
                     "s_debt"
                 ),
-                50
+                50,
             )
         )
     )
-
 
     dim_liquidity = int(
         round(
@@ -823,22 +822,20 @@ def render(ctx):
                 ctx.stock_info.get(
                     "s_liquidity"
                 ),
-                50
+                50,
             )
         )
     )
-
 
     dim_cashflow = int(
         round(
             np.clip(
                 50 + ocf_ni * 5,
                 0,
-                100
+                100,
             )
         )
     )
-
 
     dim_efficiency = int(
         round(
@@ -847,25 +844,23 @@ def render(ctx):
                     ctx.stock_info.get(
                         "roa"
                     ),
-                    5
+                    5,
                 ) * 7,
                 0,
-                100
+                100,
             )
         )
     )
-
 
     dim_earnings = int(
         round(
             np.clip(
                 50 + int_cov * 0.3,
                 0,
-                100
+                100,
             )
         )
     )
-
 
     def label_for(score):
 
@@ -880,7 +875,6 @@ def render(ctx):
 
         return "WEAK"
 
-
     dims = [
         (
             "1",
@@ -888,7 +882,7 @@ def render(ctx):
             "PROFITABILITY",
             "30%",
             dim_profit,
-            "#10B981"
+            "#10B981",
         ),
         (
             "2",
@@ -896,7 +890,7 @@ def render(ctx):
             "GROWTH",
             "15%",
             dim_growth,
-            "#3B82F6"
+            "#3B82F6",
         ),
         (
             "3",
@@ -904,7 +898,7 @@ def render(ctx):
             "FIN. STABILITY",
             "20%",
             dim_stability,
-            "#EAB308"
+            "#EAB308",
         ),
         (
             "4",
@@ -912,7 +906,7 @@ def render(ctx):
             "LIQUIDITY",
             "10%",
             dim_liquidity,
-            "#06B6D4"
+            "#06B6D4",
         ),
         (
             "5",
@@ -920,7 +914,7 @@ def render(ctx):
             "CASH FLOW",
             "10%",
             dim_cashflow,
-            "#8B5CF6"
+            "#8B5CF6",
         ),
         (
             "6",
@@ -928,7 +922,7 @@ def render(ctx):
             "EFFICIENCY",
             "10%",
             dim_efficiency,
-            "#F97316"
+            "#F97316",
         ),
         (
             "7",
@@ -936,138 +930,136 @@ def render(ctx):
             "EARNINGS Q.",
             "5%",
             dim_earnings,
-            "#10B981"
+            "#10B981",
         ),
     ]
 
-
-    dim_html = "".join([
-        f"""
-        <div style="
-            background-color:#FFFFFF;
-            border:1px solid #E2E8F0;
-            border-radius:10px;
-            padding:10px 8px;
-            text-align:center;
-        ">
-
+    dim_html = "".join(
+        [
+            f"""
             <div style="
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                gap:4px;
-            ">
-
-                <span style="
-                    font-size:14.5px;
-                ">
-                    {icon}
-                </span>
-
-                <span style="
-                    font-size:13px;
-                    font-weight:bold;
-                    color:#0F172A;
-                ">
-                    {n}. {label}
-                </span>
-
-            </div>
-
-
-            <div style="
-                font-size:12.5px;
-                color:#64748B;
-                margin-top:1px;
-            ">
-                Weight {w}
-            </div>
-
-
-            <div style="
-                margin:8px auto;
-                width:60px;
-                height:60px;
-                border-radius:50%;
-                background:conic-gradient(
-                    {color} 0% {score}%,
-                    #E2E8F0 {score}% 100%
-                );
-                display:flex;
-                align-items:center;
-                justify-content:center;
+                background:#FFFFFF;
+                border:1px solid #E2E8F0;
+                border-radius:10px;
+                padding:10px 8px;
+                text-align:center;
             ">
 
                 <div style="
-                    width:48px;
-                    height:48px;
-                    border-radius:50%;
-                    background-color:#FFFFFF;
                     display:flex;
-                    flex-direction:column;
                     align-items:center;
                     justify-content:center;
+                    gap:4px;
                 ">
 
                     <span style="
-                        font-size:16px;
-                        font-weight:bold;
-                        color:#0F172A;
-                        line-height:1;
+                        font-size:14.5px;
                     ">
-                        {score}
+                        {icon}
                     </span>
 
                     <span style="
-                        font-size:11.5px;
-                        color:#64748B;
+                        font-size:13px;
+                        font-weight:bold;
+                        color:#0F172A;
                     ">
-                        /100
+                        {n}. {label}
                     </span>
 
                 </div>
 
+                <div style="
+                    font-size:12.5px;
+                    color:#64748B;
+                    margin-top:1px;
+                ">
+                    Weight {w}
+                </div>
+
+                <div style="
+                    margin:8px auto;
+                    width:60px;
+                    height:60px;
+                    border-radius:50%;
+                    background:conic-gradient(
+                        {color} 0% {score}%,
+                        #E2E8F0 {score}% 100%
+                    );
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                ">
+
+                    <div style="
+                        width:48px;
+                        height:48px;
+                        border-radius:50%;
+                        background:#FFFFFF;
+                        display:flex;
+                        flex-direction:column;
+                        align-items:center;
+                        justify-content:center;
+                    ">
+
+                        <span style="
+                            font-size:16px;
+                            font-weight:bold;
+                            color:#0F172A;
+                            line-height:1;
+                        ">
+                            {score}
+                        </span>
+
+                        <span style="
+                            font-size:11.5px;
+                            color:#64748B;
+                        ">
+                            /100
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div style="
+                    color:{color};
+                    font-size:13.5px;
+                    font-weight:bold;
+                ">
+                    {label_for(score)}
+                </div>
+
             </div>
+            """
+            for n, icon, label, w, score, color in dims
+        ]
+    )
 
-
-            <div style="
-                color:{color};
-                font-size:13.5px;
-                font-weight:bold;
-            ">
-                {label_for(score)}
-            </div>
-
+    st.html(
+        f"""
+        <div style="
+            display:grid;
+            grid-template-columns:repeat(7, 1fr);
+            gap:8px;
+        ">
+            {dim_html}
         </div>
         """
-        for n, icon, label, w, score, color in dims
-    ])
-
-
-    st.html(f"""
-    <div style="
-        display:grid;
-        grid-template-columns:repeat(7, 1fr);
-        gap:8px;
-    ">
-        {dim_html}
-    </div>
-    """)
-
+    )
 
     # ============================================================
     # KEY FINANCIAL HIGHLIGHTS / STRENGTHS / COMPETITOR
     # ============================================================
 
-    st.html("""
-    <div style="margin-top:22px;"></div>
-    """)
-
+    st.html(
+        """
+        <div style="margin-top:22px;"></div>
+        """
+    )
 
     r3_c1, r3_c2, r3_c3 = st.columns(
         [1.5, 1.25, 1.25]
     )
-
 
     # ============================================================
     # KEY FINANCIAL HIGHLIGHTS
@@ -1075,195 +1067,191 @@ def render(ctx):
 
     with r3_c1:
 
-        st.html(f"""
-        <div style="
-            background-color:#FFFFFF;
-            border:1px solid #E2E8F0;
-            border-radius:12px;
-            padding:14px;
-            min-height:360px;
-            display:flex;
-            flex-direction:column;
-            justify-content:space-between;
-        ">
+        st.html(
+            f"""
+            <div style="
+                background:#FFFFFF;
+                border:1px solid #E2E8F0;
+                border-radius:12px;
+                padding:14px;
+                min-height:360px;
+                display:flex;
+                flex-direction:column;
+                justify-content:space-between;
+            ">
 
-            <div>
+                <div>
 
-                <div style="
-                    font-size:14.5px;
-                    font-weight:bold;
-                    color:#64748B;
-                    letter-spacing:0.5px;
-                    margin-bottom:8px;
-                ">
-                    KEY FINANCIAL HIGHLIGHTS ({ctx.selected_ticker})
+                    <div style="
+                        font-size:14.5px;
+                        font-weight:bold;
+                        color:#64748B;
+                        letter-spacing:0.5px;
+                        margin-bottom:8px;
+                    ">
+                        KEY FINANCIAL HIGHLIGHTS
+                        ({ctx.selected_ticker})
+                    </div>
+
+                    <table style="
+                        width:100%;
+                        text-align:left;
+                        font-size:14px;
+                        color:#475569;
+                        border-collapse:collapse;
+                    ">
+
+                        <tr style="
+                            border-bottom:1px solid #E2E8F0;
+                            color:#64748B;
+                            font-size:13px;
+                        ">
+
+                            <th style="padding:4px 0;">
+                                Metric
+                            </th>
+
+                            <th>2023</th>
+                            <th>2024</th>
+                            <th>2025</th>
+
+                        </tr>
+
+                        <tr style="
+                            border-bottom:1px solid #E2E8F0;
+                        ">
+
+                            <td style="
+                                padding:5px 0;
+                                font-weight:bold;
+                                color:#0F172A;
+                            ">
+                                ROE (%)
+                            </td>
+
+                            <td>{roe_23}</td>
+                            <td>{roe_24}</td>
+
+                            <td style="
+                                font-weight:bold;
+                                color:#0F172A;
+                            ">
+                                {roe_25}
+                            </td>
+
+                        </tr>
+
+                        <tr style="
+                            border-bottom:1px solid #E2E8F0;
+                        ">
+
+                            <td style="
+                                padding:5px 0;
+                                font-weight:bold;
+                                color:#0F172A;
+                            ">
+                                ROA (%)
+                            </td>
+
+                            <td>{roa_23}</td>
+                            <td>{roa_24}</td>
+
+                            <td style="
+                                font-weight:bold;
+                                color:#0F172A;
+                            ">
+                                {roa_25}
+                            </td>
+
+                        </tr>
+
+                        <tr style="
+                            border-bottom:1px solid #E2E8F0;
+                        ">
+
+                            <td style="
+                                padding:5px 0;
+                                font-weight:bold;
+                                color:#0F172A;
+                            ">
+                                Net Profit Margin (%)
+                            </td>
+
+                            <td>{npm_23}</td>
+                            <td>{npm_24}</td>
+
+                            <td style="
+                                font-weight:bold;
+                                color:#0F172A;
+                            ">
+                                {npm_25}
+                            </td>
+
+                        </tr>
+
+                        <tr style="
+                            border-bottom:1px solid #E2E8F0;
+                        ">
+
+                            <td style="
+                                padding:5px 0;
+                                font-weight:bold;
+                                color:#0F172A;
+                            ">
+                                Debt to Equity (x)
+                            </td>
+
+                            <td>{de_23}</td>
+                            <td>{de_24}</td>
+
+                            <td style="
+                                font-weight:bold;
+                                color:#0F172A;
+                            ">
+                                {de_25}
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td style="
+                                padding:5px 0;
+                                font-weight:bold;
+                                color:#0F172A;
+                            ">
+                                Current Ratio (x)
+                            </td>
+
+                            <td>{cr_23}</td>
+                            <td>{cr_24}</td>
+
+                            <td style="
+                                font-weight:bold;
+                                color:#0F172A;
+                            ">
+                                {cr_25}
+                            </td>
+
+                        </tr>
+
+                    </table>
+
                 </div>
 
-
-                <table style="
-                    width:100%;
-                    text-align:left;
-                    font-size:14px;
-                    color:#475569;
-                    border-collapse:collapse;
+                <div style="
+                    font-size:12px;
+                    color:#64748B;
+                    margin-top:6px;
                 ">
-
-                    <tr style="
-                        border-bottom:1px solid #E2E8F0;
-                        color:#64748B;
-                        font-size:13px;
-                    ">
-
-                        <th style="padding:4px 0;">
-                            Metric
-                        </th>
-
-                        <th>2023</th>
-                        <th>2024</th>
-                        <th>2025</th>
-
-                    </tr>
-
-
-                    <tr style="
-                        border-bottom:1px solid #E2E8F0;
-                    ">
-
-                        <td style="
-                            padding:5px 0;
-                            font-weight:bold;
-                            color:#0F172A;
-                        ">
-                            ROE (%)
-                        </td>
-
-                        <td>{roe_23}</td>
-                        <td>{roe_24}</td>
-
-                        <td style="
-                            font-weight:bold;
-                            color:#0F172A;
-                        ">
-                            {roe_25}
-                        </td>
-
-                    </tr>
-
-
-                    <tr style="
-                        border-bottom:1px solid #E2E8F0;
-                    ">
-
-                        <td style="
-                            padding:5px 0;
-                            font-weight:bold;
-                            color:#0F172A;
-                        ">
-                            ROA (%)
-                        </td>
-
-                        <td>{roa_23}</td>
-                        <td>{roa_24}</td>
-
-                        <td style="
-                            font-weight:bold;
-                            color:#0F172A;
-                        ">
-                            {roa_25}
-                        </td>
-
-                    </tr>
-
-
-                    <tr style="
-                        border-bottom:1px solid #E2E8F0;
-                    ">
-
-                        <td style="
-                            padding:5px 0;
-                            font-weight:bold;
-                            color:#0F172A;
-                        ">
-                            Net Profit Margin (%)
-                        </td>
-
-                        <td>{npm_23}</td>
-                        <td>{npm_24}</td>
-
-                        <td style="
-                            font-weight:bold;
-                            color:#0F172A;
-                        ">
-                            {npm_25}
-                        </td>
-
-                    </tr>
-
-
-                    <tr style="
-                        border-bottom:1px solid #E2E8F0;
-                    ">
-
-                        <td style="
-                            padding:5px 0;
-                            font-weight:bold;
-                            color:#0F172A;
-                        ">
-                            Debt to Equity (x)
-                        </td>
-
-                        <td>{de_23}</td>
-                        <td>{de_24}</td>
-
-                        <td style="
-                            font-weight:bold;
-                            color:#0F172A;
-                        ">
-                            {de_25}
-                        </td>
-
-                    </tr>
-
-
-                    <tr>
-
-                        <td style="
-                            padding:5px 0;
-                            font-weight:bold;
-                            color:#0F172A;
-                        ">
-                            Current Ratio (x)
-                        </td>
-
-                        <td>{cr_23}</td>
-                        <td>{cr_24}</td>
-
-                        <td style="
-                            font-weight:bold;
-                            color:#0F172A;
-                        ">
-                            {cr_25}
-                        </td>
-
-                    </tr>
-
-                </table>
+                    * ข้อมูลทางการเงินดึงตรงจาก
+                    stock_financials.csv
+                    สำหรับปี 2023-2025 จริงทุกค่า
+                </div>
 
             </div>
-
-
-            <div style="
-                font-size:12px;
-                color:#64748B;
-                margin-top:6px;
-            ">
-                * ข้อมูลทางการเงินดึงตรงจาก stock_financials.csv
-                สำหรับปี 2023-2025 จริงทุกค่า
-            </div>
-
-        </div>
-        """)
-
+            """
+        )
 
     # ============================================================
     # STRENGTHS / WATCH OUT
@@ -1274,7 +1262,6 @@ def render(ctx):
         strengths = []
         watch = []
 
-
         if safe(
             roe_25 if roe_25 != "-" else 0
         ) > 15:
@@ -1282,7 +1269,6 @@ def render(ctx):
             strengths.append(
                 f"ROE ล่าสุดอยู่ในเกณฑ์ดีที่ {roe_25}%"
             )
-
 
         if safe(
             cr_25 if cr_25 != "-" else 0
@@ -1293,7 +1279,6 @@ def render(ctx):
                 f"{cr_25} เท่า เพียงพอต่อภาระหนี้ระยะสั้น"
             )
 
-
         if safe(
             npm_25 if npm_25 != "-" else 0
         ) > 10:
@@ -1302,7 +1287,6 @@ def render(ctx):
                 f"Net Margin ระดับ {npm_25}% "
                 f"สะท้อนความสามารถทำกำไรที่ดี"
             )
-
 
         if safe(
             de_25 if de_25 != "-" else 0
@@ -1313,13 +1297,11 @@ def render(ctx):
                 f"{de_25} เท่า ความเสี่ยงหนี้สินต่ำ"
             )
 
-
         if not strengths:
 
             strengths.append(
                 "ผลประกอบการโดยรวมยังอยู่ระหว่างการฟื้นตัว"
             )
-
 
         if safe(
             de_25 if de_25 != "-" else 0
@@ -1330,7 +1312,6 @@ def render(ctx):
                 f"{de_25} เท่า ควรติดตามใกล้ชิด"
             )
 
-
         if safe(
             cr_25 if cr_25 != "-" else 0
         ) < 1.0:
@@ -1340,7 +1321,6 @@ def render(ctx):
                 f"({cr_25}) สภาพคล่องระยะสั้นควรเฝ้าระวัง"
             )
 
-
         if rev_growth < 0:
 
             watch.append(
@@ -1348,115 +1328,113 @@ def render(ctx):
                 f"ควรติดตามแนวโน้มปีถัดไป"
             )
 
-
         if not watch:
 
             watch.append(
                 "ยังไม่พบสัญญาณความเสี่ยงเชิงโครงสร้างที่ชัดเจนในงบล่าสุด"
             )
 
+        strengths_html = "".join(
+            [
+                f"""
+                <div style="
+                    display:flex;
+                    gap:6px;
+                    margin-bottom:3px;
+                ">
 
-        strengths_html = "".join([
+                    <span style="
+                        color:#10B981;
+                    ">
+                        ✔
+                    </span>
+
+                    <span>
+                        {s}
+                    </span>
+
+                </div>
+                """
+                for s in strengths
+            ]
+        )
+
+        watch_html = "".join(
+            [
+                f"""
+                <div style="
+                    display:flex;
+                    gap:6px;
+                    margin-bottom:3px;
+                ">
+
+                    <span style="
+                        color:#F59E0B;
+                    ">
+                        ⚠️
+                    </span>
+
+                    <span>
+                        {w}
+                    </span>
+
+                </div>
+                """
+                for w in watch
+            ]
+        )
+
+        st.html(
             f"""
             <div style="
-                display:flex;
-                gap:6px;
-                margin-bottom:3px;
+                background:#FFFFFF;
+                border:1px solid #E2E8F0;
+                border-radius:12px;
+                padding:14px;
+                height:360px;
+                overflow-y:auto;
             ">
 
-                <span style="
+                <div style="
+                    font-size:14px;
+                    font-weight:bold;
                     color:#10B981;
+                    margin-bottom:6px;
                 ">
-                    ✔
-                </span>
+                    STRENGTHS ({ctx.selected_ticker})
+                </div>
 
-                <span>
-                    {s}
-                </span>
+                <div style="
+                    font-size:13px;
+                    color:#475569;
+                    line-height:1.45;
+                    margin-bottom:10px;
+                ">
+                    {strengths_html}
+                </div>
 
-            </div>
-            """
-            for s in strengths
-        ])
-
-
-        watch_html = "".join([
-            f"""
-            <div style="
-                display:flex;
-                gap:6px;
-                margin-bottom:3px;
-            ">
-
-                <span style="
+                <div style="
+                    font-size:14px;
+                    font-weight:bold;
                     color:#F59E0B;
+                    margin-bottom:6px;
+                    border-top:1px dashed #E2E8F0;
+                    padding-top:8px;
                 ">
-                    ⚠️
-                </span>
+                    WATCH OUT
+                </div>
 
-                <span>
-                    {w}
-                </span>
+                <div style="
+                    font-size:13px;
+                    color:#475569;
+                    line-height:1.45;
+                ">
+                    {watch_html}
+                </div>
 
             </div>
             """
-            for w in watch
-        ])
-
-
-        st.html(f"""
-        <div style="
-            background-color:#FFFFFF;
-            border:1px solid #E2E8F0;
-            border-radius:12px;
-            padding:14px;
-            height:360px;
-            overflow-y:auto;
-        ">
-
-            <div style="
-                font-size:14px;
-                font-weight:bold;
-                color:#10B981;
-                margin-bottom:6px;
-            ">
-                STRENGTHS ({ctx.selected_ticker})
-            </div>
-
-
-            <div style="
-                font-size:13px;
-                color:#475569;
-                line-height:1.45;
-                margin-bottom:10px;
-            ">
-                {strengths_html}
-            </div>
-
-
-            <div style="
-                font-size:14px;
-                font-weight:bold;
-                color:#F59E0B;
-                margin-bottom:6px;
-                border-top:1px dashed #E2E8F0;
-                padding-top:8px;
-            ">
-                WATCH OUT
-            </div>
-
-
-            <div style="
-                font-size:13px;
-                color:#475569;
-                line-height:1.45;
-            ">
-                {watch_html}
-            </div>
-
-        </div>
-        """)
-
+        )
 
     # ============================================================
     # COMPETITOR COMPARISON
@@ -1474,18 +1452,16 @@ def render(ctx):
             else []
         )
 
-
         latest_year = (
             ctx.fin_stock["year"].max()
             if not ctx.fin_stock.empty
             else 2025
         )
 
-
         def pct_bar(
             stock_val,
             comp_v,
-            higher_better=True
+            higher_better=True,
         ):
 
             if comp_v == 0:
@@ -1495,11 +1471,8 @@ def render(ctx):
                 stock_val / comp_v
                 if higher_better
                 else (
-                    comp_v /
-                    max(
-                        stock_val,
-                        0.01
-                    )
+                    comp_v
+                    / max(stock_val, 0.01)
                 )
             )
 
@@ -1507,10 +1480,9 @@ def render(ctx):
                 np.clip(
                     ratio * 50,
                     5,
-                    100
+                    100,
                 )
             )
-
 
         if peer_options:
 
@@ -1519,33 +1491,34 @@ def render(ctx):
                 peer_options,
                 key="health_competitor_select",
                 format_func=lambda t:
-                    f"{t} — {COMPANY_NAMES.get(t, t)}"
+                    f"{t} — {COMPANY_NAMES.get(t, t)}",
             )
-
 
             comp_fin_all = (
                 ctx.fin_df[
-                    ctx.fin_df["ticker"] == competitor
+                    ctx.fin_df["ticker"]
+                    == competitor
                 ]
                 .sort_values("year")
             )
 
-
             comp_fin_row = comp_fin_all[
-                comp_fin_all["year"] == latest_year
+                comp_fin_all["year"]
+                == latest_year
             ]
-
 
             if (
                 comp_fin_row.empty
                 and not comp_fin_all.empty
             ):
-                comp_fin_row = comp_fin_all.iloc[[-1]]
 
+                comp_fin_row = comp_fin_all.iloc[
+                    [-1]
+                ]
 
             def comp_val(
                 col,
-                default=0.0
+                default=0.0,
             ):
 
                 return (
@@ -1553,19 +1526,17 @@ def render(ctx):
                         comp_fin_row.iloc[0].get(
                             col
                         ),
-                        default
+                        default,
                     )
                     if not comp_fin_row.empty
                     else default
                 )
-
 
             comp_roe = comp_val("roe")
             comp_roa = comp_val("roa")
             comp_npm = comp_val("net_margin")
             comp_de = comp_val("de_ratio")
             comp_cr = comp_val("current_ratio")
-
 
             comp_year_used = (
                 int(
@@ -1575,24 +1546,21 @@ def render(ctx):
                 else None
             )
 
-
             target_label = competitor
-
 
             sub_label = (
                 f"เทียบกับคู่แข่งจริง &bull; "
                 f"{ctx.stock_info.get('sector', '-')}"
             )
 
-
             if (
                 comp_year_used
                 and comp_year_used != latest_year
             ):
+
                 sub_label += (
                     f" (ปี {comp_year_used})"
                 )
-
 
         else:
 
@@ -1600,73 +1568,67 @@ def render(ctx):
 
             sub_label = (
                 f"ไม่มีคู่แข่งตรงในกลุ่ม &bull; "
-                f"เทียบค่าเฉลี่ยตลาดรวม (ปี {latest_year})"
+                f"เทียบค่าเฉลี่ยตลาดรวม "
+                f"(ปี {latest_year})"
             )
-
 
             market_latest = (
                 ctx.fin_df[
-                    ctx.fin_df["year"] == latest_year
+                    ctx.fin_df["year"]
+                    == latest_year
                 ]
                 if not ctx.fin_df.empty
                 else pd.DataFrame()
             )
 
-
             if (
                 market_latest.empty
                 and not ctx.fin_df.empty
             ):
-                market_latest = ctx.fin_df
 
+                market_latest = ctx.fin_df
 
             comp_roe = safe(
                 pd.to_numeric(
                     market_latest["roe"],
-                    errors="coerce"
+                    errors="coerce",
                 ).median(),
-                0.0
+                0.0,
             )
-
 
             comp_roa = safe(
                 pd.to_numeric(
                     market_latest["roa"],
-                    errors="coerce"
+                    errors="coerce",
                 ).median(),
-                0.0
+                0.0,
             )
-
 
             comp_npm = safe(
                 pd.to_numeric(
                     market_latest["net_margin"],
-                    errors="coerce"
+                    errors="coerce",
                 ).median(),
-                0.0
+                0.0,
             )
-
 
             comp_de = safe(
                 pd.to_numeric(
                     market_latest["de_ratio"],
-                    errors="coerce"
+                    errors="coerce",
                 ).median(),
-                0.0
+                0.0,
             )
-
 
             comp_cr = safe(
                 pd.to_numeric(
                     market_latest["current_ratio"],
-                    errors="coerce"
+                    errors="coerce",
                 ).median(),
-                0.0
+                0.0,
             )
 
-
         rows_cmp = [
-
             (
                 "ROE (%)",
                 roe_25,
@@ -1677,10 +1639,9 @@ def render(ctx):
                         if roe_25 != "-"
                         else 0
                     ),
-                    comp_roe
-                )
+                    comp_roe,
+                ),
             ),
-
             (
                 "ROA (%)",
                 roa_25,
@@ -1691,10 +1652,9 @@ def render(ctx):
                         if roa_25 != "-"
                         else 0
                     ),
-                    comp_roa
-                )
+                    comp_roa,
+                ),
             ),
-
             (
                 "Net Margin (%)",
                 npm_25,
@@ -1705,10 +1665,9 @@ def render(ctx):
                         if npm_25 != "-"
                         else 0
                     ),
-                    comp_npm
-                )
+                    comp_npm,
+                ),
             ),
-
             (
                 "Debt to Equity (x)",
                 de_25,
@@ -1720,10 +1679,9 @@ def render(ctx):
                         else 0
                     ),
                     comp_de,
-                    higher_better=False
-                )
+                    higher_better=False,
+                ),
             ),
-
             (
                 "Current Ratio (x)",
                 cr_25,
@@ -1734,11 +1692,12 @@ def render(ctx):
                         if cr_25 != "-"
                         else 0
                     ),
-                    comp_cr
-                )
+                    comp_cr,
+                ),
             ),
         ]
 
+        st.caption(sub_label)
 
         comparison_df = pd.DataFrame(
             rows_cmp,
@@ -1746,20 +1705,15 @@ def render(ctx):
                 "Metric",
                 ctx.selected_ticker,
                 target_label,
-                f"vs {target_label}"
-            ]
+                f"vs {target_label}",
+            ],
         )
-
-
-        st.caption(sub_label)
-
 
         st.dataframe(
             comparison_df,
             use_container_width=True,
-            hide_index=True
+            hide_index=True,
         )
-
 
     # ============================================================
     # FOOTER NAVIGATION
@@ -1768,5 +1722,5 @@ def render(ctx):
     render_nav_footer(
         "m1",
         prev_page=" Overview",
-        next_page=" Fair Value"
+        next_page=" Fair Value",
     )
