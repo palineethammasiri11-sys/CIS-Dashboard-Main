@@ -210,17 +210,25 @@ def render(ctx):
             ctx.sector_peers['industry_score'].mean()
         ]
 
+        radar_fill = (
+            'rgba(16,185,129,0.20)' if star_color == "#10B981"
+            else 'rgba(245,158,11,0.20)' if star_color == "#F59E0B"
+            else 'rgba(239,68,68,0.20)'
+        )
+
         fig_radar = go.Figure()
+
         fig_radar.add_trace(
             go.Scatterpolar(
                 r=stock_vals,
                 theta=cats,
                 fill='toself',
-                fillcolor='rgba(168,85,247,0.3)',
-                line=dict(color='#A855F7', width=2),
+                fillcolor=radar_fill,
+                line=dict(color=star_color, width=2),
                 name=ctx.selected_ticker
             )
         )
+
         fig_radar.add_trace(
             go.Scatterpolar(
                 r=sector_avg_vals,
