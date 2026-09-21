@@ -131,7 +131,7 @@ def render(ctx):
         else:
             dims_sector = build_dims(ctx.sector_peers)
             sector_section = f"""<div style="font-size:12.5px; color:#475569; margin-bottom:6px;">เปรียบเทียบกับกลุ่มอุตสาหกรรม {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
-    <div style="display:grid; grid-template-columns: repeat(6, 1fr); gap:6px; text-align:center; margin-bottom:16px;">
+    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; text-align:center; margin-bottom:16px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
     {''.join([dim_pct_card(l, p, c) for l, p, c in dims_sector])}
     </div>"""
 
@@ -143,7 +143,7 @@ def render(ctx):
     <div style="border-top:1px dashed #CBD5E1; margin-bottom:12px;"></div>
     <div>
     <div style="font-size:12.5px; color:#475569; margin-bottom:6px;">เปรียบเทียบกับหุ้นทั้ง {n_all} ตัว</div>
-    <div style="display:grid; grid-template-columns: repeat(6, 1fr); gap:6px; text-align:center;">
+    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; text-align:center; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
     {''.join([dim_pct_card(l, p, c) for l, p, c in dims_market])}
     </div>
     </div>
