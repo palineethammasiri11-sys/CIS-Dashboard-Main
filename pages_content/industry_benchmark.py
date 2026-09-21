@@ -521,29 +521,23 @@ def render(ctx):
     with r3_c3:
         rec = ctx.stock_info.get('recommendation', 'ACCUMULATE')
 
-        rec_color2 = star_color
+        rec_color2 = {
+            "STRONG BUY": "#10B981",
+            "BUY": "#10B981",
+            "ACCUMULATE": "#84CC16",
+            "REDUCE / SELL": "#EF4444"
+        }.get(rec, "#F59E0B")
 
-        rec_color2 = "#FFFFFF"
-        rec_bg = (
-            "#10B981" if pos_stars == 5
-            else "#F59E0B" if pos_stars >= 4
-            else "#EF4444"
-        )
+        conf_lvl = "High" if abs(safe(ctx.stock_info.get('margin_of_safety'))) > 15 else "Medium"
 
-        conf_lvl = (
-            "High"
-            if abs(safe(ctx.stock_info.get('margin_of_safety'))) > 15
-            else "Medium"
-        )
-
-        st.markdown(f"""<div style="background-color:{rec_bg}; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:275px; text-align:center;">
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:275px; text-align:center;">
     <div style="font-size:14.5px; color:#64748B; font-weight:bold; margin-bottom:4px; text-align:left;">FINAL RECOMMENDATION</div>
     <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin:4px 0;">
-    <div><h1 style="color:{rec_color2}; margin:0; font-size:24px; line-height:1.1;">{rec}</h1></div></div>
+    <div><h1 style="color:#0F172A; margin:0; font-size:24px; line-height:1.1;">{rec}</h1></div></div>
     <div style="text-align:left; font-size:13.5px; margin-top:8px; border-top:1px dashed #CBD5E1; padding-top:6px;">
-    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#64748B;">Confidence Level</span><span style="color:{rec_color2}; font-weight:bold;">{conf_lvl}</span></div>
-    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#64748B;">Overall Score</span><span style="color:{rec_color2}; font-weight:bold;">{safe(ctx.stock_info.get('overall_score')):.1f}/100</span></div>
-    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#64748B;">Sector Rank</span><span style="color:{rec_color2}; font-weight:bold;">{sector_rank} / {n_sector}</span></div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#94A3B8;">Confidence Level</span><span style="color:{rec_color2}; font-weight:bold;">{conf_lvl}</span></div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#94A3B8;">Overall Score</span><span style="color:#F59E0B; font-weight:bold;">{safe(ctx.stock_info.get('overall_score')):.1f}/100</span></div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#94A3B8;">Sector Rank</span><span style="color:#F59E0B; font-weight:bold;">{sector_rank} / {n_sector}</span></div>
     </div></div>""", unsafe_allow_html=True)
 
     import base64
