@@ -791,6 +791,53 @@ def render_sidebar(scores_df):
             }}
         }}
 
+        /* =========================
+           iPad / Tablet
+           769px - 1024px
+           ========================= */
+        @media (min-width: 769px) and (max-width: 1024px) {{
+
+            .main .block-container {{
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                padding: 1.5rem 1.5rem 2.5rem 1.5rem !important;
+            }}
+
+            [data-testid="stHorizontalBlock"] {{
+                width: 100% !important;
+                max-width: 100% !important;
+                gap: 1rem !important;
+                box-sizing: border-box !important;
+            }}
+
+            [data-testid="column"] {{
+                min-width: 0 !important;
+                box-sizing: border-box !important;
+            }}
+
+            .stMarkdown,
+            .stMarkdown > div {{
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }}
+
+            [data-testid="stDataFrame"] {{
+                max-width: 100% !important;
+                overflow-x: auto !important;
+                box-sizing: border-box !important;
+            }}
+
+            .js-plotly-plot,
+            .plot-container,
+            .plotly,
+            [data-testid="stPlotlyChart"] {{
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }}
+        }}
+
 
         /* =========================================================
            VERY SMALL MOBILE
