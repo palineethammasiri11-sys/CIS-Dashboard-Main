@@ -696,6 +696,34 @@ def render_sidebar(scores_df):
                 box-sizing: border-box;
             }}
 
+            /* ---------- Responsive HTML grids ---------- */
+            .stMarkdown [style*="grid-template-columns"] {{
+                width: 100% !important;
+                max-width: 100% !important;
+                grid-template-columns: 1fr !important;
+                box-sizing: border-box !important;
+            }}
+
+            .stMarkdown [style*="grid-template-columns"] > div {{
+                min-width: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }}
+
+            /* ---------- Prevent inner flex overflow ---------- */
+            .stMarkdown [style*="display:flex"] {{
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                min-width: 0 !important;
+            }}
+
+            .stMarkdown [style*="display:flex"] > * {{
+                min-width: 0 !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }}
+
             /* ---------- Streamlit columns ---------- */
             [data-testid="stHorizontalBlock"] {{
                 width: 100% !important;
