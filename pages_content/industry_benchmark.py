@@ -164,22 +164,75 @@ def render(ctx):
         rows_html = ""
         for _, p in peers_sorted.iterrows():
             is_sel = p['ticker'] == ctx.selected_ticker
-            row_bg = "background:rgba(168,85,247,0.08);" if is_sel else ""
-            star_n = min(5, max(1, round(safe(p['overall_score']) / 20)))
-            health_b = badge(p['health_score'], [70, 45, 0], ["Excellent", "Good", "Weak"], ["#10B981", "#3B82F6", "#EF4444"])
-            val_b = "Undervalued" if p['margin_of_safety'] > 10 else ("Overvalued" if p['margin_of_safety'] < -10 else "Fair Value")
-            val_c = "#10B981" if p['margin_of_safety'] > 10 else ("#EF4444" if p['margin_of_safety'] < -10 else "#64748B")
-            timing_b = badge(p['timing_score'], [65, 45, 0], ["Good Entry", "Neutral", "Bad Entry"], ["#10B981", "#F59E0B", "#EF4444"])
-            ai_b = badge(p['ai_score'], [65, 45, 0], ["Bullish", "Neutral", "Bearish"], ["#10B981", "#64748B", "#EF4444"])
-            risk_b = "Low" if p['risk_score'] >= 65 else ("Medium" if p['risk_score'] >= 40 else "High")
-            risk_c = "#10B981" if p['risk_score'] >= 65 else ("#F59E0B" if p['risk_score'] >= 40 else "#EF4444")
+
+            star_n = pos_stars if is_sel else min(5, max(1, round(safe(p['overall_score']) / 20)))
+
+            star_color = (
+                "#10B981" if star_n == 5
+                else "#F59E0B" if star_n >= 4
+                else "#EF4444"
+            )
+
+            row_bg = (
+                "background:rgba(16,185,129,0.10);" if is_sel and star_n == 5
+                else "background:rgba(245,158,11,0.10);" if is_sel and star_n >= 4
+                else "background:rgba(239,68,68,0.10);" if is_sel
+                else ""
+            )
+
+            health_b = badge(
+                p['health_score'],
+                [70, 45, 0],
+                ["Excellent", "Good", "Weak"],
+                ["#10B981", "#3B82F6", "#EF4444"]
+            )
+
+            val_b = "Undervalued" if p['margin_of_safety'] > 10 else (
+                "Overvalued" if p['margin_of_safety'] < -10 else "Fair Value"
+            )
+
+            val_c = (
+                "#10B981" if p['margin_of_safety'] > 10
+                else "#EF4444" if p['margin_of_safety'] < -10
+                else "#64748B"
+            )
+
+            timing_b = badge(
+                p['timing_score'],
+                [65, 45, 0],
+                ["Good Entry", "Neutral", "Bad Entry"],
+                ["#10B981", "#F59E0B", "#EF4444"]
+            )
+
+            ai_b = badge(
+                p['ai_score'],
+                [65, 45, 0],
+                ["Bullish", "Neutral", "Bearish"],
+                ["#10B981", "#64748B", "#EF4444"]
+            )
+
+            risk_b = "Low" if p['risk_score'] >= 65 else (
+                "Medium" if p['risk_score'] >= 40 else "High"
+            )
+
+            risk_c = (
+                "#10B981" if p['risk_score'] >= 65
+                else "#F59E0B" if p['risk_score'] >= 40
+                else "#EF4444"
+            )
+
             name_disp = f"⭐ {p['ticker']}" if is_sel else p['ticker']
-            name_c = "#A855F7" if is_sel else "#0F172A"
+            name_c = star_color if is_sel else "#0F172A"
 
             rows_html += f"""<tr style="border-bottom:1px solid #E2E8F0; {row_bg}">
     <td style="text-align:left; padding:6px 0; color:{name_c}; font-weight:bold;">{name_disp}</td>
-    <td>{health_b}</td><td><span style="color:{val_c};">{val_b}</span></td><td>{timing_b}</td><td>{ai_b}</td>
-    <td><span style="color:{risk_c};">{risk_b}</span></td><td style="color:#A855F7; letter-spacing:1px;">{'★'*star_n}{'☆'*(5-star_n)}</td></tr>"""
+    <td>{health_b}</td>
+    <td><span style="color:{val_c};">{val_b}</span></td>
+    <td>{timing_b}</td>
+    <td>{ai_b}</td>
+    <td><span style="color:{risk_c};">{risk_b}</span></td>
+    <td style="color:{star_color}; letter-spacing:1px;">{'★'*star_n}{'☆'*(5-star_n)}</td>
+    </tr>"""
 
         st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:350px;">
     <div style="font-size:14.5px; color:#64748B; font-weight:bold; margin-bottom:6px;">PEER COMPARISON — {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
