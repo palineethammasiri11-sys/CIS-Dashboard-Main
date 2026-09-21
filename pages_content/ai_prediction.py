@@ -2,6 +2,18 @@
 pages_content/ai_prediction.py
 --------------------------
 หน้า "AI Prediction" ของ CIS Dashboard
+
+วิธีทดสอบหน้านี้แบบเดี่ยว (ไม่ต้องรอทีมคนอื่น):
+    streamlit run preview_my_page.py
+    (แล้วเลือกโมดูลนี้จาก dropdown ในไฟล์ preview_my_page.py)
+
+ข้อมูลที่ใช้ได้ใน ctx (ดูนิยามเต็มใน common.py -> class PageContext):
+    ctx.selected_ticker, ctx.stock_info, ctx.stock_daily, ctx.fin_stock, ctx.sector_peers,
+    ctx.scores_df, ctx.fin_df, ctx.feat_imp_df, ctx.backtest_df, ctx.risk_hist_df,
+    ctx.health_yearly_df, ctx.fair_value_yearly_df,
+    ctx.current_price, ctx.change_pct, ctx.change_val, ctx.change_color, ctx.change_sign, ctx.arrow_sign
+
+ห้ามแก้ CSS ส่วนกลางหรือ helper function ใน common.py จากไฟล์นี้ — ถ้าจำเป็นต้องแก้ ให้แจ้ง Layout Lead ก่อน
 """
 
 import streamlit as st
@@ -42,6 +54,7 @@ def _kpi_card(
     bg_color="#FFFFFF",
     label_color=MUTED
 ):
+    """การ์ด KPI ใบเดียว"""
     return (
         f'<div style="background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:18px 10px; '
         f'text-align:center; min-height:140px; display:flex; flex-direction:column; justify-content:center;">'
@@ -65,95 +78,6 @@ def _metric_cell(label, value):
     )
 
 
-def _score_donut_card(score, color):
-    """
-    SCORE card แบบ Donut
-    ใช้ score จาก AI Prediction โดยตรง
-    ไม่อิง score จาก Overview
-    """
-    score = max(0, min(100, int(score)))
-
-    return f"""
-    <div style="
-        background-color:#FFFFFF;
-        border:1px solid #D9E2EC;
-        border-radius:12px;
-        padding:14px 10px;
-        text-align:center;
-        min-height:140px;
-        display:flex;
-        flex-direction:column;
-        justify-content:center;
-        align-items:center;
-        box-sizing:border-box;
-    ">
-
-        <div style="
-            font-size:14px;
-            font-weight:bold;
-            color:{MUTED};
-            letter-spacing:1px;
-            margin-bottom:7px;
-        ">
-            SCORE
-        </div>
-
-        <div style="
-            width:76px;
-            height:76px;
-            border-radius:50%;
-            background:conic-gradient(
-                {color} 0% {score}%,
-                #D9E2EC {score}% 100%
-            );
-            display:flex;
-            align-items:center;
-            justify-content:center;
-        ">
-
-            <div style="
-                width:58px;
-                height:58px;
-                border-radius:50%;
-                background:#FFFFFF;
-                display:flex;
-                flex-direction:column;
-                align-items:center;
-                justify-content:center;
-            ">
-
-                <div style="
-                    font-size:21px;
-                    font-weight:bold;
-                    color:#0F172A;
-                    line-height:1;
-                ">
-                    {score}
-                </div>
-
-                <div style="
-                    font-size:12px;
-                    color:{MUTED};
-                    margin-top:3px;
-                ">
-                    100
-                </div>
-
-            </div>
-        </div>
-
-        <div style="
-            font-size:13px;
-            color:{MUTED};
-            margin-top:5px;
-        ">
-            Prediction Score
-        </div>
-
-    </div>
-    """
-
-
 def render(ctx):
 
     # ============================================================
@@ -162,17 +86,10 @@ def render(ctx):
 
     prob_up = safe(ctx.stock_info.get('prob_up'), 50)
     down_prob = round(100 - prob_up, 1)
-
-    # SCORE ของ AI Prediction ใช้ค่าจากโมดูลนี้โดยตรง
     ai_score = int(round(safe(ctx.stock_info.get('ai_score'), 50)))
-
     acc_val = safe(ctx.stock_info.get('accuracy'), 50)
     baseline_val = safe(ctx.stock_info.get('baseline_accuracy'), acc_val)
     signal = ctx.stock_info.get('ai_signal', '-')
-
-    # ============================================================
-    # STATUS COLOR — AI PREDICTION เท่านั้น
-    # ============================================================
 
     if prob_up >= 70:
         status_color = GREEN
@@ -186,10 +103,6 @@ def render(ctx):
 
     reliability_low = acc_val < baseline_val
     baseline_note = "สูงกว่า" if not reliability_low else "ต่ำกว่า"
-
-    # ============================================================
-    # PAGE HEADER
-    # ============================================================
 
     st.markdown("""
     <div style="margin-bottom:20px;">
@@ -208,10 +121,6 @@ def render(ctx):
 
     k1, k2, k3, k4, k5 = st.columns(5)
 
-    # ------------------------------------------------------------
-    # PRICE
-    # ------------------------------------------------------------
-
     with k1:
         st.markdown(
             _kpi_card(
@@ -226,10 +135,6 @@ def render(ctx):
             unsafe_allow_html=True
         )
 
-    # ------------------------------------------------------------
-    # DIRECTION
-    # ------------------------------------------------------------
-
     with k2:
         st.markdown(
             _kpi_card(
@@ -240,10 +145,6 @@ def render(ctx):
             ),
             unsafe_allow_html=True
         )
-
-    # ------------------------------------------------------------
-    # PROBABILITY
-    # ------------------------------------------------------------
 
     with k3:
         st.markdown(
@@ -256,22 +157,105 @@ def render(ctx):
             unsafe_allow_html=True
         )
 
-    # ------------------------------------------------------------
-    # SCORE — DONUT
-    # ------------------------------------------------------------
+    # ============================================================
+    # SCORE
+    # ใช้ ai_score เดิมจากโมดูล
+    # เปลี่ยนเฉพาะรูปแบบการแสดงเป็น Donut
+    # ============================================================
 
     with k4:
+
+        score_t = min(100, max(0, ai_score))
+        score_angle = 360 * (score_t / 100)
+
         st.markdown(
-            _score_donut_card(
-                ai_score,
-                status_color
-            ),
+            f"""
+<div style="
+    background:#FFFFFF;
+    border:1px solid #D9E2EC;
+    border-radius:12px;
+    padding:18px 10px;
+    text-align:center;
+    min-height:140px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+">
+
+<div style="
+    font-size:14px;
+    font-weight:bold;
+    color:{MUTED};
+    letter-spacing:1px;
+    margin-bottom:7px;
+">
+SCORE
+</div>
+
+<div style="
+    width:76px;
+    height:76px;
+    border-radius:50%;
+    background:conic-gradient(
+        {status_color} 0deg {score_angle:.1f}deg,
+        #D9E2EC {score_angle:.1f}deg 360deg
+    );
+    display:flex;
+    align-items:center;
+    justify-content:center;
+">
+
+<div style="
+    width:58px;
+    height:58px;
+    border-radius:50%;
+    background:#FFFFFF;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+">
+
+<div style="
+    font-size:24px;
+    font-weight:bold;
+    color:#0F172A;
+    line-height:1;
+">
+{ai_score}
+</div>
+
+<div style="
+    font-size:13px;
+    color:{MUTED};
+    margin-top:4px;
+">
+/100
+</div>
+
+</div>
+</div>
+
+<div style="
+    font-size:15px;
+    color:{MUTED};
+    margin-top:7px;
+">
+Prediction Score
+</div>
+
+</div>
+""",
             unsafe_allow_html=True
         )
 
-    # ------------------------------------------------------------
+    # ============================================================
     # RECOMMENDATION
-    # ------------------------------------------------------------
+    # พื้นหลังตามสถานะ
+    # RECOMMENDATION สีอ่อน
+    # คำแนะนำเป็นสีขาว
+    # ============================================================
 
     with k5:
         st.markdown(
@@ -282,15 +266,12 @@ def render(ctx):
                 value_size=24,
                 border=status_color,
                 bg_color=status_color,
-                label_color="#DDE7E3"
+                label_color="#E5E7EB"
             ),
             unsafe_allow_html=True
         )
 
-    st.markdown(
-        "<div style='margin-top:24px;'></div>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
 
     # ============================================================
     # 2) PREDICTION
@@ -357,10 +338,7 @@ PROBABILITY OF UP
         unsafe_allow_html=True
     )
 
-    st.markdown(
-        "<div style='margin-top:24px;'></div>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
 
     # ============================================================
     # 3) FORECAST
@@ -546,10 +524,7 @@ PROBABILITY OF UP
         expand_height=700
     )
 
-    st.markdown(
-        "<div style='margin-top:24px;'></div>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
 
     # ============================================================
     # 4) MODEL EXPLANATION
@@ -652,10 +627,7 @@ EXPLAINABLE AI SUMMARY
             unsafe_allow_html=True
         )
 
-    st.markdown(
-        "<div style='margin-top:24px;'></div>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
 
     # ============================================================
     # 5) MODEL PERFORMANCE
