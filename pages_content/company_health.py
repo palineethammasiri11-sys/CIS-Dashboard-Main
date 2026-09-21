@@ -860,181 +860,45 @@ def render(ctx):
 
 
     dims = [
-        (
-            "1",
-            "📊",
-            "PROFITABILITY",
-            "30%",
-            dim_profit,
-            "#10B981"
-        ),
-        (
-            "2",
-            "📈",
-            "GROWTH",
-            "15%",
-            dim_growth,
-            "#3B82F6"
-        ),
-        (
-            "3",
-            "🛡️",
-            "FIN. STABILITY",
-            "20%",
-            dim_stability,
-            "#EAB308"
-        ),
-        (
-            "4",
-            "💧",
-            "LIQUIDITY",
-            "10%",
-            dim_liquidity,
-            "#06B6D4"
-        ),
-        (
-            "5",
-            "💵",
-            "CASH FLOW",
-            "10%",
-            dim_cashflow,
-            "#8B5CF6"
-        ),
-        (
-            "6",
-            "⚙️",
-            "EFFICIENCY",
-            "10%",
-            dim_efficiency,
-            "#F97316"
-        ),
-        (
-            "7",
-            "🎖️",
-            "EARNINGS Q.",
-            "5%",
-            dim_earnings,
-            "#10B981"
-        ),
+        ("1","📊","PROFITABILITY","30%",dim_profit),
+        ("2","📈","GROWTH","15%",dim_growth),
+        ("3","🛡️","FIN. STABILITY","20%",dim_stability),
+        ("4","💧","LIQUIDITY","10%",dim_liquidity),
+        ("5","💵","CASH FLOW","10%",dim_cashflow),
+        ("6","⚙️","EFFICIENCY","10%",dim_efficiency),
+        ("7","🎖️","EARNINGS Q.","5%",dim_earnings),
     ]
 
-
     dim_html = "".join([
-
         f"""
-        <div style="
-            background-color:#FFFFFF;
-            border:1px solid #E2E8F0;
-            border-radius:10px;
-            padding:10px 8px;
-            text-align:center;
-        ">
-
-            <div style="
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                gap:4px;
-            ">
-
-                <span style="
-                    font-size:14.5px;
-                ">
-                    {icon}
-                </span>
-
-                <span style="
-                    font-size:13px;
-                    font-weight:bold;
-                    color:#0F172A;
-                ">
-                    {n}. {label}
-                </span>
-
+        <div style="background-color:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:10px 8px;text-align:center;">
+            <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
+                <span style="font-size:14.5px;">{icon}</span>
+                <span style="font-size:13px;font-weight:bold;color:#0F172A;">{n}. {label}</span>
             </div>
-
-
-            <div style="
-                font-size:12.5px;
-                color:#64748B;
-                margin-top:1px;
-            ">
-                Weight {w}
-            </div>
-
-
-            <div style="
-                margin:8px auto;
-                width:60px;
-                height:60px;
-                border-radius:50%;
-                background:conic-gradient(
-                    {color} 0% {score}%,
-                    #E2E8F0 {score}% 100%
-                );
-                display:flex;
-                align-items:center;
-                justify-content:center;
-            ">
-
-                <div style="
-                    width:48px;
-                    height:48px;
-                    border-radius:50%;
-                    background-color:#FFFFFF;
-                    display:flex;
-                    flex-direction:column;
-                    align-items:center;
-                    justify-content:center;
-                ">
-
-                    <span style="
-                        font-size:16px;
-                        font-weight:bold;
-                        color:#0F172A;
-                        line-height:1;
-                    ">
-                        {score}
-                    </span>
-
-                    <span style="
-                        font-size:11.5px;
-                        color:#64748B;
-                    ">
-                        /100
-                    </span>
-
+            <div style="font-size:12.5px;color:#64748B;margin-top:1px;">Weight {w}</div>
+            <div style="margin:8px auto;width:60px;height:60px;border-radius:50%;background:conic-gradient({color} 0% {score}%,#E2E8F0 {score}% 100%);display:flex;align-items:center;justify-content:center;">
+                <div style="width:48px;height:48px;border-radius:50%;background-color:#FFFFFF;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                    <span style="font-size:16px;font-weight:bold;color:#0F172A;line-height:1;">{score}</span>
+                    <span style="font-size:11.5px;color:#64748B;">/100</span>
                 </div>
-
             </div>
-
-
-            <div style="
-                color:{color};
-                font-size:13.5px;
-                font-weight:bold;
-            ">
-                {label_for(score)}
-            </div>
-
+            <div style="color:{color};font-size:13.5px;font-weight:bold;">{label_for(score)}</div>
         </div>
         """
-
-        for n, icon, label, w, score, color in dims
-
+        for n, icon, label, w, score in dims
+        for color in [
+            "#EF4444" if score <= 33 else
+            "#F59E0B" if score <= 66 else
+            "#10B981"
+        ]
     ])
 
-
     st.html(f"""
-    <div style="
-        display:grid;
-        grid-template-columns:repeat(7, 1fr);
-        gap:8px;
-    ">
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;">
         {dim_html}
     </div>
     """)
-
 
     # ============================================================
     # KEY FINANCIAL HIGHLIGHTS / STRENGTHS / COMPETITOR
