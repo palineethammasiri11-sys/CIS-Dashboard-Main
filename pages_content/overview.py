@@ -411,7 +411,7 @@ def render(ctx):
 
     def hl_card(icon, bg, label, value, sub, val_color="#0F172A"):
         return f"""
-        <div style="background-color:{ai_bg};border:1px solid #E2E8F0;border-radius:8px;
+        <div style="background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;
                     padding:10px 12px;display:flex;align-items:center;gap:10px;
                     width:100%;min-width:0;max-width:100%;box-sizing:border-box;">
             <div style="background:{bg};width:40px;height:40px;border-radius:8px;
