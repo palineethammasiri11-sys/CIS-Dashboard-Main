@@ -245,6 +245,7 @@ def render(ctx):
 
     with r2_c2:
         cats = ['Health', 'Valuation', 'Timing', 'AI Pred.', 'Risk', 'Industry']
+
         stock_vals = [
             safe(ctx.stock_info.get('health_score')),
             safe(ctx.stock_info.get('valuation_score')),
@@ -263,11 +264,21 @@ def render(ctx):
             ctx.sector_peers['industry_score'].mean()
         ]
 
-        radar_fill = (
-            'rgba(16,185,129,0.20)' if star_color == "#10B981"
-            else 'rgba(245,158,11,0.20)' if star_color == "#F59E0B"
-            else 'rgba(239,68,68,0.20)'
-        )
+        radar_color = {
+            5: "#10B981",
+            4: "#F59E0B",
+            3: "#F59E0B",
+            2: "#EF4444",
+            1: "#EF4444"
+        }.get(pos_stars, "#64748B")
+
+        fill_color = {
+            5: "rgba(16,185,129,0.25)",
+            4: "rgba(245,158,11,0.25)",
+            3: "rgba(245,158,11,0.25)",
+            2: "rgba(239,68,68,0.25)",
+            1: "rgba(239,68,68,0.25)"
+        }.get(pos_stars, "rgba(100,116,139,0.20)")
 
         fig_radar = go.Figure()
 
@@ -276,8 +287,8 @@ def render(ctx):
                 r=stock_vals,
                 theta=cats,
                 fill='toself',
-                fillcolor=radar_fill,
-                line=dict(color=star_color, width=2),
+                fillcolor=fill_color,
+                line=dict(color=radar_color, width=2),
                 name=ctx.selected_ticker
             )
         )
@@ -286,7 +297,7 @@ def render(ctx):
             go.Scatterpolar(
                 r=sector_avg_vals,
                 theta=cats,
-                line=dict(color='#64748B', width=1.5, dash='dash'),
+                line=dict(color='#94A3B8', width=1.5, dash='dash'),
                 name='Sector Avg'
             )
         )
