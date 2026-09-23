@@ -2,7 +2,17 @@
 """
 calculate_modules/entry_timing.py
 --------------------------------------------------------------------
-Institutional Quantitative Framework (IKB v2.2) - Production Database Compatible Build
+Institutional Quantitative Framework (IKB v2.3) - Production Database Compatible Build
+Changelog vs v2.2:
+- TRADER MODE RR: ปรับลอจิก compute_price_levels() / compute_risk_reward() ใหม่
+  * Stop Loss (SL) = 30-Day Low (คีย์ "support_2" เดิม)
+  * Risk = ราคาปัจจุบัน - SL
+  * Target 1 (RR 1:2) = ราคาปัจจุบัน + Risk*2 (คีย์ "resistance_60d" เดิม)
+  * Target 2 (RR 1:3) = ราคาปัจจุบัน + Risk*3 (คีย์ "resistance_2" เดิม)
+  * New Low Guardrails: Risk <= 0 หรือ Risk < 1% ของราคา -> งดเข้าเทรดทันที
+    (rr_status = NOT_COMPUTABLE, rr_score = 0, พร้อมข้อความเตือน)
+  คีย์ผลลัพธ์ทั้งหมด (rr_ratio, risk_floor, reward_target, resistance_60d,
+  resistance_2, support_2 ฯลฯ) คงชื่อเดิมทุกประการ ไม่กระทบ schema ฐานข้อมูล
 Changelog vs v2.1:
 - FIX: ปรับรูปแบบคืนค่าทั้งหมดเป็น Primitive/Scalar types (int, float, str)
   เพื่อรองรับ SQLite schema ใน calculate_scores.py โดยไม่ต้องแก้ไขโค้ดฐานข้อมูลกลาง
@@ -36,9 +46,9 @@ except ImportError:
 # =====================================================================
 @dataclass(frozen=True)
 class TimingConfig:
-    trend_weight: float = 40.0
-    momentum_weight: float = 30.0
-    rr_weight: float = 30.0
+    trend_weight: float = 60.0
+    momentum_weight: float = 40.0
+    rr_weight: float = 0.0
 
     trend_criteria_count: int = 3
     momentum_criteria_count: int = 3
@@ -52,8 +62,13 @@ class TimingConfig:
     use_precomputed_volume_avg: bool = False
     volume_avg_column_candidates: Tuple[str, ...] = ("Volume_Avg20", "Volume_Avg_20")
 
-    rr_tiers: Tuple[Tuple[float, float], ...] = ((2.0, 30.0), (1.5, 20.0), (1.0, 10.0))
+    rr_tiers: Tuple[Tuple[float, float], ...] = ((2.0, 0.0), (1.5, 0.0), (1.0, 0.0))
     min_downside_pct: float = 1.0
+
+    # --- Trader Mode RR (v2.3): SL = 30-Day Low, Target = Risk x Multiple ---
+    stop_loss_lookback: int = 30
+    rr_target1_multiple: float = 2.0
+    rr_target2_multiple: float = 3.0
 
     bullish_threshold: float = 70.0
     neutral_threshold: float = 40.0
@@ -93,6 +108,12 @@ class TimingConfig:
                 raise ValueError("คะแนนสูงสุดใน rr_tiers เกินน้ำหนักเสา RR")
         if self.volume_lookback < 2:
             raise ValueError("volume_lookback ต้อง >= 2")
+        if self.stop_loss_lookback < 2:
+            raise ValueError("stop_loss_lookback ต้อง >= 2")
+        if self.rr_target1_multiple <= 0 or self.rr_target2_multiple <= 0:
+            raise ValueError("rr_target1_multiple และ rr_target2_multiple ต้องมากกว่า 0")
+        if self.rr_target2_multiple < self.rr_target1_multiple:
+            raise ValueError("rr_target2_multiple ต้องมากกว่าหรือเท่ากับ rr_target1_multiple")
 
     @classmethod
     def from_dict(cls, overrides: Optional[dict]) -> "TimingConfig":
@@ -302,6 +323,16 @@ def compute_price_levels(price: Optional[float],
                          high_col: Optional[str] = None,
                          low_col: Optional[str] = None,
                          config: Optional[TimingConfig] = None) -> dict:
+    """
+    Trader Mode (v2.3):
+    - s2  (คีย์เดิม "support_2")   -> Stop Loss = 30-Day Low
+    - r1  (คีย์เดิม "resistance_60d") -> Target 1 = ราคาปัจจุบัน + (Risk * rr_target1_multiple)  [RR 1:2]
+    - r2  (คีย์เดิม "resistance_2")   -> Target 2 = ราคาปัจจุบัน + (Risk * rr_target2_multiple)  [RR 1:3]
+    - s1  (คีย์เดิม "support_60d") และ pivot_point ยังคงคำนวณแบบเดิม (ใช้เป็น Preferred Entry / pivot)
+    หมายเหตุ: ที่นี่ยังไม่ตัดสิน "งดเข้าเทรด" (New Low Guardrails) — ปล่อยให้
+    compute_risk_reward() เป็นผู้ตัดสินสถานะ NOT_COMPUTABLE / rr_score = 0 ตามเดิม
+    เพื่อคงพฤติกรรม gate ที่มีอยู่แล้วในระบบ
+    """
     cfg = config or DEFAULT_CONFIG
     high_col = high_col or _resolve_column(df_price_ticker, cfg.high_columns)
     low_col = low_col or _resolve_column(df_price_ticker, cfg.low_columns)
@@ -318,19 +349,20 @@ def compute_price_levels(price: Optional[float],
         return levels
 
     recent_s = df_price_ticker.tail(cfg.resistance_window_short)
-    recent_l = df_price_ticker.tail(cfg.resistance_window_long)
+    sl_window = df_price_ticker.tail(cfg.stop_loss_lookback)
 
-    r1 = _to_float(recent_s[high_col].max())
-    r2 = _to_float(recent_l[high_col].max())
     s1 = _to_float(recent_s[low_col].min())
-    s2 = _to_float(recent_l[low_col].min())
+    sl_30d = _to_float(sl_window[low_col].min())
 
-    if r1 is None or s1 is None:
-        levels["levels_reason"] = "High/Low ในกรอบเวลาเป็น NaN ทั้งหมด"
+    if s1 is None or sl_30d is None:
+        levels["levels_reason"] = "Low ในกรอบเวลาเป็น NaN ทั้งหมด"
         return levels
 
-    r2 = r1 if r2 is None else max(r2, r1)
-    s2 = s1 if s2 is None else min(s2, s1)
+    s2 = sl_30d  # Stop Loss = 30-Day Low
+
+    risk = price - s2  # อาจ <= 0 หรือแคบเกินไป — compute_risk_reward() จะเป็นผู้ดักทาง
+    r1 = round(price + risk * cfg.rr_target1_multiple, 2)  # Target 1 (RR 1:2)
+    r2 = round(price + risk * cfg.rr_target2_multiple, 2)  # Target 2 (RR 1:3)
 
     pivot = None
     if len(df_price_ticker) >= 2:
@@ -340,7 +372,7 @@ def compute_price_levels(price: Optional[float],
             pivot = round((ph + pl + price) / 3.0, 2)
 
     levels.update({
-        "r1": round(r1, 2), "r2": round(r2, 2),
+        "r1": r1, "r2": r2,
         "s1": round(s1, 2), "s2": round(s2, 2),
         "pivot_point": pivot, "levels_available": True,
     })
@@ -352,6 +384,15 @@ def compute_risk_reward(price: Optional[float],
                         r2: Optional[float],
                         s2: Optional[float],
                         config: Optional[TimingConfig] = None) -> dict:
+    """
+    Trader Mode RR (v2.3):
+    - SL (risk_floor)      = s2  = 30-Day Low  (มาจาก compute_price_levels)
+    - Risk                 = price - SL
+    - Target 1 (reward_target) = r1 = price + Risk * rr_target1_multiple  (ปกติ RR 1:2)
+    - New Low Guardrails: หาก Risk <= 0 หรือ Risk < min_downside_pct% ของราคา
+      -> งดเข้าเทรดทันที (rr_status = NOT_COMPUTABLE, rr_score = 0, พร้อมข้อความเตือน)
+    คีย์ผลลัพธ์ทั้งหมดคงเดิมทุกประการ เพื่อความเข้ากันได้กับฐานข้อมูล
+    """
     cfg = config or DEFAULT_CONFIG
     out = {
         "rr_ratio": None, "rr_score": 0.0, "rr_status": "NOT_COMPUTABLE",
@@ -365,25 +406,36 @@ def compute_risk_reward(price: Optional[float],
         out["rr_reason"] = "ไม่มีราคาอ้างอิง"
         return out
     if r1 is None or s2 is None:
-        out["rr_reason"] = "หาแนวรับ/แนวต้านอ้างอิงไม่ได้"
+        out["rr_reason"] = "หา Stop Loss (30-Day Low) หรือ Target อ้างอิงไม่ได้"
         return out
 
-    reward_target = r2 if (price >= r1 and r2 is not None) else r1
+    # Risk = ราคาปัจจุบัน - Stop Loss (30-Day Low)
     downside_risk = price - s2
 
+    # --- New Low Guardrail #1: ราคาปัจจุบัน <= SL (Risk <= 0) -> งดเข้าเทรดทันที ---
     if downside_risk <= 0:
-        out["rr_reason"] = "ราคาหลุดแนวรับอ้างอิงแล้ว (ตัวหาร <= 0) จึงนิยามความเสี่ยงไม่ได้"
+        out["risk_floor"] = round(s2, 2)
+        out["rr_reason"] = (
+            "New Low Guardrail: ราคาปัจจุบันต่ำกว่าหรือเท่ากับ Stop Loss (30-Day Low) "
+            "แล้ว (Risk <= 0) — ระบบงดเข้าเทรดทันที"
+        )
         return out
 
     downside_pct = (downside_risk / price) * 100.0
+
+    # --- New Low Guardrail #2: ระยะ Risk แคบเกินไป (< min_downside_pct ของราคา) ---
     if cfg.min_downside_pct > 0 and downside_pct < cfg.min_downside_pct:
-        out["rr_reason"] = (
-            f"ระยะถึงแนวรับเพียง {downside_pct:.2f}% (ต่ำกว่าเกณฑ์ "
-            f"{cfg.min_downside_pct:.2f}%) ตัวหารเล็กเกินกว่าจะนิยามความเสี่ยงได้"
-        )
+        out["risk_floor"] = round(s2, 2)
         out["downside_pct"] = round(downside_pct, 1)
+        out["rr_reason"] = (
+            f"New Low Guardrail: ระยะ Risk เพียง {downside_pct:.2f}% ของราคา "
+            f"(ต่ำกว่าเกณฑ์ขั้นต่ำ {cfg.min_downside_pct:.2f}%) แคบเกินกว่าจะเข้าเทรด "
+            "— ระบบงดเข้าเทรดทันที"
+        )
         return out
 
+    # ผ่าน New Low Guardrails แล้ว: Target 1 (RR 1:2) คือ reward เป้าหมายหลักของเสานี้
+    reward_target = r1
     upside_reward = reward_target - price
     rr_ratio = round(max(upside_reward, 0.0) / downside_risk, 2)
 
@@ -399,14 +451,14 @@ def compute_risk_reward(price: Optional[float],
         "rr_status": "COMPUTED",
         "rr_status_th": "คำนวณได้",
         "upside_pct": round((upside_reward / price) * 100, 1),
-        "downside_pct": round((downside_risk / price) * 100, 1),
+        "downside_pct": round(downside_pct, 1),
         "reward_target": round(reward_target, 2),
         "risk_floor": round(s2, 2),
         "k_rr_ok": rr_score > 0,
         "k_rr_available": True,
     })
     if upside_reward <= 0:
-        out["rr_reason"] = "ราคาเลยเป้าหมายอ้างอิงแล้ว อัพไซด์คงเหลือ = 0"
+        out["rr_reason"] = "ราคาเลยเป้าหมาย Target 1 ไปแล้ว อัพไซด์คงเหลือ = 0"
     return out
 
 
@@ -535,8 +587,8 @@ def calculate_timing_module(df_price_ticker: Optional[pd.DataFrame],
     levels = compute_price_levels(price, df_price_ticker, high_col, low_col, cfg)
     rr = compute_risk_reward(price, levels["r1"], levels["r2"], levels["s2"], cfg)
 
-    available_flags = trend_avail + mom_avail + [rr["k_rr_available"]]
-    total_criteria = cfg.trend_criteria_count + cfg.momentum_criteria_count + 1
+    available_flags = trend_avail + mom_avail
+    total_criteria = cfg.trend_criteria_count + cfg.momentum_criteria_count
     available_count = sum(1 for a in available_flags if a)
     data_completeness = round(available_count / float(total_criteria), 2)
 
@@ -544,7 +596,7 @@ def calculate_timing_module(df_price_ticker: Optional[pd.DataFrame],
         name for name, ok in [
             ("EMA20", k15_available), ("EMA50", k16_available), ("MA200", k17_available),
             ("MACD", k18_available), ("ADX", k19_available),
-            ("Volume", k20_available), ("Risk/Reward", rr["k_rr_available"]),
+            ("Volume", k20_available)
         ] if not ok
     ]
     missing_fields_str = ", ".join(missing_fields) if missing_fields else ""
@@ -625,8 +677,8 @@ def calculate_timing_module(df_price_ticker: Optional[pd.DataFrame],
         "action_th": str(sig["action_th"]),
         "readiness": str(sig["readiness"]),
         "summary_text": str(sig["summary_text"]),
-        "trend_veto_applied": 1 if sig["trend_veto_applied"] else 0,
-        "trend_veto_reason": "ราคาต่ำกว่า MA200 (KO-15 Downtrend) — บังคับ BEARISH ตาม KO-21" if sig["trend_veto_applied"] else "",
+        "trend_veto_applied": 1 if sig.get("trend_veto_applied", False) else 0,
+        "trend_veto_reason": "ราคาต่ำกว่า MA200 (KO-15 Downtrend) — บังคับ BEARISH ตาม KO-21" if sig.get("trend_veto_applied", False) else "",
 
         "k15_ok": 1 if k15_ok else 0,
         "k16_ok": 1 if k16_ok else 0,
