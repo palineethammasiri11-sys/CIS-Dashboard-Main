@@ -35,7 +35,14 @@ def render(ctx):
     m3_s = int(round(safe(ctx.stock_info.get('timing_score'), 50)))
     m4_s = int(round(safe(ctx.stock_info.get('ai_score'), 50)))
     m5_s = int(round(safe(ctx.stock_info.get('risk_score'), 50)))
-    m6_s = int(round(safe(ctx.stock_info.get('industry_score'), 50)))
+
+    n_all = len(ctx.scores_df)
+    overall_rank = int(ctx.stock_info.get('overall_rank', 1))
+
+    m6_s = int(round(
+        100 - (overall_rank - 1) / max(n_all - 1, 1) * 100
+    ))
+
     n_sector = len(ctx.sector_peers)
 
     if m1_s >= 70:
@@ -342,8 +349,8 @@ def render(ctx):
 
                 <div style="
                     color:#F59E0B;
-                    font-size:25px;
-                    letter-spacing:4px;
+                    font-size:20px;
+                    letter-spacing:3px;
                     margin-top:-2px;
                     line-height:1.2;
                 ">
@@ -352,10 +359,10 @@ def render(ctx):
 
                 <div style="
                     color:{rec_color};
-                    font-size:27px;
+                    font-size:21px;
                     font-weight:800;
                     margin-top:5px;
-                    letter-spacing:0.4px;
+                    letter-spacing:0.3px;
                 ">
                     {label}
                 </div>
