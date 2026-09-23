@@ -394,7 +394,7 @@ def render(ctx):
     <div style="display:grid; grid-template-columns: repeat({grid_cols}, 1fr); gap:6px; text-align:center; margin:auto 0;">
     {ratio_cells}
     </div>
-    <div style="font-size:14px; color:#475569; border-top:1px solid #D9E2EC; padding-top:7px;">{footnote}</div>
+    <div style="font-size:14px; color:#475569; padding-top:10px;">{footnote}</div>
     </div>""",
             unsafe_allow_html=True
         )
