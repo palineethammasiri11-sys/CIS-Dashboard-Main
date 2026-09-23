@@ -115,7 +115,7 @@ def render(ctx):
     <path d="M 65 15 A 38 38 0 0 1 88 50" fill="none" stroke="#EF4444" stroke-width="8" stroke-linecap="round" />
     <line x1="50" y1="50" x2="{50 - 30*np.cos(np.pi*needle_frac):.1f}" y2="{50 - 40*np.sin(np.pi*needle_frac):.1f}" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round"/>
     <circle cx="50" cy="50" r="4" fill="#0F172A"/></svg></div>
-    <div style="color:{risk_color}; font-size:16.5px; font-weight:bold; margin-top:2px;">{risk_status}</div>
+    <div style="color:{risk_color}; font-size:19px; font-weight:bold; margin-top:2px;">{risk_status}</div>
     <div style="font-size:12px; color:#64748B; margin-top:1px;">Risk Score (higher = safer)</div>
     <div style="font-size:21px; font-weight:bold; color:#0F172A; line-height:1.1;">{risk_score}<span style="font-size:13.5px; color:#64748B;">/100</span></div></div>
     <div style="font-size:12.5px; color:#64748B; line-height:1.35;">ระดับความเสี่ยงของ {ctx.selected_ticker} ประเมินจาก Beta, Volatility และ Max Drawdown จริง</div>
@@ -180,7 +180,6 @@ def render(ctx):
 
         beta_cmp = ctx.scores_df[['ticker', 'beta']].sort_values('beta')
 
-        # หุ้นที่เลือก = น้ำเงิน / หุ้นอื่น = เทา
         colors_beta = [
             '#0284C7' if t == ctx.selected_ticker else '#CBD5E1'
             for t in beta_cmp['ticker']
@@ -316,9 +315,6 @@ def render(ctx):
     r3_c1, r3_c2 = st.columns(2)
 
     with r3_c1:
-        # ลำดับความสำคัญ: 1) ใช้ cvar_95 จาก cis_summary_scores ถ้ามี (เร็วสุด, คำนวณไว้ล่วงหน้าแล้ว)
-        # 2) ถ้าไม่มี (ยังไม่ได้รันคำนวณคะแนนใหม่) → คำนวณสดจาก ctx.stock_daily แทนทันที
-        # 3) ถ้าคำนวณไม่ได้จริงๆ (ข้อมูลราคาน้อยกว่า 20 วัน) → ซ่อนช่อง CVaR ไปเลย ไม่โชว์ N/A
         cvar_val = ctx.stock_info.get('cvar_95')
 
         if cvar_val is None:
@@ -331,7 +327,6 @@ def render(ctx):
     </div>
     <div style="font-size:12px; color:#64748B; border-top:1px solid #D9E2EC; padding-top:6px;">VaR = ขาดทุนสูงสุดที่คาดใน 95% ของวัน (Parametric) | CVaR = ขาดทุนเฉลี่ยจริงในวันที่แย่กว่านั้น (Historical, จับ tail risk ได้ดีกว่า)</div>"""
         else:
-            # กรณีคำนวณ CVaR ไม่ได้จริงๆ (ข้อมูลราคาน้อยเกินไป) — โชว์แค่ VaR อย่างเดียว ไม่มีช่อง N/A
             downside_metrics_html = f"""<div style="margin:auto 0;">
     <div style="font-size:24px; font-weight:bold; color:#EF4444;">-{safe(ctx.stock_info.get('var_95')):.2f}%</div><div style="font-size:12.5px; color:#64748B;">VaR 95% — Expected 1-Day Maximum Loss</div>
     </div>
@@ -360,14 +355,12 @@ def render(ctx):
     <div style="background:#F8FAFC; border:1px solid #D9E2EC; border-radius:6px; padding:6px 2px;"><div style="font-size:12px; color:#64748B;">Calmar</div><div style="font-size:15px; font-weight:bold; color:#0F172A;">{calmar:.2f}</div></div>"""
 
         if psr_val is not None:
-            # คำนวณได้ → เพิ่มช่อง PSR เป็นคอลัมน์ที่ 4 พร้อมคำอธิบายในหมายเหตุ
             grid_cols = 4
             ratio_cells = base_cells + f"""
     <div style="background:#F8FAFC; border:1px solid #D9E2EC; border-radius:6px; padding:6px 2px;"><div style="font-size:12px; color:#64748B;">PSR</div><div style="font-size:15px; font-weight:bold; color:#0F172A;">{psr_val:.0f}%</div></div>"""
 
             footnote = f"""คำนวณหัก Risk-free Rate (~{rf_pct:.1f}%/ปี, BOT Policy Rate เฉลี่ย 2023-2025) แล้ว | PSR = ความน่าจะเป็นที่ Sharpe Ratio จริง &gt; 0 เมื่อพิจารณาความเบ้/โด่งของข้อมูล (Bailey &amp; López de Prado, 2012)"""
         else:
-            # คำนวณไม่ได้จริงๆ (ข้อมูลน้อยกว่า 30 วัน หรือผลตอบแทนนิ่งสนิท) → ไม่มีช่อง PSR เลย ไม่โชว์ N/A
             grid_cols = 3
             ratio_cells = base_cells
             footnote = f"""คำนวณหัก Risk-free Rate (~{rf_pct:.1f}%/ปี, BOT Policy Rate เฉลี่ย 2023-2025) แล้ว"""
