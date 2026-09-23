@@ -342,8 +342,8 @@ def render(ctx):
 
                 <div style="
                     color:#F59E0B;
-                    font-size:20px;
-                    letter-spacing:3px;
+                    font-size:25px;
+                    letter-spacing:4px;
                     margin-top:-2px;
                     line-height:1.2;
                 ">
@@ -352,10 +352,10 @@ def render(ctx):
 
                 <div style="
                     color:{rec_color};
-                    font-size:21px;
+                    font-size:27px;
                     font-weight:800;
                     margin-top:5px;
-                    letter-spacing:0.3px;
+                    letter-spacing:0.4px;
                 ">
                     {label}
                 </div>
