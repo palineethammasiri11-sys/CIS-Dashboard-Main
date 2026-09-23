@@ -152,23 +152,95 @@ def render(ctx):
     st.markdown("""
     <style>
     .peer-comparison-table {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
         table-layout: auto !important;
+        border-collapse: collapse !important;
+        box-sizing: border-box !important;
     }
 
     .peer-comparison-table th,
     .peer-comparison-table td {
-        white-space: normal !important;
-        word-break: normal !important;
-        overflow-wrap: break-word !important;
         vertical-align: middle !important;
         box-sizing: border-box !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+    }
+
+    .peer-comparison-table th {
+        padding: 6px 4px !important;
+        line-height: 1.2 !important;
     }
 
     .peer-comparison-table td {
-        padding: 6px 3px !important;
+        padding: 7px 4px !important;
         line-height: 1.25 !important;
     }
+
+    .peer-comparison-table td span {
+        display: inline-block !important;
+        max-width: 100% !important;
+        line-height: 1.2 !important;
+        white-space: normal !important;
+    }
+
     @media (max-width: 768px) {
+
+        .peer-comparison-card {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            height: auto !important;
+            min-height: 350px !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+
+        .peer-comparison-table {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            table-layout: fixed !important;
+            font-size: 10px !important;
+            box-sizing: border-box !important;
+        }
+
+        .peer-comparison-table th,
+        .peer-comparison-table td {
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            white-space: normal !important;
+            word-break: normal !important;
+            overflow-wrap: break-word !important;
+        }
+
+        .peer-comparison-table th {
+            font-size: 9.5px !important;
+            line-height: 1.15 !important;
+            padding: 5px 2px !important;
+        }
+
+        .peer-comparison-table td {
+            font-size: 10px !important;
+            line-height: 1.2 !important;
+            padding: 6px 2px !important;
+        }
+
+        .peer-comparison-table td span {
+            display: inline-block !important;
+            max-width: 100% !important;
+            white-space: normal !important;
+            word-break: normal !important;
+            overflow-wrap: break-word !important;
+            line-height: 1.2 !important;
+        }
+
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
         /* Peer Comparison */
         .peer-comparison-card {
@@ -324,19 +396,19 @@ def render(ctx):
 
             rows_html += f"""<tr style="border-bottom:1px solid #E2E8F0; {row_bg}">
     <td style="text-align:left; padding:6px 0; color:{name_c}; font-weight:bold; min-width:0; overflow-wrap:anywhere; word-break:break-word;">{name_disp}</td>
-    <td>{health_b}</td>
-    <td><span style="color:{val_c};">{val_b}</span></td>
-    <td>{timing_b}</td>
-    <td>{ai_b}</td>
-    <td><span style="color:{risk_c};">{risk_b}</span></td>
+    <td style="padding:7px 4px;">{health_b}</td>
+    <td style="padding:7px 4px;"><span style="color:{val_c};">{val_b}</span></td>
+    <td style="padding:7px 4px;">{timing_b}</td>
+    <td style="padding:7px 4px;">{ai_b}</td>
+    <td style="padding:7px 4px;"><span style="color:{risk_c};">{risk_b}</span></td>
     <td style="color:{star_color}; letter-spacing:0.5px; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:clip;">{'★'*star_n}{'☆'*(5-star_n)}</td>
     </tr>"""
 
         st.markdown(f"""<div class="peer-comparison-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; min-height:350px; height:auto; width:100%; max-width:100%; min-width:0; box-sizing:border-box;">
     <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:6px;">PEER COMPARISON — {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
-    <table class="peer-comparison-table" style="width:100%; max-width:100%; min-width:0; text-align:center; font-size:13px; color:#475569; border-collapse:collapse; box-sizing:border-box;">
-    
-    <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:14px;">
+    <table class="peer-comparison-table" style="width:100%; max-width:100%; min-width:0; text-align:center; font-size:12px; color:#475569; border-collapse:collapse; box-sizing:border-box;">
+
+    <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:12px;">
         <th style="text-align:left; padding:5px 0;">Company</th>
         <th>Health</th>
         <th>Fair Value</th>
