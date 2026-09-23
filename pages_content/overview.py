@@ -118,8 +118,7 @@ def render(ctx):
     arc_frac = min(1.0, overall / 100)
     dash_len = round(119.38 * arc_frac, 2)
     label = "ATTRACTIVE" if overall >= 65 else "FAIR" if overall >= 45 else "CAUTION"
-    top_strength = "financial health" if
-    m1_s == max(m1_s, m2_s, m3_s, m4_s, m5_s, m6_s) else "fair value"
+    top_strength = "financial health" if m1_s == max(m1_s, m2_s, m3_s, m4_s, m5_s, m6_s) else "fair value"
 
     st.markdown("""
     <style>
