@@ -424,7 +424,7 @@ def render(ctx):
         </div>
 
         {_metric_card(
-            "ℹ️ สรุปสั้น ๆ",
+            "ⓘ สรุปสั้น ๆ",
             summary_text,
             "ภาพรวมสถานะการลงทุนเชิงปริมาณ",
             TEXT,
@@ -1209,7 +1209,7 @@ def render(ctx):
                     border-bottom:2px solid {ACCENT};
                     padding-bottom:4px;
                 ">
-                    ℹ️ SYSTEM SCORING METHODOLOGY
+                    ⓘ SYSTEM SCORING METHODOLOGY
                 </div>
 
                 <div style="
