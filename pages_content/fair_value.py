@@ -74,10 +74,10 @@ def render(ctx):
 
     with top_c1:
         st.markdown(
-            f"""<div style="background-color:rgba({val_rgb[0]},{val_rgb[1]},{val_rgb[2]},0.08); border:2px solid {val_color}; border-radius:12px; padding:14px; min-height:120px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px;"><span>🎯</span>ESTIMATED FAIR VALUE</div>
-        <div style="margin-top:6px;"><span style="font-size:30px; font-weight:bold; color:#0F172A;">{val_base:.2f}</span> <span style="font-size:14px; color:#64748B;">THB</span></div>
-        <div style="font-size:12px; color:#64748B; margin-top:2px;">(Blended: 55% DCF + 45% P/E)</div>
+            f"""<div style="background-color:{val_color}; border-radius:12px; padding:14px; min-height:120px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:rgba(255,255,255,0.9); letter-spacing:0.5px;">ESTIMATED FAIR VALUE</div>
+        <div style="margin-top:6px;"><span style="font-size:30px; font-weight:bold; color:#FFFFFF;">{val_base:.2f}</span> <span style="font-size:14px; color:rgba(255,255,255,0.85);">THB</span></div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.85); margin-top:2px;">(Blended: 55% DCF + 45% P/E)</div>
         </div>""",
             unsafe_allow_html=True
         )
@@ -85,7 +85,7 @@ def render(ctx):
     with top_c2:
         st.markdown(
             f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:120px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px;"><span>📈</span>CURRENT PRICE</div>
+        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px;">CURRENT PRICE</div>
         <div style="margin-top:6px;"><span style="font-size:30px; font-weight:bold; color:#0F172A;">{val_cur_price:.2f}</span> <span style="font-size:14px; color:#64748B;">THB</span></div>
         <div style="font-size:12px; color:#64748B; margin-top:2px;">({ctx.stock_info.get('latest_date', '-')})</div>
         </div>""",
@@ -95,7 +95,7 @@ def render(ctx):
     with top_c3:
         st.markdown(
             f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:120px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px;"><span>🛡️</span>MARGIN OF SAFETY</div>
+        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px;">MARGIN OF SAFETY</div>
         <div style="margin-top:6px;"><span style="font-size:30px; font-weight:bold; color:{val_color};">{val_mos:.1f}%</span> <span style="font-size:16px; color:{val_color};">{mos_arrow}</span></div>
         <div style="font-size:12px; color:#64748B; margin-top:2px;">(vs. fair value)</div>
         </div>""",
@@ -104,10 +104,10 @@ def render(ctx):
 
     with top_c4:
         st.markdown(
-            f"""<div style="background-color:{val_color}; border-radius:12px; padding:14px; min-height:120px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:rgba(255,255,255,0.85); letter-spacing:0.5px;"><span>🚩</span>RECOMMENDATION</div>
-        <div style="margin-top:8px; display:flex; justify-content:center;"><span style="background-color:#FFFFFF; color:{val_color}; font-weight:bold; font-size:16px; padding:6px 22px; border-radius:20px;">{val_rec_label}</span></div>
-        <div style="font-size:12px; color:rgba(255,255,255,0.85); margin-top:8px; text-align:center;">{status_th}</div>
+            f"""<div style="background-color:rgba({val_rgb[0]},{val_rgb[1]},{val_rgb[2]},0.08); border:2px solid {val_color}; border-radius:12px; padding:14px; min-height:120px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px;">RECOMMENDATION</div>
+        <div style="margin-top:8px; display:flex; justify-content:center;"><span style="background-color:{val_color}; color:#FFFFFF; font-weight:bold; font-size:16px; padding:6px 22px; border-radius:20px;">{val_rec_label}</span></div>
+        <div style="font-size:12px; color:#64748B; margin-top:8px; text-align:center;">{status_th}</div>
         </div>""",
             unsafe_allow_html=True
         )
@@ -123,15 +123,17 @@ def render(ctx):
         pos_base = min(97, max(3, (val_base - val_bear) / rng_span * 100))
         st.markdown(
             f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:16px 18px; min-height:190px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:6px; font-size:14px; font-weight:bold; color:#475569; letter-spacing:0.5px;"><span>📶</span>FAIR VALUE RANGE — DCF vs P/E RELATIVE</div>
-        <div style="position:relative; height:70px; margin-top:26px;">
-        <div style="position:absolute; left:{pos_cur:.1f}%; top:-38px; transform:translateX(-50%); background:#0EA5E9; color:#FFFFFF; font-size:11px; font-weight:bold; border-radius:8px; padding:4px 8px; text-align:center; white-space:nowrap;">Current Price<br><span style="font-size:13px;">{val_cur_price:.2f} THB</span></div>
-        <div style="position:absolute; left:{pos_base:.1f}%; top:-38px; transform:translateX(-50%); background:#F59E0B; color:#FFFFFF; font-size:11px; font-weight:bold; border-radius:8px; padding:4px 8px; text-align:center; white-space:nowrap;">Blended Fair Value<br><span style="font-size:13px;">{val_base:.2f} THB</span></div>
-        <div style="position:absolute; top:24px; left:0; right:0; height:8px; border-radius:4px; background:linear-gradient(90deg, #10B981, #F59E0B, #38BDF8, #8B5CF6);"></div>
-        <div style="position:absolute; left:{pos_cur:.1f}%; top:20px; transform:translateX(-50%); width:14px; height:14px; border-radius:50%; background:#FFFFFF; border:3px solid #0EA5E9;"></div>
-        <div style="position:absolute; left:{pos_base:.1f}%; top:16px; transform:translateX(-50%); width:4px; height:22px; background:#F59E0B;"></div>
+        <div style="display:flex; align-items:center; gap:6px; font-size:14px; font-weight:bold; color:#475569; letter-spacing:0.5px;">FAIR VALUE RANGE — DCF vs P/E RELATIVE</div>
+        <div style="position:relative; height:22px; margin-top:22px;">
+        <div style="position:absolute; top:7px; left:0; right:0; height:8px; border-radius:4px; background:linear-gradient(90deg, #10B981, #F59E0B, #38BDF8, #8B5CF6);"></div>
+        <div style="position:absolute; left:{pos_cur:.1f}%; top:3px; transform:translateX(-50%); width:14px; height:14px; border-radius:50%; background:#FFFFFF; border:3px solid #0EA5E9;"></div>
+        <div style="position:absolute; left:{pos_base:.1f}%; top:-1px; transform:translateX(-50%); width:4px; height:22px; background:{val_color};"></div>
         </div>
-        <div style="display:flex; justify-content:space-between; font-size:12px; color:#64748B; margin-top:6px;">
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;">
+        <span style="display:inline-flex; align-items:center; gap:5px; background:#0EA5E9; color:#FFFFFF; font-size:12px; font-weight:bold; border-radius:8px; padding:5px 10px;">Current Price <span style="font-weight:normal; opacity:0.9;">{val_cur_price:.2f} THB</span></span>
+        <span style="display:inline-flex; align-items:center; gap:5px; background:{val_color}; color:#FFFFFF; font-size:12px; font-weight:bold; border-radius:8px; padding:5px 10px;">Blended Fair Value <span style="font-weight:normal; opacity:0.9;">{val_base:.2f} THB</span></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; color:#64748B; margin-top:10px;">
         <div>Min<br><b style="color:#0F172A; font-size:13px;">{val_bear:.2f} THB</b></div>
         <div style="text-align:right;">Max<br><b style="color:#0F172A; font-size:13px;">{val_bull:.2f} THB</b></div>
         </div>
@@ -142,7 +144,7 @@ def render(ctx):
     with mid_c2:
         st.markdown(
             f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:190px; display:flex; flex-direction:column; align-items:center; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px; align-self:flex-start;"><span>🛡️</span>CONFIDENCE LEVEL</div>
+        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px; align-self:flex-start;">CONFIDENCE LEVEL</div>
         <div style="position:relative; width:120px; height:60px; margin-top:6px;">
         <div style="width:120px; height:60px; border-radius:120px 120px 0 0; overflow:hidden; background:conic-gradient(from 270deg at 50% 100%, {val_color} 0deg {conf_sweep:.0f}deg, #E2E8F0 {conf_sweep:.0f}deg 180deg);"></div>
         <div style="position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:88px; height:44px; border-radius:88px 88px 0 0; background:#FFFFFF;"></div>
@@ -158,7 +160,7 @@ def render(ctx):
     with mid_c3:
         st.markdown(
             f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:190px; display:flex; flex-direction:column; align-items:center; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px; align-self:flex-start;"><span>⭐</span>FAIR VALUE SUMMARY SCORE</div>
+        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px; align-self:flex-start;">FAIR VALUE SUMMARY SCORE</div>
         <div style="width:88px; height:88px; border-radius:50%; background:conic-gradient({val_color} 0% {val_score}%, #E2E8F0 {val_score}% 100%); display:flex; align-items:center; justify-content:center; margin-top:4px;">
         <div style="width:72px; height:72px; border-radius:50%; background-color:#FFFFFF; display:flex; flex-direction:column; align-items:center; justify-content:center;">
         <span style="font-size:22px; font-weight:bold; color:#0F172A; line-height:1;">{val_score}</span><span style="font-size:12px; color:#64748B;">/100</span>
@@ -190,7 +192,7 @@ def render(ctx):
         <div style="color:#0F172A; font-size:17px; font-weight:bold; margin-top:4px;">{val_bull:.2f} <span style="font-size:13px; color:#64748B;">THB</span></div></div>
         </div>
         <div style="background:rgba(16,185,129,0.08); border-radius:6px; padding:6px 8px; display:flex; align-items:flex-start; gap:6px; margin-top:10px;">
-        <span style="color:#10B981; font-size:15px;">✔</span><div style="font-size:13px; color:#475569; line-height:1.3;">
+        <div style="font-size:13px; color:#475569; line-height:1.3;">
         <b>DCF Fair Value: {safe(ctx.stock_info.get('dcf_fair_value')):.2f} THB &nbsp;|&nbsp; P/E Fair Value: {safe(ctx.stock_info.get('pe_fair_value')):.2f} THB</b><br>
         <span style="color:#64748B;">คำนวณจากงบการเงินปีล่าสุด (FY{int(ctx.fin_stock['year'].max()) if not ctx.fin_stock.empty else '-'}) เทียบราคาตลาดปัจจุบัน {val_cur_price:.2f} THB</span></div></div>
         </div>""",
@@ -202,10 +204,10 @@ def render(ctx):
             f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:315px; display:flex; flex-direction:column; justify-content:space-between;">
         <div style="font-size:15px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">VALUATION DRIVERS ({ctx.selected_ticker})</div>
         <div style="font-size:14px; color:#475569; line-height:1.45; display:flex; flex-direction:column; gap:6px; margin:auto 0;">
-        <div style="display:flex; gap:6px;"><span style="color:#10B981;">✔</span><div><b>Fair Value (Blended): {val_base:.2f} THB</b><br><span style="color:#64748B; font-size:13px;">ประเมินแบบผสมผสาน DCF + Relative P/E</span></div></div>
-        <div style="display:flex; gap:6px;"><span style="color:#10B981;">✔</span><div><b>Margin of Safety: {val_mos:.1f}%</b><br><span style="color:#64748B; font-size:13px;">ส่วนต่างความปลอดภัยจากราคาตลาดปัจจุบัน</span></div></div>
-        <div style="display:flex; gap:6px;"><span style="color:#10B981;">✔</span><div><b>P/E Ratio ปัจจุบัน: {fmt_ratio(ctx.stock_info.get('pe_ratio'), suffix='')} เท่า</b><br><span style="color:#64748B; font-size:13px;">เทียบ EPS ล่าสุด {ctx.stock_info.get('eps', '-')} บาท/หุ้น</span></div></div>
-        <div style="display:flex; gap:6px;"><span style="color:#10B981;">✔</span><div><b>สถานะมูลค่า: {val_status}</b><br><span style="color:#64748B; font-size:13px;">ระดับความน่าดึงดูดเชิงมูลค่าพื้นฐาน</span></div></div>
+        <div style="display:flex; gap:6px;"><div><b>Fair Value (Blended): {val_base:.2f} THB</b><br><span style="color:#64748B; font-size:13px;">ประเมินแบบผสมผสาน DCF + Relative P/E</span></div></div>
+        <div style="display:flex; gap:6px;"><div><b>Margin of Safety: {val_mos:.1f}%</b><br><span style="color:#64748B; font-size:13px;">ส่วนต่างความปลอดภัยจากราคาตลาดปัจจุบัน</span></div></div>
+        <div style="display:flex; gap:6px;"><div><b>P/E Ratio ปัจจุบัน: {fmt_ratio(ctx.stock_info.get('pe_ratio'), suffix='')} เท่า</b><br><span style="color:#64748B; font-size:13px;">เทียบ EPS ล่าสุด {ctx.stock_info.get('eps', '-')} บาท/หุ้น</span></div></div>
+        <div style="display:flex; gap:6px;"><div><b>สถานะมูลค่า: {val_status}</b><br><span style="color:#64748B; font-size:13px;">ระดับความน่าดึงดูดเชิงมูลค่าพื้นฐาน</span></div></div>
         </div></div>""",
             unsafe_allow_html=True
         )
@@ -216,11 +218,11 @@ def render(ctx):
             f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:315px; display:flex; flex-direction:column; justify-content:space-between;">
         <div style="font-size:15px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">FAIR VALUE SCORE BY DIMENSION</div>
         <div style="display:flex; flex-direction:column; gap:10px; margin:auto 0;">
-        <div><div style="display:flex; justify-content:space-between; font-size:14px; color:#475569; margin-bottom:3px;"><span>📊 Relative Valuation (P/E)</span><span style="font-weight:bold; color:#0F172A;">{val_score} <span style="font-size:13px; color:#64748B;">/100</span></span></div>
+        <div><div style="display:flex; justify-content:space-between; font-size:14px; color:#475569; margin-bottom:3px;"><span>Relative Valuation (P/E)</span><span style="font-weight:bold; color:#0F172A;">{val_score} <span style="font-size:13px; color:#64748B;">/100</span></span></div>
         <div style="background:#E2E8F0; height:9px; border-radius:4px; overflow:hidden;"><div style="background:{val_color}; width:{val_score}%; height:100%;"></div></div></div>
-        <div><div style="display:flex; justify-content:space-between; font-size:14px; color:#475569; margin-bottom:3px;"><span>🎯 Intrinsic Valuation (DCF)</span><span style="font-weight:bold; color:#0F172A;">{val_score} <span style="font-size:13px; color:#64748B;">/100</span></span></div>
+        <div><div style="display:flex; justify-content:space-between; font-size:14px; color:#475569; margin-bottom:3px;"><span>Intrinsic Valuation (DCF)</span><span style="font-weight:bold; color:#0F172A;">{val_score} <span style="font-size:13px; color:#64748B;">/100</span></span></div>
         <div style="background:#E2E8F0; height:9px; border-radius:4px; overflow:hidden;"><div style="background:{val_color}; width:{val_score}%; height:100%;"></div></div></div>
-        <div><div style="display:flex; justify-content:space-between; font-size:14px; color:#475569; margin-bottom:3px;"><span>🛡️ Margin of Safety</span><span style="font-weight:bold; color:#0F172A;">{safety_score} <span style="font-size:13px; color:#64748B;">/100</span></span></div>
+        <div><div style="display:flex; justify-content:space-between; font-size:14px; color:#475569; margin-bottom:3px;"><span>Margin of Safety</span><span style="font-weight:bold; color:#0F172A;">{safety_score} <span style="font-size:13px; color:#64748B;">/100</span></span></div>
         <div style="background:#E2E8F0; height:9px; border-radius:4px; overflow:hidden;"><div style="background:{val_color}; width:{safety_score}%; height:100%;"></div></div></div>
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #E2E8F0; padding-top:8px;">
