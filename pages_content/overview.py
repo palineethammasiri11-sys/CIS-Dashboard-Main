@@ -219,7 +219,7 @@ def render(ctx):
     # TOP SECTION
     # ============================================================
 
-   col_left, col_center = st.columns(
+    col_left, col_center = st.columns(
         [1.1, 2.3],
         vertical_alignment="top"
     )
