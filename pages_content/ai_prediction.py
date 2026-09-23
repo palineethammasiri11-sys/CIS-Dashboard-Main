@@ -56,7 +56,7 @@ def _kpi_card(
 ):
     """การ์ด KPI ใบเดียว"""
     return (
-        f'<div style="background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:14px 10px; text-align:center; height:150px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center;">'
+        f'<div style="background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:14px 10px; text-align:center; height:175px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center;">'
         f'<div style="font-size:11px; font-weight:bold; color:{label_color}; letter-spacing:1px;">{label}</div>'
         f'<div style="font-size:{value_size}px; font-weight:bold; color:{value_color}; line-height:1.2; margin-top:4px;">{value_html}</div>'
         f'{sub_html}'
@@ -71,7 +71,7 @@ def _kpi_sub(text, color=MUTED, bold=False):
 
 def _metric_cell(label, value):
     return (
-        f'<div style="background:#F8FAFC; border:1px solid #D9E2EC; border-radius:8px; padding:14px 6px; text-align:center;">'
+        f'<div style="background:#F8FAFC; border:1px solid #D9E2EC; border-radius:8px; padding:14px 6px; text-align:center;>'
         f'<div style="font-size:12px; color:{MUTED};">{label}</div>'
         f'<div style="font-size:21px; font-weight:bold; color:#0F172A; line-height:1.35;">{value}</div></div>'
     )
@@ -202,15 +202,15 @@ def render(ctx):
         f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-top:none; border-radius:0 0 12px 12px; padding:16px;">
 <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:stretch;">
 
-<div style="flex:0 0 320px; max-width:100%; background-color:#F8FAFC; border:1px solid #D9E2EC; border-radius:12px; padding:22px 14px; display:flex; align-items:center; justify-content:center;">
-<svg viewBox="0 0 100 56" style="width:100%; max-width:180px; height:auto;">
-<path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#D9E2EC" stroke-width="6" stroke-linecap="round" />
-<path d="M 10 50 A 40 40 0 0 1 {_gx:.1f} {_gy:.1f}" fill="none" stroke="{status_color}" stroke-width="6" stroke-linecap="round" />
-<text x="50" y="47" text-anchor="middle" font-size="17" font-weight="bold" fill="#0F172A">{prob_up:.0f}%</text>
+<div style="flex:0 0 120px; max-width:120px; background-color:#F8FAFC; border:1px solid #D9E2EC; border-radius:12px; padding:8px; display:flex; align-items:center; justify-content:center;">
+<svg viewBox="0 0 100 56" style="width:100%; max-width:88px; height:auto;">
+<path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#D9E2EC" stroke-width="4" stroke-linecap="round" />
+<path d="M 10 50 A 40 40 0 0 1 {_gx:.1f} {_gy:.1f}" fill="none" stroke="{status_color}" stroke-width="4" stroke-linecap="round" />
+<text x="50" y="47" text-anchor="middle" font-size="12" font-weight="bold" fill="#0F172A">{prob_up:.0f}%</text>
 </svg>
 </div>
 
-<div style="flex:1; min-width:300px; background-color:#F3F7FB; border:1px solid #C7D5E3; border-left:4px solid {status_color}; border-radius:12px; padding:22px 26px; display:flex; flex-direction:column; justify-content:center;">
+<div style="flex:1; min-width:300px; background-color:#F3F7FB; border:1px solid #C7D5E3; border-left:4px solid {status_color}; border-radius:12px; padding:22px 26px; display:flex; flex-direction:column; justify-content:center;>
 
 <div style="font-size:12px; font-weight:bold; color:{MUTED}; letter-spacing:1px; margin-bottom:10px;">
 PROBABILITY OF UP
