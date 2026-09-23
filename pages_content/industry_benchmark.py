@@ -151,6 +151,16 @@ def render(ctx):
 
     st.markdown("""
     <style>
+    .peer-comparison-table td {
+        white-space: nowrap !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+    }
+
+    .peer-comparison-table th {
+        white-space: normal !important;
+    }
+
     @media (max-width: 768px) {
 
         /* Peer Comparison */
@@ -315,9 +325,9 @@ def render(ctx):
     <td style="color:{star_color}; letter-spacing:0.5px; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:clip;">{'★'*star_n}{'☆'*(5-star_n)}</td>
     </tr>"""
 
-        st.markdown(f"""<div class="peer-comparison-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:350px; width:100%; max-width:100%; min-width:0; box-sizing:border-box;">
+        st.markdown(f"""<div class="peer-comparison-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; min-height:350px; height:auto; width:100%; max-width:100%; min-width:0; box-sizing:border-box;">
     <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:6px;">PEER COMPARISON — {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
-    <table class="peer-comparison-table" style="width:100%; max-width:100%; min-width:0; table-layout:fixed; text-align:center; font-size:15px; color:#475569; border-collapse:collapse; box-sizing:border-box;">
+    <table class="peer-comparison-table" style="width:100%; max-width:100%; min-width:0; table-layout:fixed; text-align:center; font-size:13px; color:#475569; border-collapse:collapse; box-sizing:border-box;">
     <colgroup>
         <col style="width:14%;">
         <col style="width:11%;">
