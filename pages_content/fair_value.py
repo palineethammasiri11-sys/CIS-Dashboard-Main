@@ -22,1855 +22,303 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 
-from common import (
-    fmt_mb,
-    fmt_ratio,
-    safe,
-    show_chart,
-    render_nav_footer,
-    COMPANY_NAMES,
-    SECTOR_MAP
-)
+from common import fmt_mb, fmt_ratio, safe, show_chart, render_nav_footer, COMPANY_NAMES, SECTOR_MAP
 
 
 def render(ctx):
-
-    # =========================================================
-    # DATA / CALCULATION — คงเดิม
-    # =========================================================
     val_cur_price = ctx.current_price
-    val_fair_value = safe(
-        ctx.stock_info.get('fair_value'),
-        val_cur_price * 1.1
-    )
-    val_mos = safe(
-        ctx.stock_info.get('margin_of_safety'),
-        10.0
-    )
-    val_score = int(
-        round(
-            safe(
-                ctx.stock_info.get('valuation_score'),
-                75
-            )
-        )
-    )
+    val_fair_value = safe(ctx.stock_info.get('fair_value'), val_cur_price * 1.1)
+    val_mos = safe(ctx.stock_info.get('margin_of_safety'), 10.0)
+    val_score = int(round(safe(ctx.stock_info.get('valuation_score'), 75)))
+    val_status = "UNDERVALUED" if val_mos > 10 else ("OVERVALUED" if val_mos < -10 else "FAIR VALUE")
+    val_color = "#10B981" if val_mos > 10 else ("#EF4444" if val_mos < -10 else "#F59E0B")
+    val_rec_label = "ATTRACTIVE" if val_mos > 10 else ("FAIR" if val_mos >= -5 else "CAUTION")
 
-    val_status = (
-        "UNDERVALUED"
-        if val_mos > 10
-        else (
-            "OVERVALUED"
-            if val_mos < -10
-            else "FAIR VALUE"
-        )
-    )
-
-    val_color = (
-        "#10B981"
-        if val_mos > 10
-        else (
-            "#EF4444"
-            if val_mos < -10
-            else "#F59E0B"
-        )
-    )
-
-    val_rec_label = (
-        "ATTRACTIVE"
-        if val_mos > 10
-        else (
-            "FAIR"
-            if val_mos >= -5
-            else "CAUTION"
-        )
-    )
-
-    val_bear = safe(
-        ctx.stock_info.get('dcf_fair_value'),
-        val_fair_value * 0.9
-    )
-
+    val_bear = safe(ctx.stock_info.get('dcf_fair_value'), val_fair_value * 0.9)
     val_base = val_fair_value
-
-    val_bull = safe(
-        ctx.stock_info.get('pe_fair_value'),
-        val_fair_value * 1.1
-    )
+    val_bull = safe(ctx.stock_info.get('pe_fair_value'), val_fair_value * 1.1)
 
     # เรียงให้ bear <= base <= bull เสมอเพื่อความสวยงามของภาพ
     lo, hi = min(val_bear, val_bull), max(val_bear, val_bull)
     val_bear, val_bull = lo, hi
 
-    val_stars = min(
-        5,
-        max(
-            1,
-            round(val_score / 20)
-        )
+    st.markdown(
+        """<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
+        <div><div style="display:flex; align-items:center; gap:8px;"><h2 style="margin:0; font-size:23px; font-weight:bold; color:#0F172A; letter-spacing:0.5px;">FAIR VALUE</h2></div>
+        <div style="font-size:16px; color:#64748B; margin-top:2px;">ประเมินมูลค่าที่เหมาะสมของหุ้นโดยใช้แบบจำลอง DCF ผสาน P/E Relative</div></div>
+        </div>""",
+        unsafe_allow_html=True
     )
 
-    # =========================================================
-    # PAGE HEADER
-    # =========================================================
-    st.markdown(
-        """
-        <div style="
-            margin-bottom:18px;
-        ">
-            <div style="
-                font-size:23px;
-                font-weight:bold;
-                color:#0F172A;
-                letter-spacing:0.5px;
-            ">
-                FAIR VALUE
-            </div>
+    # ---------------------------------------------------------------
+    # ตัวแปรช่วยสำหรับการ์ดแถวบน (เลย์เอาต์ใหม่ตามภาพตัวอย่าง)
+    # ---------------------------------------------------------------
+    def _hex_to_rgb(h):
+        h = h.lstrip('#')
+        return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
 
-            <div style="
-                font-size:16px;
-                color:#64748B;
-                margin-top:3px;
-            ">
-                ประเมินมูลค่าที่เหมาะสมของหุ้นโดยใช้แบบจำลอง DCF ผสาน P/E Relative
-            </div>
+    val_rgb = _hex_to_rgb(val_color)
+    val_stars = min(5, max(1, round(val_score / 20)))
+    conf = "High" if abs(val_mos) > 15 else ("Medium" if abs(val_mos) > 5 else "Low")
+    conf_score = 85 if conf == "High" else (60 if conf == "Medium" else 35)
+    conf_sweep = conf_score / 100 * 180
+    status_th = {
+        "UNDERVALUED": "ราคาต่ำกว่ามูลค่าที่เหมาะสม",
+        "OVERVALUED": "ราคาสูงกว่ามูลค่าที่เหมาะสม",
+        "FAIR VALUE": "ราคาใกล้เคียงมูลค่าที่เหมาะสม",
+    }.get(val_status, "ราคาใกล้เคียงมูลค่าที่เหมาะสม")
+    mos_arrow = "▲" if val_mos >= 0 else "▼"
+
+    # ---- แถว 1: Estimated Fair Value / Current Price / Margin of Safety / Recommendation ----
+    top_c1, top_c2, top_c3, top_c4 = st.columns([1.3, 1, 1, 1.1])
+
+    with top_c1:
+        st.markdown(
+            f"""<div style="background-color:rgba({val_rgb[0]},{val_rgb[1]},{val_rgb[2]},0.08); border:2px solid {val_color}; border-radius:12px; padding:14px; min-height:120px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px;"><span>🎯</span>ESTIMATED FAIR VALUE</div>
+        <div style="margin-top:6px;"><span style="font-size:30px; font-weight:bold; color:#0F172A;">{val_base:.2f}</span> <span style="font-size:14px; color:#64748B;">THB</span></div>
+        <div style="font-size:12px; color:#64748B; margin-top:2px;">(Blended: 55% DCF + 45% P/E)</div>
+        </div>""",
+            unsafe_allow_html=True
+        )
+
+    with top_c2:
+        st.markdown(
+            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:120px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px;"><span>📈</span>CURRENT PRICE</div>
+        <div style="margin-top:6px;"><span style="font-size:30px; font-weight:bold; color:#0F172A;">{val_cur_price:.2f}</span> <span style="font-size:14px; color:#64748B;">THB</span></div>
+        <div style="font-size:12px; color:#64748B; margin-top:2px;">({ctx.stock_info.get('latest_date', '-')})</div>
+        </div>""",
+            unsafe_allow_html=True
+        )
+
+    with top_c3:
+        st.markdown(
+            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:120px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px;"><span>🛡️</span>MARGIN OF SAFETY</div>
+        <div style="margin-top:6px;"><span style="font-size:30px; font-weight:bold; color:{val_color};">{val_mos:.1f}%</span> <span style="font-size:16px; color:{val_color};">{mos_arrow}</span></div>
+        <div style="font-size:12px; color:#64748B; margin-top:2px;">(vs. fair value)</div>
+        </div>""",
+            unsafe_allow_html=True
+        )
+
+    with top_c4:
+        st.markdown(
+            f"""<div style="background-color:{val_color}; border-radius:12px; padding:14px; min-height:120px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:rgba(255,255,255,0.85); letter-spacing:0.5px;"><span>🚩</span>RECOMMENDATION</div>
+        <div style="margin-top:8px; display:flex; justify-content:center;"><span style="background-color:#FFFFFF; color:{val_color}; font-weight:bold; font-size:16px; padding:6px 22px; border-radius:20px;">{val_rec_label}</span></div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.85); margin-top:8px; text-align:center;">{status_th}</div>
+        </div>""",
+            unsafe_allow_html=True
+        )
+
+    st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
+
+    # ---- แถว 2: Fair Value Range (gradient bar) / Confidence Level (arc) / Fair Value Summary Score (donut) ----
+    mid_c1, mid_c2, mid_c3 = st.columns([1.6, 1, 1])
+
+    with mid_c1:
+        rng_span = (val_bull - val_bear) if (val_bull - val_bear) != 0 else 1
+        pos_cur = min(97, max(3, (val_cur_price - val_bear) / rng_span * 100))
+        pos_base = min(97, max(3, (val_base - val_bear) / rng_span * 100))
+        st.markdown(
+            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:16px 18px; min-height:190px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:6px; font-size:14px; font-weight:bold; color:#475569; letter-spacing:0.5px;"><span>📶</span>FAIR VALUE RANGE — DCF vs P/E RELATIVE</div>
+        <div style="position:relative; height:70px; margin-top:26px;">
+        <div style="position:absolute; left:{pos_cur:.1f}%; top:-38px; transform:translateX(-50%); background:#0EA5E9; color:#FFFFFF; font-size:11px; font-weight:bold; border-radius:8px; padding:4px 8px; text-align:center; white-space:nowrap;">Current Price<br><span style="font-size:13px;">{val_cur_price:.2f} THB</span></div>
+        <div style="position:absolute; left:{pos_base:.1f}%; top:-38px; transform:translateX(-50%); background:#F59E0B; color:#FFFFFF; font-size:11px; font-weight:bold; border-radius:8px; padding:4px 8px; text-align:center; white-space:nowrap;">Blended Fair Value<br><span style="font-size:13px;">{val_base:.2f} THB</span></div>
+        <div style="position:absolute; top:24px; left:0; right:0; height:8px; border-radius:4px; background:linear-gradient(90deg, #10B981, #F59E0B, #38BDF8, #8B5CF6);"></div>
+        <div style="position:absolute; left:{pos_cur:.1f}%; top:20px; transform:translateX(-50%); width:14px; height:14px; border-radius:50%; background:#FFFFFF; border:3px solid #0EA5E9;"></div>
+        <div style="position:absolute; left:{pos_base:.1f}%; top:16px; transform:translateX(-50%); width:4px; height:22px; background:#F59E0B;"></div>
         </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    # =========================================================
-    # ROW 1
-    # ตามรูป:
-    # Estimated Fair Value | Current Price | Margin of Safety | Recommendation
-    # =========================================================
-    r1_c1, r1_c2, r1_c3, r1_c4 = st.columns(
-        [1.45, 1.0, 1.0, 1.0]
-    )
-
-    # ---------------------------------------------------------
-    # 1. ESTIMATED FAIR VALUE
-    # ---------------------------------------------------------
-    with r1_c1:
-
-        st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:2px solid {val_color};
-                border-radius:12px;
-                padding:14px 16px;
-                min-height:170px;
-                box-sizing:border-box;
-                display:flex;
-                flex-direction:column;
-                justify-content:space-between;
-            ">
-
-                <div style="
-                    font-size:14px;
-                    font-weight:bold;
-                    color:#64748B;
-                    letter-spacing:0.5px;
-                ">
-                    ESTIMATED FAIR VALUE
-                </div>
-
-                <div style="
-                    display:flex;
-                    align-items:baseline;
-                    gap:7px;
-                    margin-top:8px;
-                ">
-                    <span style="
-                        font-size:38px;
-                        font-weight:800;
-                        color:#0F172A;
-                        line-height:1;
-                        letter-spacing:-1px;
-                    ">
-                        {val_base:.2f}
-                    </span>
-
-                    <span style="
-                        font-size:17px;
-                        color:#64748B;
-                    ">
-                        THB
-                    </span>
-                </div>
-
-                <div style="
-                    font-size:13px;
-                    color:#64748B;
-                    margin-top:5px;
-                ">
-                    (Blended: 55% DCF + 45% P/E)
-                </div>
-
-            </div>
-            """,
+        <div style="display:flex; justify-content:space-between; font-size:12px; color:#64748B; margin-top:6px;">
+        <div>Min<br><b style="color:#0F172A; font-size:13px;">{val_bear:.2f} THB</b></div>
+        <div style="text-align:right;">Max<br><b style="color:#0F172A; font-size:13px;">{val_bull:.2f} THB</b></div>
+        </div>
+        </div>""",
             unsafe_allow_html=True
         )
 
-    # ---------------------------------------------------------
-    # 2. CURRENT PRICE
-    # ---------------------------------------------------------
-    with r1_c2:
-
+    with mid_c2:
         st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:12px;
-                padding:14px;
-                min-height:170px;
-                box-sizing:border-box;
-                display:flex;
-                flex-direction:column;
-                justify-content:space-between;
-            ">
-
-                <div style="
-                    font-size:14px;
-                    font-weight:bold;
-                    color:#64748B;
-                    letter-spacing:0.5px;
-                ">
-                    CURRENT PRICE
-                </div>
-
-                <div>
-                    <div style="
-                        font-size:28px;
-                        font-weight:bold;
-                        color:#0F172A;
-                        line-height:1;
-                    ">
-                        {val_cur_price:.2f}
-                        <span style="
-                            font-size:14px;
-                            color:#64748B;
-                        ">
-                            THB
-                        </span>
-                    </div>
-
-                    <div style="
-                        font-size:13px;
-                        color:#64748B;
-                        margin-top:6px;
-                    ">
-                        ({ctx.stock_info.get('latest_date','-')})
-                    </div>
-                </div>
-
-            </div>
-            """,
+            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:190px; display:flex; flex-direction:column; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px; align-self:flex-start;"><span>🛡️</span>CONFIDENCE LEVEL</div>
+        <div style="position:relative; width:120px; height:60px; margin-top:6px;">
+        <div style="width:120px; height:60px; border-radius:120px 120px 0 0; overflow:hidden; background:conic-gradient(from 270deg at 50% 100%, {val_color} 0deg {conf_sweep:.0f}deg, #E2E8F0 {conf_sweep:.0f}deg 180deg);"></div>
+        <div style="position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:88px; height:44px; border-radius:88px 88px 0 0; background:#FFFFFF;"></div>
+        </div>
+        <div style="text-align:center; margin-top:-6px;">
+        <div style="font-size:17px; font-weight:bold; color:{val_color};">{conf.upper()}</div>
+        <div style="font-size:12px; color:#64748B;">({conf_score}/100)</div>
+        </div>
+        </div>""",
             unsafe_allow_html=True
         )
 
-    # ---------------------------------------------------------
-    # 3. MARGIN OF SAFETY
-    # ---------------------------------------------------------
-    with r1_c3:
-
+    with mid_c3:
         st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:12px;
-                padding:14px;
-                min-height:170px;
-                box-sizing:border-box;
-                display:flex;
-                flex-direction:column;
-                justify-content:space-between;
-            ">
-
-                <div style="
-                    font-size:14px;
-                    font-weight:bold;
-                    color:#64748B;
-                    letter-spacing:0.5px;
-                ">
-                    MARGIN OF SAFETY
-                </div>
-
-                <div>
-                    <div style="
-                        font-size:30px;
-                        font-weight:bold;
-                        color:{val_color};
-                        line-height:1;
-                    ">
-                        {val_mos:.1f}%
-                    </div>
-
-                    <div style="
-                        font-size:13px;
-                        color:#64748B;
-                        margin-top:6px;
-                    ">
-                        (vs. fair value)
-                    </div>
-                </div>
-
-            </div>
-            """,
+            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:190px; display:flex; flex-direction:column; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px; align-self:flex-start;"><span>⭐</span>FAIR VALUE SUMMARY SCORE</div>
+        <div style="width:88px; height:88px; border-radius:50%; background:conic-gradient({val_color} 0% {val_score}%, #E2E8F0 {val_score}% 100%); display:flex; align-items:center; justify-content:center; margin-top:4px;">
+        <div style="width:72px; height:72px; border-radius:50%; background-color:#FFFFFF; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+        <span style="font-size:22px; font-weight:bold; color:#0F172A; line-height:1;">{val_score}</span><span style="font-size:12px; color:#64748B;">/100</span>
+        </div></div>
+        <div style="text-align:center; margin-top:4px;">
+        <div style="font-size:15px; font-weight:bold; color:{val_color};">{val_rec_label}</div>
+        <div style="color:{val_color}; font-size:14px; letter-spacing:1px;">{'★' * val_stars}{'☆' * (5 - val_stars)}</div>
+        </div>
+        </div>""",
             unsafe_allow_html=True
         )
 
-    # ---------------------------------------------------------
-    # 4. RECOMMENDATION
-    # ---------------------------------------------------------
-    with r1_c4:
+    st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
+    r2_c1, r2_c2, r2_c3 = st.columns([1.3, 1.3, 1.4])
 
-        st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:12px;
-                padding:14px;
-                min-height:170px;
-                box-sizing:border-box;
-                display:flex;
-                flex-direction:column;
-                justify-content:space-between;
-                text-align:center;
-            ">
-
-                <div style="
-                    font-size:14px;
-                    font-weight:bold;
-                    color:#64748B;
-                    letter-spacing:0.5px;
-                    text-align:left;
-                ">
-                    RECOMMENDATION
-                </div>
-
-                <div style="
-                    display:flex;
-                    flex-direction:column;
-                    align-items:center;
-                    justify-content:center;
-                    gap:7px;
-                    flex:1;
-                ">
-
-                    <div style="
-                        background:{val_color};
-                        color:#FFFFFF;
-                        border-radius:20px;
-                        padding:8px 30px;
-                        min-width:105px;
-                        box-sizing:border-box;
-                        font-size:18px;
-                        font-weight:bold;
-                        line-height:1;
-                    ">
-                        {val_rec_label}
-                    </div>
-
-                    <div style="
-                        font-size:13px;
-                        color:#64748B;
-                    ">
-                        ราคาเหมาะสม
-                    </div>
-
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    # =========================================================
-    # ROW 2
-    # ตามรูป:
-    # Fair Value Range (ใหญ่) | Confidence | Fair Value Score
-    # =========================================================
-    st.markdown(
-        "<div style='height:18px;'></div>",
-        unsafe_allow_html=True
-    )
-
-    r2_c1, r2_c2, r2_c3 = st.columns(
-        [2.5, 0.7, 0.7]
-    )
-
-    # ---------------------------------------------------------
-    # 1. FAIR VALUE RANGE
-    # ---------------------------------------------------------
     with r2_c1:
-
-        # ตำแหน่ง current / fair value บน range
-        range_min = min(
-            val_cur_price,
-            val_bear,
-            val_base,
-            val_bull
-        )
-
-        range_max = max(
-            val_cur_price,
-            val_bear,
-            val_base,
-            val_bull
-        )
-
-        range_span = max(
-            range_max - range_min,
-            1
-        )
-
-        current_pos = (
-            (val_cur_price - range_min)
-            / range_span
-        ) * 100
-
-        fair_pos = (
-            (val_base - range_min)
-            / range_span
-        ) * 100
-
-        current_pos = max(
-            4,
-            min(
-                96,
-                current_pos
-            )
-        )
-
-        fair_pos = max(
-            4,
-            min(
-                96,
-                fair_pos
-            )
-        )
-
         st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:12px;
-                padding:14px 18px;
-                min-height:315px;
-                box-sizing:border-box;
-                display:flex;
-                flex-direction:column;
-            ">
-
-                <div style="
-                    font-size:15px;
-                    font-weight:bold;
-                    color:#64748B;
-                    letter-spacing:0.5px;
-                    margin-bottom:10px;
-                ">
-                    FAIR VALUE RANGE — DCF vs P/E RELATIVE
-                </div>
-
-                <div style="
-                    position:relative;
-                    flex:1;
-                    min-height:230px;
-                    display:flex;
-                    flex-direction:column;
-                    justify-content:center;
-                ">
-
-                    <!-- Current Price label -->
-                    <div style="
-                        position:absolute;
-                        left:{current_pos}%;
-                        top:34px;
-                        transform:translateX(-50%);
-                        background:#FFFFFF;
-                        border:1px solid #3B82F6;
-                        border-radius:7px;
-                        padding:5px 10px;
-                        text-align:center;
-                        white-space:nowrap;
-                        z-index:3;
-                    ">
-                        <div style="
-                            font-size:11px;
-                            color:#3B82F6;
-                            font-weight:bold;
-                        ">
-                            Current Price
-                        </div>
-
-                        <div style="
-                            font-size:15px;
-                            color:#3B82F6;
-                            font-weight:bold;
-                        ">
-                            {val_cur_price:.2f}
-                            <span style="font-size:10px;">
-                                THB
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Blended Fair Value label -->
-                    <div style="
-                        position:absolute;
-                        left:{fair_pos}%;
-                        top:34px;
-                        transform:translateX(-50%);
-                        background:#FFFFFF;
-                        border:1px solid #F59E0B;
-                        border-radius:7px;
-                        padding:5px 10px;
-                        text-align:center;
-                        white-space:nowrap;
-                        z-index:3;
-                    ">
-                        <div style="
-                            font-size:11px;
-                            color:#F59E0B;
-                            font-weight:bold;
-                        ">
-                            Blended Fair Value
-                        </div>
-
-                        <div style="
-                            font-size:15px;
-                            color:#F59E0B;
-                            font-weight:bold;
-                        ">
-                            {val_base:.2f}
-                            <span style="font-size:10px;">
-                                THB
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Gradient Range -->
-                    <div style="
-                        position:relative;
-                        width:100%;
-                        height:12px;
-                        border-radius:10px;
-                        background:linear-gradient(
-                            90deg,
-                            #34D399 0%,
-                            #38BDF8 30%,
-                            #F59E0B 65%,
-                            #A855F7 100%
-                        );
-                        margin-top:20px;
-                    ">
-
-                        <!-- Current marker -->
-                        <div style="
-                            position:absolute;
-                            left:{current_pos}%;
-                            top:50%;
-                            transform:translate(-50%,-50%);
-                            width:15px;
-                            height:15px;
-                            border-radius:50%;
-                            background:#FFFFFF;
-                            border:2px solid #3B82F6;
-                            box-shadow:0 0 0 2px rgba(59,130,246,0.15);
-                        "></div>
-
-                        <!-- Fair value marker -->
-                        <div style="
-                            position:absolute;
-                            left:{fair_pos}%;
-                            top:50%;
-                            transform:translate(-50%,-50%);
-                            width:15px;
-                            height:15px;
-                            border-radius:3px;
-                            background:#F59E0B;
-                            border:2px solid #FFFFFF;
-                            box-shadow:0 0 0 1px #F59E0B;
-                        "></div>
-
-                    </div>
-
-                    <!-- Min / Max -->
-                    <div style="
-                        display:flex;
-                        justify-content:space-between;
-                        margin-top:14px;
-                    ">
-
-                        <div>
-                            <div style="
-                                font-size:13px;
-                                color:#475569;
-                            ">
-                                Min
-                            </div>
-
-                            <div style="
-                                font-size:17px;
-                                font-weight:bold;
-                                color:#0F172A;
-                            ">
-                                {val_bear:.2f}
-                            </div>
-
-                            <div style="
-                                font-size:11px;
-                                color:#64748B;
-                            ">
-                                THB
-                            </div>
-                        </div>
-
-                        <div style="
-                            text-align:right;
-                        ">
-                            <div style="
-                                font-size:13px;
-                                color:#475569;
-                            ">
-                                Max
-                            </div>
-
-                            <div style="
-                                font-size:17px;
-                                font-weight:bold;
-                                color:#0F172A;
-                            ">
-                                {val_bull:.2f}
-                            </div>
-
-                            <div style="
-                                font-size:11px;
-                                color:#64748B;
-                            ">
-                                THB
-                            </div>
-                        </div>
-
-                    </div>
-
-                </div>
-
-                <div style="
-                    background:rgba(16,185,129,0.08);
-                    border-radius:6px;
-                    padding:7px 9px;
-                    display:flex;
-                    align-items:flex-start;
-                    gap:7px;
-                    margin-top:8px;
-                ">
-
-                    <span style="
-                        color:#10B981;
-                        font-size:15px;
-                    ">
-                        ✔
-                    </span>
-
-                    <div style="
-                        font-size:13px;
-                        color:#475569;
-                        line-height:1.3;
-                    ">
-                        <b>
-                            DCF Fair Value:
-                            {safe(ctx.stock_info.get('dcf_fair_value')):.2f}
-                            THB
-                            &nbsp;|&nbsp;
-                            P/E Fair Value:
-                            {safe(ctx.stock_info.get('pe_fair_value')):.2f}
-                            THB
-                        </b>
-                        <br>
-
-                        <span style="color:#64748B;">
-                            คำนวณจากงบการเงินปีล่าสุด
-                            (FY{int(ctx.fin_stock['year'].max()) if not ctx.fin_stock.empty else '-'})
-                            เทียบราคาตลาดปัจจุบัน
-                            {val_cur_price:.2f} THB
-                        </span>
-                    </div>
-
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    # ---------------------------------------------------------
-    # 2. CONFIDENCE LEVEL
-    # ---------------------------------------------------------
-    with r2_c2:
-
-        conf = (
-            "High"
-            if abs(val_mos) > 15
-            else (
-                "Medium"
-                if abs(val_mos) > 5
-                else "Low"
-            )
-        )
-
-        conf_score = (
-            80
-            if conf == "High"
-            else (
-                60
-                if conf == "Medium"
-                else 35
-            )
-        )
-
-        st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:12px;
-                padding:14px;
-                min-height:315px;
-                box-sizing:border-box;
-                display:flex;
-                flex-direction:column;
-                justify-content:space-between;
-                text-align:center;
-            ">
-
-                <div style="
-                    font-size:14px;
-                    font-weight:bold;
-                    color:#64748B;
-                    letter-spacing:0.4px;
-                    text-align:left;
-                ">
-                    CONFIDENCE LEVEL
-                </div>
-
-                <div style="
-                    display:flex;
-                    flex-direction:column;
-                    align-items:center;
-                    justify-content:center;
-                    flex:1;
-                ">
-
-                    <div style="
-                        width:78px;
-                        height:42px;
-                        border-radius:78px 78px 0 0;
-                        border:9px solid #E2E8F0;
-                        border-bottom:0;
-                        position:relative;
-                        box-sizing:border-box;
-                        margin-top:15px;
-                    ">
-                        <div style="
-                            position:absolute;
-                            left:-9px;
-                            top:-9px;
-                            width:78px;
-                            height:42px;
-                            border-radius:78px 78px 0 0;
-                            border:9px solid #10B981;
-                            border-bottom:0;
-                            box-sizing:border-box;
-                            clip-path:polygon(
-                                0 0,
-                                {conf_score}% 0,
-                                {conf_score}% 100%,
-                                0 100%
-                            );
-                        "></div>
-                    </div>
-
-                    <div style="
-                        font-size:18px;
-                        font-weight:bold;
-                        color:#10B981;
-                        margin-top:5px;
-                    ">
-                        {conf.upper()}
-                    </div>
-
-                    <div style="
-                        font-size:13px;
-                        color:#64748B;
-                        margin-top:4px;
-                    ">
-                        ({conf_score}/100)
-                    </div>
-
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    # ---------------------------------------------------------
-    # 3. FAIR VALUE SCORE
-    # ---------------------------------------------------------
-    with r2_c3:
-
-        safety_score = int(
-            min(
-                100,
-                max(
-                    20,
-                    int(val_mos + 50)
-                )
-            )
-        )
-
-        st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:12px;
-                padding:14px;
-                min-height:315px;
-                box-sizing:border-box;
-                display:flex;
-                flex-direction:column;
-                justify-content:space-between;
-            ">
-
-                <div style="
-                    font-size:14px;
-                    font-weight:bold;
-                    color:#64748B;
-                    letter-spacing:0.4px;
-                ">
-                    FAIR VALUE SCORE
-                </div>
-
-                <div style="
-                    display:flex;
-                    flex-direction:column;
-                    align-items:center;
-                    justify-content:center;
-                    flex:1;
-                ">
-
-                    <div style="
-                        width:86px;
-                        height:86px;
-                        border-radius:50%;
-                        background:conic-gradient(
-                            {val_color} 0% {val_score}%,
-                            #E2E8F0 {val_score}% 100%
-                        );
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                    ">
-
-                        <div style="
-                            width:68px;
-                            height:68px;
-                            border-radius:50%;
-                            background:#FFFFFF;
-                            display:flex;
-                            flex-direction:column;
-                            align-items:center;
-                            justify-content:center;
-                        ">
-
-                            <span style="
-                                font-size:24px;
-                                font-weight:bold;
-                                color:#0F172A;
-                                line-height:1;
-                            ">
-                                {val_score}
-                            </span>
-
-                            <span style="
-                                font-size:11px;
-                                color:#64748B;
-                            ">
-                                /100
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                    <div style="
-                        font-size:14px;
-                        color:{val_color};
-                        font-weight:bold;
-                        margin-top:9px;
-                    ">
-                        {val_status}
-                    </div>
-
-                    <div style="
-                        color:{val_color};
-                        font-size:15px;
-                        letter-spacing:1px;
-                        margin-top:4px;
-                    ">
-                        {'★'*val_stars}{'☆'*(5-val_stars)}
-                    </div>
-
-                </div>
-
-                <div style="
-                    border-top:1px solid #E2E8F0;
-                    padding-top:7px;
-                    text-align:center;
-                ">
-                    <span style="
-                        font-size:12px;
-                        color:#64748B;
-                    ">
-                        Overall Fair Value Score
-                    </span>
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    # =========================================================
-    # ROW 3 — EXISTING VALUATION DRIVERS / DIMENSION
-    # =========================================================
-    st.markdown(
-        "<div style='margin-top:22px;'></div>",
-        unsafe_allow_html=True
-    )
-
-    r3_c1, r3_c2, r3_c3 = st.columns(
-        [1.3, 1.3, 1.4]
-    )
-
-    # ---------------------------------------------------------
-    # VALUATION DRIVERS
-    # ---------------------------------------------------------
-    with r3_c1:
-
-        st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:12px;
-                padding:14px;
-                min-height:315px;
-                display:flex;
-                flex-direction:column;
-                justify-content:space-between;
-            ">
-
-                <div style="
-                    font-size:15px;
-                    font-weight:bold;
-                    color:#64748B;
-                    letter-spacing:0.5px;
-                ">
-                    VALUATION DRIVERS ({ctx.selected_ticker})
-                </div>
-
-                <div style="
-                    font-size:14px;
-                    color:#475569;
-                    line-height:1.45;
-                    display:flex;
-                    flex-direction:column;
-                    gap:8px;
-                    margin:auto 0;
-                ">
-
-                    <div style="display:flex; gap:6px;">
-                        <span style="color:#10B981;">✔</span>
-                        <div>
-                            <b>Fair Value (Blended): {val_base:.2f} THB</b><br>
-                            <span style="color:#64748B; font-size:13px;">
-                                ประเมินแบบผสมผสาน DCF + Relative P/E
-                            </span>
-                        </div>
-                    </div>
-
-                    <div style="display:flex; gap:6px;">
-                        <span style="color:#10B981;">✔</span>
-                        <div>
-                            <b>Margin of Safety: {val_mos:.1f}%</b><br>
-                            <span style="color:#64748B; font-size:13px;">
-                                ส่วนต่างความปลอดภัยจากราคาตลาดปัจจุบัน
-                            </span>
-                        </div>
-                    </div>
-
-                    <div style="display:flex; gap:6px;">
-                        <span style="color:#10B981;">✔</span>
-                        <div>
-                            <b>
-                                P/E Ratio ปัจจุบัน:
-                                {fmt_ratio(ctx.stock_info.get('pe_ratio'), suffix='')}
-                                เท่า
-                            </b><br>
-                            <span style="color:#64748B; font-size:13px;">
-                                เทียบ EPS ล่าสุด {ctx.stock_info.get('eps','-')} บาท/หุ้น
-                            </span>
-                        </div>
-                    </div>
-
-                    <div style="display:flex; gap:6px;">
-                        <span style="color:#10B981;">✔</span>
-                        <div>
-                            <b>สถานะมูลค่า: {val_status}</b><br>
-                            <span style="color:#64748B; font-size:13px;">
-                                ระดับความน่าดึงดูดเชิงมูลค่าพื้นฐาน
-                            </span>
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    # ---------------------------------------------------------
-    # FAIR VALUE SCORE BY DIMENSION
-    # ---------------------------------------------------------
-    with r3_c2:
-
-        st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:12px;
-                padding:14px;
-                min-height:315px;
-                display:flex;
-                flex-direction:column;
-                justify-content:space-between;
-            ">
-
-                <div style="
-                    font-size:15px;
-                    font-weight:bold;
-                    color:#64748B;
-                    letter-spacing:0.5px;
-                ">
-                    FAIR VALUE SCORE BY DIMENSION
-                </div>
-
-                <div style="
-                    display:flex;
-                    flex-direction:column;
-                    gap:12px;
-                    margin:auto 0;
-                ">
-
-                    <div>
-                        <div style="
-                            display:flex;
-                            justify-content:space-between;
-                            font-size:14px;
-                            color:#475569;
-                            margin-bottom:4px;
-                        ">
-                            <span>📊 Relative Valuation (P/E)</span>
-                            <span style="
-                                font-weight:bold;
-                                color:#0F172A;
-                            ">
-                                {val_score}
-                                <span style="
-                                    font-size:13px;
-                                    color:#64748B;
-                                ">
-                                    /100
-                                </span>
-                            </span>
-                        </div>
-
-                        <div style="
-                            background:#E2E8F0;
-                            height:9px;
-                            border-radius:4px;
-                            overflow:hidden;
-                        ">
-                            <div style="
-                                background:{val_color};
-                                width:{val_score}%;
-                                height:100%;
-                            "></div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div style="
-                            display:flex;
-                            justify-content:space-between;
-                            font-size:14px;
-                            color:#475569;
-                            margin-bottom:4px;
-                        ">
-                            <span>🎯 Intrinsic Valuation (DCF)</span>
-
-                            <span style="
-                                font-weight:bold;
-                                color:#0F172A;
-                            ">
-                                {val_score}
-                                <span style="
-                                    font-size:13px;
-                                    color:#64748B;
-                                ">
-                                    /100
-                                </span>
-                            </span>
-                        </div>
-
-                        <div style="
-                            background:#E2E8F0;
-                            height:9px;
-                            border-radius:4px;
-                            overflow:hidden;
-                        ">
-                            <div style="
-                                background:{val_color};
-                                width:{val_score}%;
-                                height:100%;
-                            "></div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div style="
-                            display:flex;
-                            justify-content:space-between;
-                            font-size:14px;
-                            color:#475569;
-                            margin-bottom:4px;
-                        ">
-                            <span>🛡️ Margin of Safety</span>
-
-                            <span style="
-                                font-weight:bold;
-                                color:#0F172A;
-                            ">
-                                {safety_score}
-                                <span style="
-                                    font-size:13px;
-                                    color:#64748B;
-                                ">
-                                    /100
-                                </span>
-                            </span>
-                        </div>
-
-                        <div style="
-                            background:#E2E8F0;
-                            height:9px;
-                            border-radius:4px;
-                            overflow:hidden;
-                        ">
-                            <div style="
-                                background:{val_color};
-                                width:{safety_score}%;
-                                height:100%;
-                            "></div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                    border-top:1px solid #E2E8F0;
-                    padding-top:8px;
-                ">
-                    <span style="
-                        font-size:14px;
-                        font-weight:bold;
-                        color:#475569;
-                    ">
-                        OVERALL FAIR VALUE SCORE
-                    </span>
-
-                    <span style="
-                        font-size:19px;
-                        font-weight:bold;
-                        color:{val_color};
-                    ">
-                        {val_score}
-                        <span style="
-                            font-size:14px;
-                            color:#64748B;
-                        ">
-                            /100
-                        </span>
-                    </span>
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    # ---------------------------------------------------------
-    # EXISTING FAIR VALUE SUMMARY
-    # ---------------------------------------------------------
-    with r3_c3:
-
-        st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:12px;
-                padding:14px;
-                min-height:315px;
-                display:flex;
-                flex-direction:column;
-                justify-content:space-between;
-            ">
-
-                <div style="
-                    font-size:15px;
-                    font-weight:bold;
-                    color:#64748B;
-                    letter-spacing:0.5px;
-                ">
-                    FAIR VALUE SUMMARY
-                </div>
-
-                <div style="
-                    display:flex;
-                    flex-direction:column;
-                    align-items:center;
-                    justify-content:center;
-                    flex:1;
-                ">
-
-                    <div style="
-                        width:100px;
-                        height:100px;
-                        border-radius:50%;
-                        background:
-                            conic-gradient(
-                                {val_color} 0% {val_score}%,
-                                #E2E8F0 {val_score}% 100%
-                            );
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                    ">
-
-                        <div style="
-                            width:78px;
-                            height:78px;
-                            border-radius:50%;
-                            background:#FFFFFF;
-                            display:flex;
-                            flex-direction:column;
-                            align-items:center;
-                            justify-content:center;
-                        ">
-
-                            <span style="
-                                font-size:26px;
-                                font-weight:bold;
-                                color:#0F172A;
-                                line-height:1;
-                            ">
-                                {val_score}
-                            </span>
-
-                            <span style="
-                                font-size:12px;
-                                color:#64748B;
-                            ">
-                                /100
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                    <div style="
-                        color:{val_color};
-                        font-size:17px;
-                        font-weight:bold;
-                        margin-top:9px;
-                    ">
-                        {val_status}
-                    </div>
-
-                    <div style="
-                        color:{val_color};
-                        font-size:17px;
-                        letter-spacing:2px;
-                        margin-top:4px;
-                    ">
-                        {'★'*val_stars}{'☆'*(5-val_stars)}
-                    </div>
-
-                    <div style="
-                        font-size:13px;
-                        color:#64748B;
-                        margin-top:8px;
-                        text-align:center;
-                    ">
-                        Margin of Safety: {val_mos:.1f}%
-                    </div>
-
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    # =========================================================
-    # DETAIL BREAKDOWN
-    # =========================================================
-    st.markdown(
-        "<div style='margin-top:22px;'></div>",
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        """
-        <div style="
-            font-size:15px;
-            font-weight:bold;
-            color:#64748B;
-            letter-spacing:0.5px;
-            margin-bottom:8px;
-        ">
-            DETAIL BREAKDOWN
+            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:315px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div style="font-size:15px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">FAIR VALUE RANGE — DCF vs P/E RELATIVE</div>
+        <div style="display:grid; grid-template-columns:1fr 1.1fr 1fr; gap:6px; margin-top:6px;">
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:8px 4px; text-align:center;">
+        <div style="color:#EF4444; font-size:14px; font-weight:bold;">Lower Estimate</div><div style="color:#64748B; font-size:13px;">Min(DCF, P/E)</div>
+        <div style="color:#0F172A; font-size:17px; font-weight:bold; margin-top:4px;">{val_bear:.2f} <span style="font-size:13px; color:#64748B;">THB</span></div></div>
+        <div style="background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:8px; padding:8px 4px; text-align:center;">
+        <div style="color:#F59E0B; font-size:14px; font-weight:bold;">Blended Fair Value</div><div style="color:#64748B; font-size:13px;">55% DCF + 45% P/E</div>
+        <div style="color:#0F172A; font-size:17.5px; font-weight:bold; margin-top:4px;">{val_base:.2f} <span style="font-size:13px; color:#64748B;">THB</span></div></div>
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:8px 4px; text-align:center;">
+        <div style="color:#10B981; font-size:14px; font-weight:bold;">Upper Estimate</div><div style="color:#64748B; font-size:13px;">Max(DCF, P/E)</div>
+        <div style="color:#0F172A; font-size:17px; font-weight:bold; margin-top:4px;">{val_bull:.2f} <span style="font-size:13px; color:#64748B;">THB</span></div></div>
         </div>
-        """,
+        <div style="background:rgba(16,185,129,0.08); border-radius:6px; padding:6px 8px; display:flex; align-items:flex-start; gap:6px; margin-top:10px;">
+        <span style="color:#10B981; font-size:15px;">✔</span><div style="font-size:13px; color:#475569; line-height:1.3;">
+        <b>DCF Fair Value: {safe(ctx.stock_info.get('dcf_fair_value')):.2f} THB &nbsp;|&nbsp; P/E Fair Value: {safe(ctx.stock_info.get('pe_fair_value')):.2f} THB</b><br>
+        <span style="color:#64748B;">คำนวณจากงบการเงินปีล่าสุด (FY{int(ctx.fin_stock['year'].max()) if not ctx.fin_stock.empty else '-'}) เทียบราคาตลาดปัจจุบัน {val_cur_price:.2f} THB</span></div></div>
+        </div>""",
+            unsafe_allow_html=True
+        )
+
+    with r2_c2:
+        st.markdown(
+            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:315px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div style="font-size:15px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">VALUATION DRIVERS ({ctx.selected_ticker})</div>
+        <div style="font-size:14px; color:#475569; line-height:1.45; display:flex; flex-direction:column; gap:6px; margin:auto 0;">
+        <div style="display:flex; gap:6px;"><span style="color:#10B981;">✔</span><div><b>Fair Value (Blended): {val_base:.2f} THB</b><br><span style="color:#64748B; font-size:13px;">ประเมินแบบผสมผสาน DCF + Relative P/E</span></div></div>
+        <div style="display:flex; gap:6px;"><span style="color:#10B981;">✔</span><div><b>Margin of Safety: {val_mos:.1f}%</b><br><span style="color:#64748B; font-size:13px;">ส่วนต่างความปลอดภัยจากราคาตลาดปัจจุบัน</span></div></div>
+        <div style="display:flex; gap:6px;"><span style="color:#10B981;">✔</span><div><b>P/E Ratio ปัจจุบัน: {fmt_ratio(ctx.stock_info.get('pe_ratio'), suffix='')} เท่า</b><br><span style="color:#64748B; font-size:13px;">เทียบ EPS ล่าสุด {ctx.stock_info.get('eps', '-')} บาท/หุ้น</span></div></div>
+        <div style="display:flex; gap:6px;"><span style="color:#10B981;">✔</span><div><b>สถานะมูลค่า: {val_status}</b><br><span style="color:#64748B; font-size:13px;">ระดับความน่าดึงดูดเชิงมูลค่าพื้นฐาน</span></div></div>
+        </div></div>""",
+            unsafe_allow_html=True
+        )
+
+    with r2_c3:
+        safety_score = int(min(100, max(20, int(val_mos + 50))))
+        st.markdown(
+            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:315px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div style="font-size:15px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">FAIR VALUE SCORE BY DIMENSION</div>
+        <div style="display:flex; flex-direction:column; gap:10px; margin:auto 0;">
+        <div><div style="display:flex; justify-content:space-between; font-size:14px; color:#475569; margin-bottom:3px;"><span>📊 Relative Valuation (P/E)</span><span style="font-weight:bold; color:#0F172A;">{val_score} <span style="font-size:13px; color:#64748B;">/100</span></span></div>
+        <div style="background:#E2E8F0; height:9px; border-radius:4px; overflow:hidden;"><div style="background:{val_color}; width:{val_score}%; height:100%;"></div></div></div>
+        <div><div style="display:flex; justify-content:space-between; font-size:14px; color:#475569; margin-bottom:3px;"><span>🎯 Intrinsic Valuation (DCF)</span><span style="font-weight:bold; color:#0F172A;">{val_score} <span style="font-size:13px; color:#64748B;">/100</span></span></div>
+        <div style="background:#E2E8F0; height:9px; border-radius:4px; overflow:hidden;"><div style="background:{val_color}; width:{val_score}%; height:100%;"></div></div></div>
+        <div><div style="display:flex; justify-content:space-between; font-size:14px; color:#475569; margin-bottom:3px;"><span>🛡️ Margin of Safety</span><span style="font-weight:bold; color:#0F172A;">{safety_score} <span style="font-size:13px; color:#64748B;">/100</span></span></div>
+        <div style="background:#E2E8F0; height:9px; border-radius:4px; overflow:hidden;"><div style="background:{val_color}; width:{safety_score}%; height:100%;"></div></div></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #E2E8F0; padding-top:8px;">
+        <span style="font-size:14px; font-weight:bold; color:#475569;">OVERALL FAIR VALUE SCORE</span><span style="font-size:19px; font-weight:bold; color:{val_color};">{val_score} <span style="font-size:14px; color:#64748B;">/100</span></span>
+        </div></div>""",
+            unsafe_allow_html=True
+        )
+
+    st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
+    st.markdown(
+        """<div style="font-size:15px; font-weight:bold; color:#64748B; letter-spacing:0.5px; margin-bottom:8px;">DETAIL BREAKDOWN</div>""",
         unsafe_allow_html=True
     )
 
     d_c1, d_c2, d_c3, d_c4 = st.columns(4)
 
-    # =========================================================
-    # DETAIL 1
-    # =========================================================
     with d_c1:
-
         st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:10px;
-                padding:12px;
-                min-height:190px;
-                display:flex;
-                flex-direction:column;
-                justify-content:space-between;
-            ">
-
-                <div>
-                    <div style="
-                        font-size:14px;
-                        font-weight:bold;
-                        color:#475569;
-                    ">
-                        RELATIVE VALUATION (P/E)
-                    </div>
-
-                    <table style="
-                        width:100%;
-                        font-size:14px;
-                        color:#475569;
-                        border-collapse:collapse;
-                        margin-top:6px;
-                    ">
-
-                        <tr style="
-                            border-bottom:1px solid #E2E8F0;
-                            color:#64748B;
-                            font-size:13px;
-                        ">
-                            <th style="
-                                text-align:left;
-                                padding:2px 0;
-                            ">
-                                Metric
-                            </th>
-
-                            <th>
-                                Value
-                            </th>
-                        </tr>
-
-                        <tr style="
-                            border-bottom:1px solid #E2E8F0;
-                        ">
-                            <td style="padding:3px 0;">
-                                P/E Ratio ปัจจุบัน
-                            </td>
-
-                            <td>
-                                {fmt_ratio(ctx.stock_info.get('pe_ratio'))}
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td style="padding:3px 0;">
-                                P/E Fair Value
-                            </td>
-
-                            <td>
-                                {safe(ctx.stock_info.get('pe_fair_value')):.2f} THB
-                            </td>
-                        </tr>
-
-                    </table>
-                </div>
-
-            </div>
-            """,
+            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:12px; min-height:190px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div><div style="font-size:14px; font-weight:bold; color:#475569;">RELATIVE VALUATION (P/E)</div>
+        <table style="width:100%; font-size:14px; color:#475569; border-collapse:collapse; margin-top:6px;">
+        <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:13px;"><th style="text-align:left; padding:2px 0;">Metric</th><th>Value</th></tr>
+        <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:3px 0;">P/E Ratio ปัจจุบัน</td><td>{fmt_ratio(ctx.stock_info.get('pe_ratio'))}</td></tr>
+        <tr><td style="padding:3px 0;">P/E Fair Value</td><td>{safe(ctx.stock_info.get('pe_fair_value')):.2f} THB</td></tr>
+        </table></div></div>""",
             unsafe_allow_html=True
         )
 
-    # =========================================================
-    # DETAIL 2
-    # =========================================================
     with d_c2:
-
         st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:10px;
-                padding:12px;
-                min-height:190px;
-                display:flex;
-                flex-direction:column;
-                justify-content:space-between;
-            ">
-
-                <div>
-
-                    <div style="
-                        font-size:14px;
-                        font-weight:bold;
-                        color:#475569;
-                    ">
-                        INTRINSIC VALUATION (DCF)
-                    </div>
-
-                    <table style="
-                        width:100%;
-                        font-size:14px;
-                        color:#475569;
-                        border-collapse:collapse;
-                        margin-top:6px;
-                    ">
-
-                        <tr style="
-                            border-bottom:1px solid #E2E8F0;
-                            color:#64748B;
-                            font-size:13px;
-                        ">
-                            <th style="
-                                text-align:left;
-                                padding:2px 0;
-                            ">
-                                Metric
-                            </th>
-
-                            <th>
-                                Value
-                            </th>
-                        </tr>
-
-                        <tr style="
-                            border-bottom:1px solid #E2E8F0;
-                        ">
-                            <td style="padding:3px 0;">
-                                WACC
-                            </td>
-
-                            <td>
-                                {fmt_ratio(
-                                    ctx.stock_info.get('wacc_used'),
-                                    suffix="%",
-                                    decimals=1
-                                )}
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td style="padding:3px 0;">
-                                DCF Fair Value
-                            </td>
-
-                            <td>
-                                {safe(ctx.stock_info.get('dcf_fair_value')):.2f} THB
-                            </td>
-                        </tr>
-
-                    </table>
-
-                </div>
-
-            </div>
-            """,
+            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:12px; min-height:190px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div><div style="font-size:14px; font-weight:bold; color:#475569;">INTRINSIC VALUATION (DCF)</div>
+        <table style="width:100%; font-size:14px; color:#475569; border-collapse:collapse; margin-top:6px;">
+        <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:13px;"><th style="text-align:left; padding:2px 0;">Metric</th><th>Value</th></tr>
+        <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:3px 0;">WACC</td><td>{fmt_ratio(ctx.stock_info.get('wacc_used'), suffix="%", decimals=1)}</td></tr>
+        <tr><td style="padding:3px 0;">DCF Fair Value</td><td>{safe(ctx.stock_info.get('dcf_fair_value')):.2f} THB</td></tr>
+        </table></div></div>""",
             unsafe_allow_html=True
         )
 
-    # =========================================================
-    # DETAIL 3
-    # =========================================================
     with d_c3:
-
         st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:10px;
-                padding:12px;
-                min-height:190px;
-                display:flex;
-                flex-direction:column;
-                justify-content:space-between;
-            ">
-
-                <div>
-
-                    <div style="
-                        font-size:14px;
-                        font-weight:bold;
-                        color:#475569;
-                    ">
-                        PRICE COMPARISON
-                    </div>
-
-                    <table style="
-                        width:100%;
-                        font-size:14px;
-                        color:#475569;
-                        border-collapse:collapse;
-                        margin-top:6px;
-                    ">
-
-                        <tr style="
-                            border-bottom:1px solid #E2E8F0;
-                        ">
-                            <td style="padding:3px 0;">
-                                Current
-                            </td>
-
-                            <td>
-                                {val_cur_price:.2f}
-                            </td>
-                        </tr>
-
-                        <tr style="
-                            border-bottom:1px solid #E2E8F0;
-                        ">
-                            <td style="padding:3px 0;">
-                                Fair Value
-                            </td>
-
-                            <td>
-                                {val_base:.2f}
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td style="padding:3px 0;">
-                                Difference
-                            </td>
-
-                            <td>
-                                {(val_base - val_cur_price):+.2f}
-                            </td>
-                        </tr>
-
-                    </table>
-
-                </div>
-
-            </div>
-            """,
+            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:12px; min-height:190px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div><div style="font-size:14px; font-weight:bold; color:#475569;">PRICE COMPARISON</div>
+        <table style="width:100%; font-size:14px; color:#475569; border-collapse:collapse; margin-top:6px;">
+        <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:3px 0;">Current</td><td>{val_cur_price:.2f}</td></tr>
+        <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:3px 0;">Fair Value</td><td>{val_base:.2f}</td></tr>
+        <tr><td style="padding:3px 0;">Difference</td><td>{(val_base - val_cur_price):+.2f}</td></tr>
+        </table></div></div>""",
             unsafe_allow_html=True
         )
 
-    # =========================================================
-    # DETAIL 4
-    # =========================================================
     with d_c4:
-
         st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:10px;
-                padding:12px;
-                min-height:190px;
-                display:flex;
-                flex-direction:column;
-                justify-content:space-between;
-            ">
-
-                <div>
-
-                    <div style="
-                        font-size:14px;
-                        font-weight:bold;
-                        color:#475569;
-                    ">
-                        MARGIN OF SAFETY
-                    </div>
-
-                    <table style="
-                        width:100%;
-                        font-size:14px;
-                        color:#475569;
-                        border-collapse:collapse;
-                        margin-top:6px;
-                    ">
-
-                        <tr>
-                            <td style="padding:3px 0;">
-                                Margin of Safety
-                            </td>
-
-                            <td style="
-                                color:{val_color};
-                                font-weight:bold;
-                            ">
-                                {val_mos:.1f}%
-                            </td>
-                        </tr>
-
-                    </table>
-
-                </div>
-
-            </div>
-            """,
+            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:12px; min-height:190px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div><div style="font-size:14px; font-weight:bold; color:#475569;">MARGIN OF SAFETY</div>
+        <table style="width:100%; font-size:14px; color:#475569; border-collapse:collapse; margin-top:6px;">
+        <tr><td style="padding:3px 0;">Margin of Safety</td><td style="color:{val_color}; font-weight:bold;">{val_mos:.1f}%</td></tr>
+        </table></div></div>""",
             unsafe_allow_html=True
         )
 
-    # =========================================================
-    # DCF ASSUMPTIONS + HISTORICAL
-    # =========================================================
-    st.markdown(
-        "<div style='margin-top:22px;'></div>",
-        unsafe_allow_html=True
-    )
-
+    st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
     r4_c1, r4_c2 = st.columns([1.3, 1.7])
 
-    # ---------------------------------------------------------
-    # DCF ASSUMPTIONS
-    # ---------------------------------------------------------
     with r4_c1:
-
-        wacc_disp = fmt_ratio(
-            ctx.stock_info.get('wacc_used'),
-            suffix="%",
-            decimals=1
-        )
-
-        g_disp = fmt_ratio(
-            ctx.stock_info.get('terminal_growth_used'),
-            suffix="%",
-            decimals=1
-        )
-
-        fcf_g_disp = fmt_ratio(
-            ctx.stock_info.get('fcf_growth_assumed'),
-            suffix="%",
-            decimals=1
-        )
+        wacc_disp = fmt_ratio(ctx.stock_info.get('wacc_used'), suffix="%", decimals=1)
+        g_disp = fmt_ratio(ctx.stock_info.get('terminal_growth_used'), suffix="%", decimals=1)
+        fcf_g_disp = fmt_ratio(ctx.stock_info.get('fcf_growth_assumed'), suffix="%", decimals=1)
 
         st.markdown(
-            f"""
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:12px;
-                padding:14px;
-                min-height:220px;
-                display:flex;
-                flex-direction:column;
-                justify-content:space-between;
-            ">
-
-                <div style="
-                    font-size:14px;
-                    font-weight:bold;
-                    color:#64748B;
-                    letter-spacing:0.5px;
-                ">
-                    DCF ASSUMPTIONS
-
-                    <span style="
-                        font-size:12px;
-                        color:#64748B;
-                        font-weight:normal;
-                    ">
-                        ({ctx.stock_info.get('sector','-')})
-                    </span>
-                </div>
-
-                <div style="
-                    display:grid;
-                    grid-template-columns:1fr 1fr;
-                    gap:8px;
-                    font-size:14px;
-                    color:#475569;
-                    margin:auto 0;
-                ">
-
-                    <div>
-                        <span style="color:#64748B;">
-                            WACC
-                        </span>
-                        <br>
-                        <b style="color:#0F172A;">
-                            {wacc_disp}
-                        </b>
-                    </div>
-
-                    <div>
-                        <span style="color:#64748B;">
-                            Terminal Growth
-                        </span>
-                        <br>
-                        <b style="color:#0F172A;">
-                            {g_disp}
-                        </b>
-                    </div>
-
-                    <div>
-                        <span style="color:#64748B;">
-                            FCF Growth (Yr 1)
-                        </span>
-                        <br>
-                        <b style="color:#0F172A;">
-                            {fcf_g_disp}
-                        </b>
-                    </div>
-
-                    <div>
-                        <span style="color:#64748B;">
-                            Target P/E
-                        </span>
-                        <br>
-                        <b style="color:#0F172A;">
-                            18-22x (by sector)
-                        </b>
-                    </div>
-
-                    <div>
-                        <span style="color:#64748B;">
-                            DCF Weight
-                        </span>
-                        <br>
-                        <b style="color:#0F172A;">
-                            55%
-                        </b>
-                    </div>
-
-                    <div>
-                        <span style="color:#64748B;">
-                            P/E Weight
-                        </span>
-                        <br>
-                        <b style="color:#0F172A;">
-                            45%
-                        </b>
-                    </div>
-
-                </div>
-
-                <div style="
-                    font-size:12px;
-                    color:#64748B;
-                    border-top:1px solid #E2E8F0;
-                    padding-top:6px;
-                    margin-top:4px;
-                ">
-                    WACC/Growth ปรับตามกลุ่มอุตสาหกรรม
-                    (ไม่ใช่ค่าคงที่เดียวทุกหุ้นแล้ว)
-                    &bull;
-                    FCF ฐานใช้ค่าเฉลี่ย 2 ปีล่าสุด
-                </div>
-
-            </div>
-            """,
+            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:220px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div style="font-size:14px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">DCF ASSUMPTIONS <span style="font-size:12px; color:#64748B; font-weight:normal;">({ctx.stock_info.get('sector', '-')})</span></div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; font-size:14px; color:#475569; margin:auto 0;">
+        <div><span style="color:#64748B;">WACC</span><br><b style="color:#0F172A;">{wacc_disp}</b></div>
+        <div><span style="color:#64748B;">Terminal Growth</span><br><b style="color:#0F172A;">{g_disp}</b></div>
+        <div><span style="color:#64748B;">FCF Growth (Yr 1)</span><br><b style="color:#0F172A;">{fcf_g_disp}</b></div>
+        <div><span style="color:#64748B;">Target P/E</span><br><b style="color:#0F172A;">18-22x (by sector)</b></div>
+        <div><span style="color:#64748B;">DCF Weight</span><br><b style="color:#0F172A;">55%</b></div>
+        <div><span style="color:#64748B;">P/E Weight</span><br><b style="color:#0F172A;">45%</b></div>
+        </div>
+        <div style="font-size:12px; color:#64748B; border-top:1px solid #E2E8F0; padding-top:6px; margin-top:4px;">WACC/Growth ปรับตามกลุ่มอุตสาหกรรม (ไม่ใช่ค่าคงที่เดียวทุกหุ้นแล้ว) &bull; FCF ฐานใช้ค่าเฉลี่ย 2 ปีล่าสุด</div>
+        </div>""",
             unsafe_allow_html=True
         )
 
-    # ---------------------------------------------------------
-    # HISTORICAL FAIR VALUE
-    # ---------------------------------------------------------
     with r4_c2:
-
         st.markdown(
-            """
-            <div style="
-                background-color:#FFFFFF;
-                border:1px solid #E2E8F0;
-                border-radius:12px 12px 0 0;
-                padding:12px 16px 0 16px;
-            ">
-
-                <div style="
-                    font-size:14px;
-                    font-weight:bold;
-                    color:#64748B;
-                    letter-spacing:0.5px;
-                ">
-                    HISTORICAL FAIR VALUE VS PRICE
-                    (Actual, year-end 2023-2025)
-                </div>
-
-            </div>
-            """,
+            """<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px 12px 0 0; padding:12px 16px 0 16px;">
+        <div style="font-size:14px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">HISTORICAL FAIR VALUE VS PRICE (Actual, year-end 2023-2025)</div></div>""",
             unsafe_allow_html=True
         )
 
-        fv_hist = (
-            ctx.fair_value_yearly_df[
-                ctx.fair_value_yearly_df['ticker']
-                == ctx.selected_ticker
-            ].sort_values('year')
-            if not ctx.fair_value_yearly_df.empty
-            else pd.DataFrame()
-        )
+        fv_hist = ctx.fair_value_yearly_df[
+            ctx.fair_value_yearly_df['ticker'] == ctx.selected_ticker
+        ].sort_values('year') if not ctx.fair_value_yearly_df.empty else pd.DataFrame()
 
         if not fv_hist.empty:
-
             fig_hist_val = go.Figure()
 
             fig_hist_val.add_trace(
@@ -1879,11 +327,7 @@ def render(ctx):
                     y=fv_hist['fair_value'],
                     mode='lines+markers',
                     name='Fair Value',
-                    line=dict(
-                        color='#A855F7',
-                        width=1.8,
-                        dash='dash'
-                    )
+                    line=dict(color='#A855F7', width=1.8, dash='dash')
                 )
             )
 
@@ -1893,40 +337,23 @@ def render(ctx):
                     y=fv_hist['price'],
                     mode='lines+markers',
                     name='Actual Price',
-                    line=dict(
-                        color='#38BDF8',
-                        width=2
-                    ),
-                    marker=dict(
-                        size=9,
-                        color='#38BDF8'
-                    )
+                    line=dict(color='#38BDF8', width=2),
+                    marker=dict(size=9, color='#38BDF8')
                 )
             )
 
             fig_hist_val.update_layout(
                 height=150,
-                margin=dict(
-                    l=25,
-                    r=15,
-                    t=10,
-                    b=20
-                ),
+                margin=dict(l=25, r=15, t=10, b=20),
                 paper_bgcolor="#FFFFFF",
                 plot_bgcolor="#FFFFFF",
                 yaxis=dict(
-                    tickfont=dict(
-                        size=12,
-                        color="#64748B"
-                    ),
+                    tickfont=dict(size=12, color="#64748B"),
                     gridcolor="#E2E8F0",
                     zeroline=False
                 ),
                 xaxis=dict(
-                    tickfont=dict(
-                        size=12,
-                        color="#64748B"
-                    ),
+                    tickfont=dict(size=12, color="#64748B"),
                     gridcolor="#E2E8F0"
                 ),
                 legend=dict(
@@ -1935,29 +362,13 @@ def render(ctx):
                     y=-0.35,
                     xanchor="center",
                     x=0.5,
-                    font=dict(
-                        size=12,
-                        color="#64748B"
-                    )
+                    font=dict(size=12, color="#64748B")
                 )
             )
 
-            show_chart(
-                fig_hist_val,
-                key="fair_value_hist",
-                expand_height=650
-            )
+            show_chart(fig_hist_val, key="fair_value_hist", expand_height=650)
 
         else:
-            st.info(
-                "ไม่มีข้อมูลย้อนหลังเพียงพอ"
-            )
+            st.info("ไม่มีข้อมูลย้อนหลังเพียงพอ")
 
-    # =========================================================
-    # NAVIGATION — คงเดิม
-    # =========================================================
-    render_nav_footer(
-        "m2",
-        prev_page=" Company Health",
-        next_page=" Entry Timing"
-    )
+    render_nav_footer("m2", prev_page=" Company Health", next_page=" Entry Timing")
