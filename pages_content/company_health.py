@@ -45,9 +45,9 @@ def render(ctx):
     cr_23, cr_24, cr_25 = get_fin_val(2023, 'current_ratio', fmt="{:.2f}"), get_fin_val(2024, 'current_ratio', fmt="{:.2f}"), get_fin_val(2025, 'current_ratio', fmt="{:.2f}")
 
     st.markdown(f"""<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
-<div><div style="display:flex; align-items:center; gap:8px;"><h2 style="margin:0; font-size:23px; font-weight:bold; color:#F8FAFC; letter-spacing:0.5px;">COMPANY HEALTH</h2></div>
-<div style="font-size:15px; color:#94A3B8; margin-top:2px;">ประเมินสุขภาพทางการเงินของบริษัทจากมิติสำคัญตามงบการเงินจริง</div></div>
-<div style="text-align:right;"><span style="font-size:13px; color:#64748B;">ข้อมูล ณ วันที่</span><br><b style="color:#CBD5E1; font-size:15px;">{ctx.stock_info.get('latest_date','-')}</b></div>
+<div><div style="display:flex; align-items:center; gap:8px;"><h2 style="margin:0; font-size:23px; font-weight:bold; color:#0F172A; letter-spacing:0.5px;">COMPANY HEALTH</h2></div>
+<div style="font-size:15px; color:#64748B; margin-top:2px;">ประเมินสุขภาพทางการเงินของบริษัทจากมิติสำคัญตามงบการเงินจริง</div></div>
+<div style="text-align:right;"><span style="font-size:13px; color:#64748B;">ข้อมูล ณ วันที่</span><br><b style="color:#475569; font-size:15px;">{ctx.stock_info.get('latest_date','-')}</b></div>
 </div>""", unsafe_allow_html=True)
 
     r1_c1, r1_c2, r1_c3 = st.columns([1.1, 1.4, 1.5])
@@ -58,30 +58,30 @@ def render(ctx):
     h_stars = min(5, max(1, round(h_score / 20)))
 
     with r1_c1:
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:16px; min-height:235px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">COMPANY HEALTH SCORE</div>
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:16px; min-height:235px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div style="font-size:14.5px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">COMPANY HEALTH SCORE</div>
     <div style="display:flex; align-items:center; gap:16px; margin:auto 0;">
-    <div style="width:92px; height:92px; border-radius:50%; background:conic-gradient({h_color} 0% {h_score}%, #1E293B {h_score}% 100%); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-    <div style="width:76px; height:76px; border-radius:50%; background-color:#0F172A; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-    <span style="font-size:23px; font-weight:bold; color:#FFFFFF; line-height:1;">{h_score}</span><span style="font-size:13px; color:#64748B;">/100</span></div></div>
+    <div style="width:92px; height:92px; border-radius:50%; background:conic-gradient({h_color} 0% {h_score}%, #E2E8F0 {h_score}% 100%); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+    <div style="width:76px; height:76px; border-radius:50%; background-color:#FFFFFF; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+    <span style="font-size:23px; font-weight:bold; color:#0F172A; line-height:1;">{h_score}</span><span style="font-size:13px; color:#64748B;">/100</span></div></div>
     <div><div style="color:{h_color}; font-size:18.5px; font-weight:bold; line-height:1.2;">{h_badge}</div>
-    <div style="font-size:14.5px; color:#CBD5E1; line-height:1.4; margin-top:4px;">ประเมินจากอัตราส่วนทางการเงินจริงปี 2023-2025</div>
+    <div style="font-size:14.5px; color:#475569; line-height:1.4; margin-top:4px;">ประเมินจากอัตราส่วนทางการเงินจริงปี 2023-2025</div>
     <div style="color:{h_color}; font-size:15px; letter-spacing:2px; margin-top:6px;">{'★'*h_stars}{'☆'*(5-h_stars)}</div></div>
     </div></div>""", unsafe_allow_html=True)
 
     with r1_c2:
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:16px; min-height:235px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div><div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px; margin-bottom:8px;">EXPLAINABLE FINANCIAL SUMMARY ({ctx.selected_ticker})</div>
-    <p style="font-size:15px; color:#CBD5E1; line-height:1.6; margin:0;">
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:16px; min-height:235px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div><div style="font-size:14.5px; font-weight:bold; color:#64748B; letter-spacing:0.5px; margin-bottom:8px;">EXPLAINABLE FINANCIAL SUMMARY ({ctx.selected_ticker})</div>
+    <p style="font-size:15px; color:#475569; line-height:1.6; margin:0;">
     ผลการวิเคราะห์สุขภาพการเงินของ <b>{ctx.selected_ticker}</b> พบว่ามีอัตราส่วนผลตอบแทนต่อส่วนของผู้ถือหุ้น (ROE) ล่าสุดอยู่ที่ {roe_25}% และความสามารถในการทำกำไรสุทธิ (Net Margin) อยู่ที่ {npm_25}% ในขณะที่ภาระหนี้สินต่อทุน (D/E Ratio) อยู่ที่ {de_25} เท่า และสภาพคล่องหมุนเวียน (Current Ratio) อยู่ที่ {cr_25} เท่า
     </p></div>
-    <div><span style="display:inline-flex; align-items:center; gap:6px; background-color:#151E2F; border:1px solid #1E293B; color:#38BDF8; font-size:14px; padding:5px 12px; border-radius:6px;">
+    <div><span style="display:inline-flex; align-items:center; gap:6px; background-color:#EFF6FF; border:1px solid #BFDBFE; color:#0EA5E9; font-size:14px; padding:5px 12px; border-radius:6px;">
     Financial Health Benchmark: {ctx.stock_info.get('sector','-')}</span></div>
     </div>""", unsafe_allow_html=True)
 
     with r1_c3:
-        st.markdown("""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px 12px 0 0; padding:12px 16px 0 16px;">
-    <div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">COMPANY HEALTH SCORE TREND (Actual, 2023-2025)</div></div>""", unsafe_allow_html=True)
+        st.markdown("""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px 12px 0 0; padding:12px 16px 0 16px;">
+    <div style="font-size:14.5px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">COMPANY HEALTH SCORE TREND (Actual, 2023-2025)</div></div>""", unsafe_allow_html=True)
 
         hy = ctx.health_yearly_df[ctx.health_yearly_df['ticker'] == ctx.selected_ticker].sort_values('year') if not ctx.health_yearly_df.empty else pd.DataFrame()
         trend_x = hy['year'].astype(str).tolist() if not hy.empty else ['2023', '2024', '2025']
@@ -90,22 +90,22 @@ def render(ctx):
         fig_health_trend = go.Figure()
         fig_health_trend.add_trace(go.Scatter(
             x=trend_x, y=trend_y, mode='lines+markers+text', text=trend_y, textposition='top center',
-            textfont=dict(size=12.5, color='#F8FAFC'), line=dict(color='#10B981', width=2),
+            textfont=dict(size=12.5, color='#0F172A'), line=dict(color='#10B981', width=2),
             marker=dict(size=10, color='#10B981', line=dict(width=1.5, color='#FFFFFF'))
         ))
         
         # แก้ไขตรงนี้: เพิ่ม type='category' เข้าไปใน xaxis เพื่อป้องกันกราฟใส่จุดทศนิยมบนแกนปี
         fig_health_trend.update_layout(
-            height=168, margin=dict(l=25, r=15, t=10, b=20), paper_bgcolor="#0F172A", plot_bgcolor="#0F172A",
-            yaxis=dict(range=[0, 110], tickvals=[0, 25, 50, 75, 100], tickfont=dict(size=11.5, color="#64748B"), gridcolor="#1E293B", zeroline=False),
-            xaxis=dict(type='category', tickfont=dict(size=12, color="#94A3B8"), gridcolor="#1E293B"), showlegend=False
+            height=168, margin=dict(l=25, r=15, t=10, b=20), paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF",
+            yaxis=dict(range=[0, 110], tickvals=[0, 25, 50, 75, 100], tickfont=dict(size=11.5, color="#64748B"), gridcolor="#E2E8F0", zeroline=False),
+            xaxis=dict(type='category', tickfont=dict(size=12, color="#64748B"), gridcolor="#E2E8F0"), showlegend=False
         )
         
         show_chart(fig_health_trend, key="health_trend", expand_height=650)
 
     st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
-    st.markdown("""<div style="font-size:15px; font-weight:bold; color:#F8FAFC; letter-spacing:0.5px; margin-bottom:8px;">
-    7 DIMENSIONS OVERVIEW <span style="font-size:14.5px; color:#94A3B8; font-weight:normal; margin-left:6px;">ผลการประเมินสุขภาพทางการเงินในแต่ละมิติ (คำนวณจากอัตราส่วนจริง)</span></div>""", unsafe_allow_html=True)
+    st.markdown("""<div style="font-size:15px; font-weight:bold; color:#0F172A; letter-spacing:0.5px; margin-bottom:8px;">
+    7 DIMENSIONS OVERVIEW <span style="font-size:14.5px; color:#64748B; font-weight:normal; margin-left:6px;">ผลการประเมินสุขภาพทางการเงินในแต่ละมิติ (คำนวณจากอัตราส่วนจริง)</span></div>""", unsafe_allow_html=True)
 
     latest_fin_row = ctx.fin_stock.iloc[-1] if not ctx.fin_stock.empty else pd.Series(dtype=float)
     ocf_ni = safe(latest_fin_row.get('ocf_to_ni'), 1.0)
@@ -135,12 +135,12 @@ def render(ctx):
         ("6", "⚙️", "EFFICIENCY", "10%", dim_efficiency, "#F97316"),
         ("7", "🎖️", "EARNINGS Q.", "5%", dim_earnings, "#10B981"),
     ]
-    dim_html = "".join([f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:10px; padding:10px 8px; text-align:center;">
-    <div style="display:flex; align-items:center; justify-content:center; gap:4px;"><span style="font-size:14.5px;">{icon}</span><span style="font-size:13px; font-weight:bold; color:#CBD5E1;">{n}. {label}</span></div>
+    dim_html = "".join([f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:10px 8px; text-align:center;">
+    <div style="display:flex; align-items:center; justify-content:center; gap:4px;"><span style="font-size:14.5px;">{icon}</span><span style="font-size:13px; font-weight:bold; color:#475569;">{n}. {label}</span></div>
     <div style="font-size:12.5px; color:#64748B; margin-top:1px;">Weight {w}</div>
-    <div style="margin:8px auto; width:60px; height:60px; border-radius:50%; background:conic-gradient({color} 0% {score}%, #1E293B {score}% 100%); display:flex; align-items:center; justify-content:center;">
-    <div style="width:48px; height:48px; border-radius:50%; background-color:#0F172A; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-    <span style="font-size:16px; font-weight:bold; color:#FFFFFF; line-height:1;">{score}</span><span style="font-size:11.5px; color:#64748B;">/100</span></div></div>
+    <div style="margin:8px auto; width:60px; height:60px; border-radius:50%; background:conic-gradient({color} 0% {score}%, #E2E8F0 {score}% 100%); display:flex; align-items:center; justify-content:center;">
+    <div style="width:48px; height:48px; border-radius:50%; background-color:#FFFFFF; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+    <span style="font-size:16px; font-weight:bold; color:#0F172A; line-height:1;">{score}</span><span style="font-size:11.5px; color:#64748B;">/100</span></div></div>
     <div style="color:{color}; font-size:13.5px; font-weight:bold;">{label_for(score)}</div>
     </div>""" for n, icon, label, w, score, color in dims])
     st.markdown(f"""<div style="display:grid; grid-template-columns: repeat(7, 1fr); gap:8px;">{dim_html}</div>""", unsafe_allow_html=True)
@@ -149,15 +149,15 @@ def render(ctx):
     r3_c1, r3_c2, r3_c3 = st.columns([1.5, 1.25, 1.25])
 
     with r3_c1:
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:360px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div><div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px; margin-bottom:8px;">KEY FINANCIAL HIGHLIGHTS ({ctx.selected_ticker})</div>
-    <table style="width:100%; text-align:left; font-size:14px; color:#CBD5E1; border-collapse:collapse;">
-    <tr style="border-bottom:1px solid #1E293B; color:#64748B; font-size:13px;"><th style="padding:4px 0;">Metric</th><th>2023</th><th>2024</th><th>2025</th></tr>
-    <tr style="border-bottom:1px solid #1E293B;"><td style="padding:5px 0; font-weight:bold; color:#F8FAFC;">ROE (%)</td><td>{roe_23}</td><td>{roe_24}</td><td style="font-weight:bold; color:#F8FAFC;">{roe_25}</td></tr>
-    <tr style="border-bottom:1px solid #1E293B;"><td style="padding:5px 0; font-weight:bold; color:#F8FAFC;">ROA (%)</td><td>{roa_23}</td><td>{roa_24}</td><td style="font-weight:bold; color:#F8FAFC;">{roa_25}</td></tr>
-    <tr style="border-bottom:1px solid #1E293B;"><td style="padding:5px 0; font-weight:bold; color:#F8FAFC;">Net Profit Margin (%)</td><td>{npm_23}</td><td>{npm_24}</td><td style="font-weight:bold; color:#F8FAFC;">{npm_25}</td></tr>
-    <tr style="border-bottom:1px solid #1E293B;"><td style="padding:5px 0; font-weight:bold; color:#F8FAFC;">Debt to Equity (x)</td><td>{de_23}</td><td>{de_24}</td><td style="font-weight:bold; color:#F8FAFC;">{de_25}</td></tr>
-    <tr><td style="padding:5px 0; font-weight:bold; color:#F8FAFC;">Current Ratio (x)</td><td>{cr_23}</td><td>{cr_24}</td><td style="font-weight:bold; color:#F8FAFC;">{cr_25}</td></tr>
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:360px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div><div style="font-size:14.5px; font-weight:bold; color:#64748B; letter-spacing:0.5px; margin-bottom:8px;">KEY FINANCIAL HIGHLIGHTS ({ctx.selected_ticker})</div>
+    <table style="width:100%; text-align:left; font-size:14px; color:#475569; border-collapse:collapse;">
+    <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:13px;"><th style="padding:4px 0;">Metric</th><th>2023</th><th>2024</th><th>2025</th></tr>
+    <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:5px 0; font-weight:bold; color:#0F172A;">ROE (%)</td><td>{roe_23}</td><td>{roe_24}</td><td style="font-weight:bold; color:#0F172A;">{roe_25}</td></tr>
+    <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:5px 0; font-weight:bold; color:#0F172A;">ROA (%)</td><td>{roa_23}</td><td>{roa_24}</td><td style="font-weight:bold; color:#0F172A;">{roa_25}</td></tr>
+    <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:5px 0; font-weight:bold; color:#0F172A;">Net Profit Margin (%)</td><td>{npm_23}</td><td>{npm_24}</td><td style="font-weight:bold; color:#0F172A;">{npm_25}</td></tr>
+    <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:5px 0; font-weight:bold; color:#0F172A;">Debt to Equity (x)</td><td>{de_23}</td><td>{de_24}</td><td style="font-weight:bold; color:#0F172A;">{de_25}</td></tr>
+    <tr><td style="padding:5px 0; font-weight:bold; color:#0F172A;">Current Ratio (x)</td><td>{cr_23}</td><td>{cr_24}</td><td style="font-weight:bold; color:#0F172A;">{cr_25}</td></tr>
     </table></div>
     <div style="font-size:12px; color:#64748B; margin-top:6px;">* ข้อมูลทางการเงินดึงตรงจาก stock_financials.csv สำหรับปี 2023-2025 จริงทุกค่า</div>
     </div>""", unsafe_allow_html=True)
@@ -174,13 +174,13 @@ def render(ctx):
         if rev_growth < 0: watch.append(f"รายได้หดตัว {rev_growth:.1f}% YoY ควรติดตามแนวโน้มปีถัดไป")
         if not watch: watch.append("ยังไม่พบสัญญาณความเสี่ยงเชิงโครงสร้างที่ชัดเจนในงบล่าสุด")
 
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; height:360px; overflow-y:auto;">
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; height:360px; overflow-y:auto;">
     <div style="font-size:14px; font-weight:bold; color:#10B981; margin-bottom:6px;">STRENGTHS ({ctx.selected_ticker})</div>
-    <div style="font-size:13px; color:#CBD5E1; line-height:1.45; margin-bottom:10px;">
+    <div style="font-size:13px; color:#475569; line-height:1.45; margin-bottom:10px;">
     {''.join([f'<div style="display:flex; gap:6px; margin-bottom:3px;"><span style="color:#10B981;">✔</span><span>{s}</span></div>' for s in strengths])}
     </div>
-    <div style="font-size:14px; font-weight:bold; color:#F59E0B; margin-bottom:6px; border-top:1px dashed #1E293B; padding-top:8px;">WATCH OUT</div>
-    <div style="font-size:13px; color:#CBD5E1; line-height:1.45;">
+    <div style="font-size:14px; font-weight:bold; color:#F59E0B; margin-bottom:6px; border-top:1px dashed #E2E8F0; padding-top:8px;">WATCH OUT</div>
+    <div style="font-size:13px; color:#475569; line-height:1.45;">
     {''.join([f'<div style="display:flex; gap:6px; margin-bottom:3px;"><span style="color:#F59E0B;">⚠️</span><span>{w}</span></div>' for w in watch])}
     </div></div>""", unsafe_allow_html=True)
 
@@ -236,16 +236,16 @@ def render(ctx):
             ("Debt to Equity (x)", de_25, f"{comp_de:.2f}", pct_bar(safe(de_25 if de_25 != '-' else 0), comp_de, higher_better=False)),
             ("Current Ratio (x)", cr_25, f"{comp_cr:.2f}", pct_bar(safe(cr_25 if cr_25 != '-' else 0), comp_cr)),
         ]
-        rows_html = "".join([f"""<tr style="border-bottom:1px solid #1E293B;">
-<td style="padding:4px 0;">{name}</td><td style="font-weight:bold; color:#F8FAFC;">{v}</td><td style="color:#64748B;">{cv}</td>
-<td><div style="display:flex; align-items:center; gap:6px;"><div style="background:#1E293B; width:60px; height:9px; border-radius:4px; overflow:hidden;"><div style="background:#10B981; width:{pct}%; height:100%;"></div></div><span style="font-size:12px; color:#10B981; font-weight:bold;">{pct}%</span></div></td>
+        rows_html = "".join([f"""<tr style="border-bottom:1px solid #E2E8F0;">
+<td style="padding:4px 0;">{name}</td><td style="font-weight:bold; color:#0F172A;">{v}</td><td style="color:#64748B;">{cv}</td>
+<td><div style="display:flex; align-items:center; gap:6px;"><div style="background:#E2E8F0; width:60px; height:9px; border-radius:4px; overflow:hidden;"><div style="background:#10B981; width:{pct}%; height:100%;"></div></div><span style="font-size:12px; color:#10B981; font-weight:bold;">{pct}%</span></div></td>
 </tr>""" for name, v, cv, pct in rows_cmp])
 
-        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; height:360px;">
-<div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">HEAD-TO-HEAD COMPARISON</div>
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; height:360px;">
+<div style="font-size:14.5px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">HEAD-TO-HEAD COMPARISON</div>
 <div style="font-size:12.5px; color:#64748B; margin-bottom:8px;">{sub_label}</div>
-<table style="width:100%; text-align:left; font-size:13.5px; color:#CBD5E1; border-collapse:collapse;">
-<tr style="border-bottom:1px solid #1E293B; color:#64748B; font-size:12.5px;"><th style="padding:3px 0;">Metric</th><th>{ctx.selected_ticker}</th><th>{target_label}</th><th>vs {target_label}</th></tr>
+<table style="width:100%; text-align:left; font-size:13.5px; color:#475569; border-collapse:collapse;">
+<tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:12.5px;"><th style="padding:3px 0;">Metric</th><th>{ctx.selected_ticker}</th><th>{target_label}</th><th>vs {target_label}</th></tr>
 {rows_html}
 </table></div>""", unsafe_allow_html=True)
 
