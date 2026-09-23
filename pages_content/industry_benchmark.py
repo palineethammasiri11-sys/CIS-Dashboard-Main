@@ -151,6 +151,8 @@ def render(ctx):
 
     st.markdown("""
     <style>
+
+    /* Peer Comparison - Desktop */
     .peer-comparison-table {
         width: 100% !important;
         max-width: 100% !important;
@@ -186,8 +188,11 @@ def render(ctx):
         white-space: normal !important;
     }
 
+
+    /* Mobile */
     @media (max-width: 768px) {
 
+        /* Peer Comparison */
         .peer-comparison-card {
             width: 100% !important;
             max-width: 100% !important;
@@ -238,55 +243,6 @@ def render(ctx):
             line-height: 1.2 !important;
         }
 
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-        /* Peer Comparison */
-        .peer-comparison-card {
-            width: 100% !important;
-            max-width: 100% !important;
-            min-width: 0 !important;
-            height: auto !important;
-            min-height: 350px !important;
-            box-sizing: border-box !important;
-            overflow: visible !important;
-        }
-
-        .peer-comparison-table {
-            width: 100% !important;
-            max-width: 100% !important;
-            min-width: 0 !important;
-            table-layout: fixed !important;
-            box-sizing: border-box !important;
-        }
-
-        .peer-comparison-table th {
-            line-height: 1.2 !important;
-            padding: 5px 2px !important;
-        }
-
-        .peer-comparison-table td {
-            line-height: 1.3 !important;
-            padding: 6px 2px !important;
-        }
-
-        .peer-comparison-table th,
-        .peer-comparison-table td {
-            min-width: 0 !important;
-            max-width: 100% !important;
-            box-sizing: border-box !important;
-            overflow-wrap: anywhere !important;
-            word-break: break-word !important;
-        }
-
-        .peer-comparison-table {
-            font-size: 12px !important;
-        }
-
-        .peer-comparison-table th {
-            font-size: 11px !important;
-        }
 
         /* Dimension Percentile */
         .dimension-percentile-card {
@@ -316,6 +272,7 @@ def render(ctx):
         }
 
     }
+
     </style>
     """, unsafe_allow_html=True)
     
