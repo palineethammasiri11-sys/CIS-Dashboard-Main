@@ -218,7 +218,7 @@ def render(ctx):
     st.html(f"""
     <div class="ai-summary-card"
          style="
-            background:linear-gradient(135deg,{ai_bg} 0%,#FFFFFF 72%);
+            background:{ai_bg};
             border:2px solid {rec_color};
             border-radius:16px;
             padding:20px 22px;
@@ -294,9 +294,9 @@ def render(ctx):
         <div class="ai-summary-grid"
              style="
                 display:grid;
-                grid-template-columns:minmax(280px,1.35fr)
-                                 minmax(190px,0.9fr)
-                                 minmax(240px,1.25fr);
+                grid-template-columns:minmax(300px,1.55fr)
+                                 minmax(180px,0.8fr)
+                                 minmax(230px,1.15fr);
                 gap:20px;
                 align-items:stretch;
                 width:100%;
@@ -354,7 +354,7 @@ def render(ctx):
 
                         <div style="
                             color:{rec_color};
-                            font-size:21px;
+                            font-size:25px;
                             font-weight:800;
                             line-height:1.2;
                         ">
@@ -382,7 +382,7 @@ def render(ctx):
 
                     <div style="display:flex; align-items:center; gap:6px; font-size:12px; color:#475569;">
                         <span style="width:9px; height:9px; border-radius:50%; background:#EF4444; display:inline-block; flex-shrink:0;"></span>
-                        ขาย (Sell)
+                        ลดสัดส่วน/ขาย (Reduce/Sell)
                     </div>
 
                     <div style="display:flex; align-items:center; gap:6px; font-size:12px; color:#475569;">
