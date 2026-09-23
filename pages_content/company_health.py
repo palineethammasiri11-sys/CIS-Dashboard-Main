@@ -353,11 +353,11 @@ def render(ctx):
 
     # ============================================================
     # ROW 1
-    # Overall Score ใหญ่ขึ้นเป็น 1.4
+    # การ์ดแถวแรกทั้ง 3 อันขนาดเท่ากัน
     # ============================================================
 
     r1_c1, r1_c2, r1_c3 = st.columns(
-        [1.4, 1.4, 1.5]
+        [1, 1, 1]
     )
 
 
@@ -602,9 +602,11 @@ def render(ctx):
         <div style="
             background-color:#FFFFFF;
             border:1px solid #E2E8F0;
-            border-radius:12px;
-            padding:16px;
-            min-height:235px;
+            border-radius:16px;
+            padding:22px 22px 18px 22px;
+            min-height:285px;
+            width:100%;
+            box-sizing:border-box;
             display:flex;
             flex-direction:column;
             justify-content:space-between;
@@ -669,7 +671,7 @@ def render(ctx):
     # ============================================================
 
     with r1_c3:
-        st.html("""<div style="background-color:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px 12px 0 0;padding:12px 16px 0 16px;">
+        st.html(f"""<div style="background-color:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px 16px 0 0;padding:22px 22px 0 22px;min-height:63px;width:100%;box-sizing:border-box;">
         <div style="font-size:14.5px;font-weight:bold;color:#64748B;letter-spacing:0.5px;">COMPANY HEALTH SCORE TREND (Actual, 2023-2025)</div>
         </div>""")
 
@@ -686,7 +688,7 @@ def render(ctx):
         ))
 
         fig_health_trend.update_layout(
-            height=168, margin=dict(l=25, r=15, t=10, b=20),
+            height=222, margin=dict(l=25, r=15, t=10, b=20),
             paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF",
             yaxis=dict(range=[0,110], tickvals=[0,25,50,75,100], tickfont=dict(size=11.5,color="#64748B"), gridcolor="#E2E8F0", zeroline=False),
             xaxis=dict(type="linear", tickfont=dict(size=12,color="#64748B"), gridcolor="#E2E8F0", zeroline=False),
