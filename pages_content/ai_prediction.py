@@ -118,7 +118,7 @@ def render(ctx):
     # 1) OVERVIEW
     # ============================================================
 
-    k1, k2, k3, k4, k5 = st.columns(5)
+    k1, k2, k3, k4 = st.columns(4)
 
     with k1:
         st.markdown(
@@ -140,7 +140,9 @@ def render(ctx):
                 "DIRECTION (10D)",
                 direction_th,
                 _kpi_sub("10 Trading Days"),
-                value_color=status_color
+                value_color=status_color,
+                border=status_color,
+                bg_color=_hex_to_rgba(status_color, 0.06)
             ),
             unsafe_allow_html=True
         )
@@ -151,123 +153,23 @@ def render(ctx):
                 "PROBABILITY",
                 f"{prob_up:.0f}%",
                 _kpi_sub(f"Down: {down_prob:.0f}%"),
-                value_color=status_color
+                value_color=status_color,
+                border=status_color,
+                bg_color=_hex_to_rgba(status_color, 0.06)
             ),
             unsafe_allow_html=True
         )
 
-    # ============================================================
-    # SCORE
-    # ใช้ ai_score เดิมจากโมดูล
-    # เปลี่ยนเฉพาะรูปแบบการแสดงเป็น Donut
-    # ============================================================
-
     with k4:
-
-        score_t = min(100, max(0, ai_score))
-        score_angle = 360 * (score_t / 100)
-
-        st.markdown(
-            f"""
-<div style="
-    width:100%;
-    height:155px;
-    box-sizing:border-box;
-    background:#FFFFFF;
-    border:1px solid #D9E2EC;
-    border-radius:12px;
-    padding:14px 8px;
-    text-align:center;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-">
-
-<div style="
-    font-size:11px;
-    font-weight:bold;
-    color:{MUTED};
-    letter-spacing:1px;
-    margin-bottom:5px;
-">
-SCORE
-</div>
-
-<div style="
-    width:68px;
-    height:68px;
-    border-radius:50%;
-    background:conic-gradient(
-        {status_color} 0deg {score_angle:.1f}deg,
-        #D9E2EC {score_angle:.1f}deg 360deg
-    );
-    display:flex;
-    align-items:center;
-    justify-content:center;
-">
-
-<div style="
-    width:52px;
-    height:52px;
-    border-radius:50%;
-    background:#FFFFFF;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-">
-
-<div style="
-    font-size:19px;
-    font-weight:bold;
-    color:#0F172A;
-    line-height:1;
-">
-{ai_score}
-</div>
-
-<div style="
-    font-size:10px;
-    color:{MUTED};
-    margin-top:3px;
-">
-/100
-</div>
-
-</div>
-</div>
-
-<div style="
-    font-size:11px;
-    color:{MUTED};
-    margin-top:5px;
-">
-Prediction Score
-</div>
-
-</div>
-""",
-            unsafe_allow_html=True
-        )
-
-    # ============================================================
-    # RECOMMENDATION
-    # พื้นหลังตามสถานะ
-    # RECOMMENDATION สีอ่อน
-    # คำแนะนำเป็นสีขาว
-    # ============================================================
-
-    with k5:
         st.markdown(
             _kpi_card(
                 "RECOMMENDATION",
                 signal,
-                value_color="#FFFFFF",
+                value_color="#0F172A",
                 value_size=21,
-                border=status_color,
-                bg_color=status_color,
-                label_color="#E5E7EB"
+                border="#D9E2EC",
+                bg_color="#FFFFFF",
+                label_color=MUTED
             ),
             unsafe_allow_html=True
         )
