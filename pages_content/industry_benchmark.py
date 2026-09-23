@@ -151,16 +151,23 @@ def render(ctx):
 
     st.markdown("""
     <style>
+    .peer-comparison-table {
+        table-layout: auto !important;
+    }
+
+    .peer-comparison-table th,
     .peer-comparison-table td {
-        white-space: nowrap !important;
-        word-break: normal !important;
-        overflow-wrap: normal !important;
-    }
-
-    .peer-comparison-table th {
         white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+        vertical-align: middle !important;
+        box-sizing: border-box !important;
     }
 
+    .peer-comparison-table td {
+        padding: 6px 3px !important;
+        line-height: 1.25 !important;
+    }
     @media (max-width: 768px) {
 
         /* Peer Comparison */
@@ -327,16 +334,8 @@ def render(ctx):
 
         st.markdown(f"""<div class="peer-comparison-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; min-height:350px; height:auto; width:100%; max-width:100%; min-width:0; box-sizing:border-box;">
     <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:6px;">PEER COMPARISON — {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
-    <table class="peer-comparison-table" style="width:100%; max-width:100%; min-width:0; table-layout:fixed; text-align:center; font-size:13px; color:#475569; border-collapse:collapse; box-sizing:border-box;">
-    <colgroup>
-        <col style="width:14%;">
-        <col style="width:11%;">
-        <col style="width:14%;">
-        <col style="width:16%;">
-        <col style="width:16%;">
-        <col style="width:12%;">
-        <col style="width:17%;">
-    </colgroup>
+    <table class="peer-comparison-table" style="width:100%; max-width:100%; min-width:0; text-align:center; font-size:13px; color:#475569; border-collapse:collapse; box-sizing:border-box;">
+    
     <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:14px;">
         <th style="text-align:left; padding:5px 0;">Company</th>
         <th>Health</th>
