@@ -41,7 +41,7 @@ def _hex_to_rgba(hex_color, alpha):
 
 def _section_title(text):
     return f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px 12px 0 0; padding:14px 18px 2px 18px;">
-<div><span style="font-size:16.5px; font-weight:bold; color:{MUTED}; letter-spacing:0.5px;">{text}</span></div></div>"""
+<div><span style="font-size:14.5px; font-weight:bold; color:{MUTED}; letter-spacing:0.5px;">{text}</span></div></div>"""
 
 
 def _kpi_card(
@@ -49,7 +49,7 @@ def _kpi_card(
     value_html,
     sub_html="",
     value_color="#0F172A",
-    value_size=36,
+    value_size=32,
     border="#D9E2EC",
     bg_color="#FFFFFF",
     label_color=MUTED
@@ -58,7 +58,7 @@ def _kpi_card(
     return (
         f'<div style="background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:18px 10px; '
         f'text-align:center; height:176px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center;">'
-        f'<div style="font-size:14px; font-weight:bold; color:{label_color}; letter-spacing:1px;">{label}</div>'
+        f'<div style="font-size:12px; font-weight:bold; color:{label_color}; letter-spacing:1px;">{label}</div>'
         f'<div style="font-size:{value_size}px; font-weight:bold; color:{value_color}; line-height:1.2; margin-top:4px;">{value_html}</div>'
         f'{sub_html}'
         f'</div>'
@@ -67,14 +67,14 @@ def _kpi_card(
 
 def _kpi_sub(text, color=MUTED, bold=False):
     weight = "bold" if bold else "normal"
-    return f'<div style="font-size:15px; font-weight:{weight}; color:{color}; margin-top:2px;">{text}</div>'
+    return f'<div style="font-size:13px; font-weight:{weight}; color:{color}; margin-top:2px;">{text}</div>'
 
 
 def _metric_cell(label, value):
     return (
         f'<div style="background:#F8FAFC; border:1px solid #D9E2EC; border-radius:8px; padding:14px 6px; text-align:center;">'
-        f'<div style="font-size:14.5px; color:{MUTED};">{label}</div>'
-        f'<div style="font-size:26px; font-weight:bold; color:#0F172A; line-height:1.35;">{value}</div></div>'
+        f'<div style="font-size:13px; color:{MUTED};">{label}</div>'
+        f'<div style="font-size:23px; font-weight:bold; color:#0F172A; line-height:1.35;">{value}</div></div>'
     )
 
 
@@ -106,10 +106,10 @@ def render(ctx):
 
     st.markdown("""
     <div style="margin-bottom:20px;">
-        <div style="font-size:23px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
+        <div style="font-size:21px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
             AI PREDICTION
         </div>
-        <div style="font-size:15px; color:#64748B; margin-top:4px;">
+        <div style="font-size:13px; color:#64748B; margin-top:4px;">
             ประเมินทิศทางราคาหุ้นในอีก 10 วันทำการด้วยโมเดล Random Forest
         </div>
     </div>
@@ -184,7 +184,7 @@ def render(ctx):
 ">
 
 <div style="
-    font-size:14px;
+    font-size:12px;
     font-weight:bold;
     color:{MUTED};
     letter-spacing:1px;
@@ -218,7 +218,7 @@ SCORE
 ">
 
 <div style="
-    font-size:24px;
+    font-size:21px;
     font-weight:bold;
     color:#0F172A;
     line-height:1;
@@ -227,7 +227,7 @@ SCORE
 </div>
 
 <div style="
-    font-size:13px;
+    font-size:11px;
     color:{MUTED};
     margin-top:4px;
 ">
@@ -238,7 +238,7 @@ SCORE
 </div>
 
 <div style="
-    font-size:15px;
+    font-size:13px;
     color:{MUTED};
     margin-top:7px;
 ">
@@ -263,7 +263,7 @@ Prediction Score
                 "RECOMMENDATION",
                 signal,
                 value_color="#FFFFFF",
-                value_size=24,
+                value_size=21,
                 border=status_color,
                 bg_color=status_color,
                 label_color="#E5E7EB"
@@ -290,7 +290,7 @@ Prediction Score
 
     if reliability_low:
         warn_line = (
-            f'<div style="font-size:15px; color:{RED}; background:rgba(239,68,68,0.1); border:1px solid {RED}; '
+            f'<div style="font-size:13px; color:{RED}; background:rgba(239,68,68,0.1); border:1px solid {RED}; '
             f'border-radius:8px; padding:10px 14px; margin-top:14px; line-height:1.55;">'
             f'⚠ ความแม่นยำของโมเดลต่ำกว่าเกณฑ์เปรียบเทียบ (baseline) สำหรับหุ้นตัวนี้ — ควรใช้ผลทำนายนี้ด้วยความระมัดระวังเป็นพิเศษ</div>'
         )
@@ -309,24 +309,24 @@ Prediction Score
 
 <div style="flex:1; min-width:300px; background-color:#F3F7FB; border:1px solid #C7D5E3; border-left:4px solid {status_color}; border-radius:12px; padding:22px 26px; display:flex; flex-direction:column; justify-content:center;">
 
-<div style="font-size:14px; font-weight:bold; color:{MUTED}; letter-spacing:1px; margin-bottom:10px;">
+<div style="font-size:12px; font-weight:bold; color:{MUTED}; letter-spacing:1px; margin-bottom:10px;">
 PROBABILITY OF UP
 </div>
 
-<div style="font-size:18px; color:#334155; line-height:1.7;">
+<div style="font-size:16px; color:#334155; line-height:1.7;">
 โมเดล Random Forest ประเมินว่า <b>{ctx.selected_ticker}</b> มีโอกาส
 <b style="color:{status_color};">{direction_th}</b>
 <b>{dir_prob:.0f}%</b> ในอีก 10 วันทำการ
 </div>
 
-<div style="font-size:18px; color:#334155; line-height:1.7;">
+<div style="font-size:16px; color:#334155; line-height:1.7;">
 ด้วยความแม่นยำการทดสอบ <b>{acc_val:.1f}%</b>
 ({baseline_note}เกณฑ์เปรียบเทียบ {baseline_val:.1f}%)
 &nbsp;→&nbsp; คำแนะนำ:
 <b style="color:{status_color};">{signal}</b>
 </div>
 
-<div style="font-size:14.5px; color:{MUTED}; line-height:1.6; margin-top:12px;">
+<div style="font-size:13px; color:{MUTED}; line-height:1.6; margin-top:12px;">
 โปรดใช้ประกอบการตัดสินใจลงทุน ควรพิจารณาร่วมกับ Fair Value และ Company Health ก่อนตัดสินใจ ไม่ใช่คำแนะนำโดยตรง
 </div>
 
@@ -359,7 +359,7 @@ PROBABILITY OF UP
                 box-sizing:border-box;
             ">
                 <span style="
-                    font-size:16.5px;
+                    font-size:14.5px;
                     font-weight:bold;
                     color:#64748B;
                     letter-spacing:0.5px;
@@ -485,7 +485,7 @@ PROBABILITY OF UP
         xaxis=dict(
             gridcolor="#D9E2EC",
             tickfont=dict(
-                size=13,
+                size=11.5,
                 color=MUTED
             ),
             zeroline=False
@@ -494,13 +494,13 @@ PROBABILITY OF UP
             title=dict(
                 text="Price (THB)",
                 font=dict(
-                    size=13.5,
+                    size=12,
                     color=MUTED
                 )
             ),
             gridcolor="#D9E2EC",
             tickfont=dict(
-                size=13,
+                size=11.5,
                 color=MUTED
             ),
             zeroline=False
@@ -512,7 +512,7 @@ PROBABILITY OF UP
             xanchor="left",
             x=0,
             font=dict(
-                size=13,
+                size=11.5,
                 color="#334155"
             )
         )
@@ -557,7 +557,7 @@ PROBABILITY OF UP
                     ],
                     textposition='outside',
                     textfont=dict(
-                        size=13,
+                        size=11.5,
                         color='#334155'
                     )
                 )
@@ -576,14 +576,14 @@ PROBABILITY OF UP
                 xaxis=dict(
                     gridcolor="#D9E2EC",
                     tickfont=dict(
-                        size=13,
+                        size=11.5,
                         color=MUTED
                     ),
                     zeroline=False
                 ),
                 yaxis=dict(
                     tickfont=dict(
-                        size=13.5,
+                        size=12,
                         color="#334155"
                     ),
                     gridcolor="#D9E2EC",
@@ -614,10 +614,10 @@ PROBABILITY OF UP
 
         st.markdown(
             f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px; padding:22px; min-height:310px; display:flex; flex-direction:column; justify-content:center;">
-<div style="font-size:15.5px; font-weight:bold; color:{MUTED}; letter-spacing:0.5px; margin-bottom:12px;">
+<div style="font-size:14px; font-weight:bold; color:{MUTED}; letter-spacing:0.5px; margin-bottom:12px;">
 EXPLAINABLE AI SUMMARY
 </div>
-<p style="font-size:17px; color:#334155; line-height:1.7; margin:0;">
+<p style="font-size:15px; color:#334155; line-height:1.7; margin:0;">
 โมเดลใช้ 6 ตัวชี้วัดเชิงเทคนิคในการทำนาย โดย feature ที่มีอิทธิพลต่อผลทำนายของ
 <b>{ctx.selected_ticker}</b> สูงสุดคือ
 <b style="color:{BLUE};">{top_feat}</b>
@@ -666,10 +666,10 @@ EXPLAINABLE AI SUMMARY
         st.markdown(
             f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-top:none; border-radius:0 0 12px 12px; padding:16px; min-height:350px;">
 <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;">{cells}</div>
-<div style="font-size:15px; color:{RED if reliability_low else GREEN}; border-top:1px dashed #D9E2EC; padding-top:12px; margin-top:14px; line-height:1.55;">
+<div style="font-size:13px; color:{RED if reliability_low else GREEN}; border-top:1px dashed #D9E2EC; padding-top:12px; margin-top:14px; line-height:1.55;">
 vs. Baseline (naive majority-class): <b>{baseline_val:.1f}%</b> — {"ต่ำกว่า baseline ⚠" if reliability_low else "สูงกว่า baseline ✓"}
 </div>
-<div style="font-size:13.5px; color:{MUTED}; border-top:1px solid #D9E2EC; padding-top:10px; margin-top:10px;">
+<div style="font-size:12px; color:{MUTED}; border-top:1px solid #D9E2EC; padding-top:10px; margin-top:10px;">
 Validation: Out-of-time (Train 2023-24 / Test 2025)
 </div>
 </div>""",
@@ -746,14 +746,14 @@ Validation: Out-of-time (Train 2023-24 / Test 2025)
                 plot_bgcolor="#FFFFFF",
                 xaxis=dict(
                     tickfont=dict(
-                        size=12.5,
+                        size=11,
                         color=MUTED
                     ),
                     gridcolor="#D9E2EC"
                 ),
                 yaxis=dict(
                     tickfont=dict(
-                        size=12.5,
+                        size=11,
                         color=MUTED
                     ),
                     gridcolor="#D9E2EC",
@@ -764,7 +764,7 @@ Validation: Out-of-time (Train 2023-24 / Test 2025)
                     side='right',
                     showgrid=False,
                     tickfont=dict(
-                        size=12.5,
+                        size=11,
                         color=MUTED
                     )
                 ),
@@ -776,7 +776,7 @@ Validation: Out-of-time (Train 2023-24 / Test 2025)
                     xanchor="left",
                     x=0,
                     font=dict(
-                        size=12.5,
+                        size=11,
                         color="#334155"
                     )
                 )
@@ -789,7 +789,7 @@ Validation: Out-of-time (Train 2023-24 / Test 2025)
             )
 
             st.markdown(
-                f"""<div style="background:#FFFFFF; border:1px solid #D9E2EC; border-top:none; border-radius:0 0 12px 12px; padding:8px 14px 12px 14px; font-size:13.5px; color:{MUTED};">
+                f"""<div style="background:#FFFFFF; border:1px solid #D9E2EC; border-top:none; border-radius:0 0 12px 12px; padding:8px 14px 12px 14px; font-size:12px; color:{MUTED};">
 * Test-set Accuracy: {acc_val:.1f}%
 </div>""",
                 unsafe_allow_html=True
@@ -830,7 +830,7 @@ Validation: Out-of-time (Train 2023-24 / Test 2025)
         )
 
         st.markdown(
-            f"""<ul style="font-size:16px; line-height:1.9; color:#334155; margin:0; padding-left:22px;">
+            f"""<ul style="font-size:14px; line-height:1.9; color:#334155; margin:0; padding-left:22px;">
 <li><b>Model</b>: Random Forest (n_estimators=200, max_depth=4)</li>
 <li><b>Target</b>: 10-Day Forward Direction (ราคาปิด 10 วันข้างหน้าสูงกว่าปัจจุบันหรือไม่)</li>
 <li><b>Train Samples</b>: {n_train} แถว (2023–2024)</li>
