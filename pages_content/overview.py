@@ -118,99 +118,429 @@ def render(ctx):
     arc_frac = min(1.0, overall / 100)
     dash_len = round(119.38 * arc_frac, 2)
     label = "ATTRACTIVE" if overall >= 65 else "FAIR" if overall >= 45 else "CAUTION"
-    top_strength = "financial health" if m1_s == max(m1_s, m2_s, m3_s, m4_s, m5_s, m6_s) else "fair value"
+    top_strength = "financial health" if
+    m1_s == max(m1_s, m2_s, m3_s, m4_s, m5_s, m6_s) else "fair value"
 
     st.markdown("""
     <style>
+
+    .ai-summary-card {
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+        box-sizing:border-box !important;
+    }
+
+    .ai-summary-grid {
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+        box-sizing:border-box !important;
+    }
+
+    .ai-summary-section {
+        min-width:0 !important;
+        box-sizing:border-box !important;
+    }
+
+    .ai-score-section {
+        border-right:1px solid #E2E8F0;
+        padding-right:20px;
+    }
+
+    .ai-insight-section {
+        padding:0 10px;
+    }
+
+    .ai-recommendation-section {
+        min-width:0 !important;
+    }
+
     @media (max-width: 768px) {
+
+        .ai-summary-card {
+            padding:16px !important;
+        }
+
         .ai-summary-grid {
             grid-template-columns:1fr !important;
-            width:100% !important;
-            max-width:100% !important;
-            min-width:0 !important;
-            box-sizing:border-box !important;
             gap:16px !important;
         }
-        .ai-summary-grid > div {
-            width:100% !important;
-            max-width:100% !important;
-            min-width:0 !important;
-            box-sizing:border-box !important;
+
+        .ai-score-section {
+            border-right:none !important;
+            border-bottom:1px solid #E2E8F0 !important;
+            padding-right:0 !important;
+            padding-bottom:16px !important;
         }
-        .ai-summary-grid * {
+
+        .ai-insight-section {
+            padding:0 !important;
+            padding-bottom:16px !important;
+            border-bottom:1px solid #E2E8F0 !important;
+        }
+
+        .ai-recommendation-section {
+            width:100% !important;
+        }
+
+        .ai-summary-card * {
             max-width:100%;
             box-sizing:border-box;
         }
-        .ai-summary-grid div[style*="display:flex"] {
-            min-width:0 !important;
-            max-width:100% !important;
+
+        .ai-recommendation-inner {
             flex-wrap:wrap !important;
+            gap:12px !important;
         }
+
     }
+
     </style>
     """, unsafe_allow_html=True)
 
     st.html(f"""
-    <div style="background-color:{ai_bg};border:2px solid {rec_color};border-radius:12px;
-                padding:16px;margin-bottom:16px;width:100%;max-width:100%;min-width:0;box-sizing:border-box;">
-        <div style="font-size:14.5px;font-weight:bold;color:#64748B;letter-spacing:0.5px;margin-bottom:12px;">
-            AI INVESTMENT SUMMARY
+    <div class="ai-summary-card"
+         style="
+            background:linear-gradient(135deg,{ai_bg} 0%,#FFFFFF 72%);
+            border:2px solid {rec_color};
+            border-radius:16px;
+            padding:20px 22px;
+            margin-bottom:20px;
+            width:100%;
+            max-width:100%;
+            min-width:0;
+            box-sizing:border-box;
+            box-shadow:0 3px 12px rgba(15,23,42,0.06);
+         ">
+
+        <!-- HEADER -->
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:18px;
+            padding-bottom:12px;
+            border-bottom:1px solid #E2E8F0;
+        ">
+            <div>
+                <div style="
+                    font-size:16px;
+                    font-weight:800;
+                    color:#0F172A;
+                    letter-spacing:0.6px;
+                ">
+                    AI INVESTMENT SUMMARY
+                </div>
+
+                <div style="
+                    font-size:11.5px;
+                    color:#64748B;
+                    margin-top:3px;
+                ">
+                    AI-powered overview of investment signals
+                </div>
+            </div>
+
+            <div style="
+                background:{rec_bg};
+                color:{rec_color};
+                border:1px solid {rec_color};
+                border-radius:20px;
+                padding:5px 11px;
+                font-size:11px;
+                font-weight:700;
+                white-space:nowrap;
+            ">
+                {rec}
+            </div>
         </div>
 
-        <div class="ai-summary-grid" style="display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr) minmax(0,1.3fr);
-                    gap:24px;align-items:center;width:100%;min-width:0;max-width:100%;box-sizing:border-box;">
 
-            <div style="text-align:center;">
-                <div style="margin:0 auto;width:140px;">
-                    <svg viewBox="0 0 100 58" style="width:130px;height:83px;display:block;margin:0 auto;">
-                        <path d="M 12 50 A 38 38 0 0 1 88 50" fill="none" stroke="#E2E8F0"
-                              stroke-width="10" stroke-linecap="round"/>
-                        <path d="M 12 50 A 38 38 0 0 1 88 50" fill="none" stroke="{rec_color}"
-                              stroke-width="10" stroke-linecap="round" stroke-dasharray="{dash_len} 119.38"/>
-                        <text x="50" y="38" text-anchor="middle" font-size="21" font-weight="bold"
-                              fill="#0F172A">{overall:.0f}</text>
-                        <text x="50" y="49" text-anchor="middle" font-size="11.5"
-                              fill="#64748B">100</text>
+        <!-- MAIN CONTENT -->
+        <div class="ai-summary-grid"
+             style="
+                display:grid;
+                grid-template-columns:minmax(190px,0.9fr)
+                                 minmax(240px,1.25fr)
+                                 minmax(280px,1.35fr);
+                gap:20px;
+                align-items:stretch;
+                width:100%;
+                min-width:0;
+                max-width:100%;
+                box-sizing:border-box;
+             ">
+
+
+            <!-- OVERALL SCORE -->
+            <div class="ai-summary-section ai-score-section"
+                 style="text-align:center;">
+
+                <div style="
+                    font-size:12px;
+                    font-weight:700;
+                    color:#64748B;
+                    letter-spacing:0.7px;
+                    margin-bottom:4px;
+                ">
+                    OVERALL SCORE
+                </div>
+
+                <div style="
+                    margin:0 auto;
+                    width:180px;
+                    max-width:100%;
+                ">
+                    <svg viewBox="0 0 100 58"
+                         style="
+                            width:175px;
+                            height:105px;
+                            display:block;
+                            margin:0 auto;
+                         ">
+
+                        <path
+                            d="M 12 50 A 38 38 0 0 1 88 50"
+                            fill="none"
+                            stroke="#E2E8F0"
+                            stroke-width="10"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M 12 50 A 38 38 0 0 1 88 50"
+                            fill="none"
+                            stroke="{rec_color}"
+                            stroke-width="10"
+                            stroke-linecap="round"
+                            stroke-dasharray="{dash_len} 119.38"
+                        />
+
+                        <text
+                            x="50"
+                            y="38"
+                            text-anchor="middle"
+                            font-size="24"
+                            font-weight="bold"
+                            fill="#0F172A"
+                        >
+                            {overall:.0f}
+                        </text>
+
+                        <text
+                            x="50"
+                            y="49"
+                            text-anchor="middle"
+                            font-size="11.5"
+                            fill="#64748B"
+                        >
+                            / 100
+                        </text>
+
                     </svg>
                 </div>
-                <div style="font-size:13px;font-weight:bold;color:#64748B;">OVERALL SCORE</div>
-                <div style="color:#F59E0B;font-size:14.5px;letter-spacing:2px;margin:2px 0;">
+
+                <div style="
+                    color:#F59E0B;
+                    font-size:15px;
+                    letter-spacing:3px;
+                    margin-top:-2px;
+                ">
                     {'★' * stars}{'☆' * (5-stars)}
                 </div>
-                <div style="color:{rec_color};font-size:16px;font-weight:bold;">{label}</div>
+
+                <div style="
+                    color:{rec_color};
+                    font-size:17px;
+                    font-weight:800;
+                    margin-top:3px;
+                ">
+                    {label}
+                </div>
+
             </div>
 
-            <div style="text-align:center;">
-                <div style="font-size:14px;color:#475569;line-height:1.6;">
-                    <b style="color:#0F172A;">{ctx.selected_ticker}</b>
-                    ได้คะแนนภาพรวม <b>{overall:.1f}/100</b><br>
-                    จุดเด่นหลักอยู่ที่ <b>{top_strength}</b><br>
-                    อันดับ <b>{int(ctx.stock_info.get('sector_rank',1))} / {n_sector}</b>
-                    จากบริษัทในกลุ่ม <b>{ctx.stock_info.get('sector','-')}</b>
-                </div>
-            </div>
 
-            <div style="background-color:{rec_bg};border:1px solid #E2E8F0;border-radius:8px;
-                        padding:12px 14px;text-align:left;">
-                <div style="font-size:12.5px;color:#64748B;font-weight:bold;margin-bottom:4px;">
-                    RECOMMENDATION
+            <!-- AI INSIGHT -->
+            <div class="ai-summary-section ai-insight-section"
+                 style="
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:center;
+                    text-align:center;
+                 ">
+
+                <div style="
+                    font-size:12px;
+                    font-weight:700;
+                    color:#64748B;
+                    letter-spacing:0.6px;
+                    margin-bottom:10px;
+                ">
+                    INVESTMENT INSIGHT
                 </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        <span style="color:{rec_color};font-size:18px;">📈</span>
-                        <div>
-                            <b style="color:{rec_color};font-size:16px;">{rec}</b>
-                            <div style="color:#64748B;font-size:11.5px;">Based on Overall Score</div>
-                        </div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div style="color:#64748B;font-size:11.5px;">Sector Rank:</div>
-                        <b style="color:{rec_color};font-size:13px;">
-                            {int(ctx.stock_info.get('sector_rank',1))} / {n_sector}
+
+                <div style="
+                    font-size:16px;
+                    color:#475569;
+                    line-height:1.7;
+                ">
+
+                    <div style="margin-bottom:4px;">
+                        <b style="
+                            color:#0F172A;
+                            font-size:21px;
+                        ">
+                            {ctx.selected_ticker}
                         </b>
                     </div>
+
+                    <div>
+                        ได้คะแนนภาพรวม
+                        <b style="
+                            color:#0F172A;
+                            font-size:18px;
+                        ">
+                            {overall:.1f}/100
+                        </b>
+                    </div>
+
+                    <div style="margin-top:4px;">
+                        จุดเด่นหลักอยู่ที่
+                        <b style="color:{rec_color};">
+                            {top_strength}
+                        </b>
+                    </div>
+
+                    <div style="
+                        margin-top:4px;
+                        font-size:14px;
+                        color:#64748B;
+                    ">
+                        อันดับ
+                        <b style="color:#0F172A;">
+                            {int(ctx.stock_info.get('sector_rank',1))} / {n_sector}
+                        </b>
+                        จากบริษัทในกลุ่ม
+                        <b style="color:#0F172A;">
+                            {ctx.stock_info.get('sector','-')}
+                        </b>
+                    </div>
+
                 </div>
+
             </div>
+
+
+            <!-- RECOMMENDATION -->
+            <div class="ai-summary-section ai-recommendation-section"
+                 style="
+                    background:{rec_bg};
+                    border:1px solid #D1FAE5;
+                    border-radius:12px;
+                    padding:16px 18px;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:center;
+                    box-sizing:border-box;
+                 ">
+
+                <div style="
+                    font-size:12px;
+                    color:#64748B;
+                    font-weight:700;
+                    letter-spacing:0.6px;
+                    margin-bottom:10px;
+                ">
+                    RECOMMENDATION
+                </div>
+
+                <div class="ai-recommendation-inner"
+                     style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                        gap:16px;
+                     ">
+
+                    <div style="
+                        display:flex;
+                        align-items:center;
+                        gap:11px;
+                        min-width:0;
+                     ">
+
+                        <div style="
+                            width:42px;
+                            height:42px;
+                            border-radius:10px;
+                            background:#FFFFFF;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            font-size:20px;
+                            flex-shrink:0;
+                        ">
+                            📈
+                        </div>
+
+                        <div style="min-width:0;">
+
+                            <div style="
+                                color:{rec_color};
+                                font-size:21px;
+                                font-weight:800;
+                                line-height:1.2;
+                            ">
+                                {rec}
+                            </div>
+
+                            <div style="
+                                color:#64748B;
+                                font-size:11.5px;
+                                margin-top:3px;
+                            ">
+                                Based on Overall Score
+                            </div>
+
+                        </div>
+                    </div>
+
+
+                    <div style="
+                        text-align:right;
+                        flex-shrink:0;
+                    ">
+
+                        <div style="
+                            color:#64748B;
+                            font-size:11.5px;
+                        ">
+                            Sector Rank
+                        </div>
+
+                        <div style="
+                            color:{rec_color};
+                            font-size:18px;
+                            font-weight:800;
+                            margin-top:2px;
+                        ">
+                            {int(ctx.stock_info.get('sector_rank',1))}
+                            <span style="
+                                font-size:12px;
+                                font-weight:600;
+                            ">
+                                / {n_sector}
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
     </div>
     """)
