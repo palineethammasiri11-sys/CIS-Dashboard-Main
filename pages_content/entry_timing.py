@@ -274,6 +274,27 @@ def render(ctx):
         )
     downside_pct = _num(info.get("downside_pct"))
     upside_pct = _num(info.get("upside_pct"))
+    # TRADER MODE (v2.3): Stop Loss = 30-Day Low, Target 1/2 = Risk x 2 / x 3.
+    # เมื่อ New Low Guardrails สั่งงดเข้าเทรด (rr_computable == False) ต้องไม่โชว์
+    # ตัวเลข SL/Target ที่คำนวณมาแบบไม่มีความหมาย (เช่น Risk <= 0) จึงสลับเป็น
+    # N/A พร้อมข้อความเตือนแทน
+    if rr_computable:
+        sl_display = f"&lt; {_f(s2)}"
+        target1_display = _f(r1)
+        target2_display = _f(r2)
+        watch_zone_display = f"{_f(pp)} -- {_f(r1)}"
+        setup_warning_html = ""
+    else:
+        sl_display = "N/A"
+        target1_display = "N/A"
+        target2_display = "N/A"
+        watch_zone_display = f"{_f(pp)} -- N/A"
+        setup_warning_html = f"""
+        <div style="margin-top:8px;background:rgba(239,68,68,.08);border-left:3px solid {RED};
+                    padding:6px 10px;border-radius:0 6px 6px 0;font-size:9.5px;color:{TEXT_MUTED};">
+            <b style="color:{RED};">⚠ งดเข้าเทรด (New Low Guardrail):</b> {rr_status_reason}
+        </div>
+        """
     vol_series = next(
         (
             ctx.stock_daily[v]
@@ -317,9 +338,6 @@ def render(ctx):
         (k20_ok, k20_av, "Volume Confirmation",
          ("วอลุ่มล่าสุดสูงกว่าค่าเฉลี่ย 20 วันก่อนหน้า" if k20_ok else "วอลุ่มเบาบางกว่าค่าเฉลี่ย 20 วันก่อนหน้า") if k20_av else "ไม่มีข้อมูลวอลุ่มเพียงพอ",
          pillar_pts_label(k20_ok, k20_av, mom_criteria_count, 30.0)),
-        (k_rr_ok, k_rr_av, "Risk / Reward",
-         rr_sub_text,
-         f"+{_f(rr_score, '.1f')} pts" if k_rr_ok else "0.0 pts"),
     ]
     bullish_count = sum(1 for ok, av, *_ in checklist if ok and av)
     total_checks = len(checklist)
@@ -512,18 +530,19 @@ def render(ctx):
                         <span style="color:{GREEN};">Preferred Entry</span><b style="color:{GREEN};">{_f(s1)} -- {_f(pp)}</b>
                     </div>
                     <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:11px;">
-                        <span style="color:{AMBER};">Watch Zone</span><b style="color:{AMBER};">{_f(pp)} -- {_f(r1)}</b>
+                        <span style="color:{AMBER};">Watch Zone</span><b style="color:{AMBER};">{watch_zone_display}</b>
                     </div>
                     <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:11px;">
-                        <span style="color:{RED};">Stop Loss</span><b style="color:{RED};">&lt; {_f(s2)}</b>
+                        <span style="color:{RED};">Stop Loss (30D Low)</span><b style="color:{RED};">{sl_display}</b>
                     </div>
                     <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:11px;">
-                        <span style="color:{TEXT_WHITE};">Target 1</span><b style="color:{TEXT_WHITE};">{_f(r1)}</b>
+                        <span style="color:{TEXT_WHITE};">Target 1 (RR 1:2)</span><b style="color:{TEXT_WHITE};">{target1_display}</b>
                     </div>
                     <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:11px;">
-                        <span style="color:{TEXT_WHITE};">Target 2</span><b style="color:{TEXT_WHITE};">{_f(r2)}</b>
+                        <span style="color:{TEXT_WHITE};">Target 2 (RR 1:3)</span><b style="color:{TEXT_WHITE};">{target2_display}</b>
                     </div>
                 </div>
+                {setup_warning_html}
             </div>
             """
         )
@@ -603,8 +622,6 @@ def render(ctx):
              "MACD สนับสนุนโมเมนตัม" if k18_ok else ("MACD เป็นขาลง" if k18_av else "ไม่มีข้อมูล MACD")),
             ("Volume", "✓" if k20_ok else "✕", GREEN if k20_ok else (RED if k20_av else GRAY),
              "มี Volume ยืนยัน" if k20_ok else ("วอลุ่มไม่หนุน" if k20_av else "ไม่มีข้อมูลวอลุ่ม")),
-            ("Risk / Reward", "✓" if k_rr_ok else "✕", GREEN if k_rr_ok else (RED if k_rr_av else GRAY),
-             "อัตราผลตอบแทนคุ้มค่า" if k_rr_ok else ("อัตราผลตอบแทนยังไม่คุ้มความเสี่ยง" if k_rr_av else "คำนวณอัตราส่วนไม่ได้")),
         ]
         reason_cards = "".join(
             f"""
