@@ -202,7 +202,7 @@ def render(ctx):
     <td>{health_b}</td><td><span style="color:{val_c};">{val_b}</span></td><td>{timing_b}</td><td>{ai_b}</td>
     <td><span style="color:{risk_c};">{risk_b}</span></td><td style="color:#A855F7; letter-spacing:1px;">{'★'*star_n}{'☆'*(5-star_n)}</td></tr>"""
 
-        st.markdown(f"""<div style="background-color:#151E2F; border:1px solid #1E293B; border-radius:8px; padding:14px; height:350px;">
+        st.markdown(f"""<div style="background-color:#151E2F; border:1px solid #1E293B; border-radius:8px; padding:14px; height:420px;">
     <div style="font-size:14.5px; color:#94A3B8; font-weight:bold; margin-bottom:6px;">PEER COMPARISON — {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
     <table style="width:100%; text-align:center; font-size:14px; color:#CBD5E1; border-collapse:collapse;">
     <tr style="border-bottom:1px solid #1E293B; color:#64748B; font-size:13px;"><th style="text-align:left; padding:5px 0;">Company</th><th>Health</th><th>Fair Value</th><th>Entry Timing</th><th>AI Prediction</th><th>Risk</th><th>Overall</th></tr>
@@ -251,7 +251,7 @@ def render(ctx):
         show_chart(fig_matrix, key="industry_matrix", expand_height=650)
 
     st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
-    r3_c1, r3_c2, r3_c3 = st.columns([1.3, 1.5, 1.2])
+    r3_c1, r3_c2 = st.columns([1.3, 1.7])
 
     with r3_c1:
         compare_df = ctx.scores_df if single_member_sector else ctx.sector_peers
@@ -301,19 +301,6 @@ def render(ctx):
     <b>{ctx.selected_ticker}</b> {rank_sentence} (Overall Score {safe(ctx.stock_info.get('overall_score')):.1f}/100) {compare_desc}:</p>
     <div style="color:#CBD5E1; font-size:13.5px; line-height:1.5;">
     {metric_rows}
-    </div></div>""", unsafe_allow_html=True)
-    with r3_c3:
-        rec = ctx.stock_info.get('recommendation', 'ACCUMULATE')
-        rec_color2 = {"STRONG BUY": "#10B981", "BUY": "#10B981", "ACCUMULATE": "#84CC16", "REDUCE / SELL": "#EF4444", "ข้อมูลไม่พอ": "#64748B"}.get(rec, "#F59E0B")
-        conf_lvl = "High" if abs(safe(ctx.stock_info.get('margin_of_safety'))) > 15 else "Medium"
-        st.markdown(f"""<div style="background-color:#151E2F; border:1px solid #1E293B; border-radius:8px; padding:14px; height:275px; text-align:center;">
-    <div style="font-size:14.5px; color:#94A3B8; font-weight:bold; margin-bottom:4px; text-align:left;">FINAL RECOMMENDATION</div>
-    <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin:4px 0;">
-    <div><h1 style="color:{rec_color2}; margin:0; font-size:24px; line-height:1.1;">{rec}</h1></div></div>
-    <div style="text-align:left; font-size:13.5px; margin-top:8px; border-top:1px dashed #334155; padding-top:6px;">
-    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#94A3B8;">Confidence Level</span><span style="color:{rec_color2}; font-weight:bold;">{conf_lvl}</span></div>
-    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#94A3B8;">Overall Score</span><span style="color:#F59E0B; font-weight:bold;">{safe(ctx.stock_info.get('overall_score')):.1f}/100</span></div>
-    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#94A3B8;">Sector Rank</span><span style="color:#F59E0B; font-weight:bold;">{(str(sector_rank) + ' / ' + str(n_sector)) if not single_member_sector and not no_data else ('ไม่มีเทียบกลุ่ม' if single_member_sector else '-')}</span></div>
     </div></div>""", unsafe_allow_html=True)
 
     import base64
