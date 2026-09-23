@@ -202,11 +202,11 @@ def render(ctx):
         f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-top:none; border-radius:0 0 12px 12px; padding:16px;">
 <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:stretch;">
 
-<div style="flex:0 0 150px; max-width:150px; background-color:#F8FAFC; border:1px solid #D9E2EC; border-radius:12px; padding:10px; display:flex; align-items:center; justify-content:center;">
-<svg viewBox="0 0 100 56" style="width:100%; max-width:110px; height:auto;">
-<path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#D9E2EC" stroke-width="5" stroke-linecap="round" />
-<path d="M 10 50 A 40 40 0 0 1 {_gx:.1f} {_gy:.1f}" fill="none" stroke="{status_color}" stroke-width="5" stroke-linecap="round" />
-<text x="50" y="47" text-anchor="middle" font-size="14" font-weight="bold" fill="#0F172A">{prob_up:.0f}%</text>
+<div style="flex:0 0 320px; max-width:100%; background-color:#F8FAFC; border:1px solid #D9E2EC; border-radius:12px; padding:22px 14px; display:flex; align-items:center; justify-content:center;">
+<svg viewBox="0 0 100 56" style="width:100%; max-width:180px; height:auto;">
+<path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#D9E2EC" stroke-width="6" stroke-linecap="round" />
+<path d="M 10 50 A 40 40 0 0 1 {_gx:.1f} {_gy:.1f}" fill="none" stroke="{status_color}" stroke-width="6" stroke-linecap="round" />
+<text x="50" y="47" text-anchor="middle" font-size="17" font-weight="bold" fill="#0F172A">{prob_up:.0f}%</text>
 </svg>
 </div>
 
