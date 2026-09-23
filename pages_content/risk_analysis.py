@@ -225,9 +225,8 @@ def render(ctx):
     rh = ctx.risk_hist_df[ctx.risk_hist_df['ticker'] == ctx.selected_ticker].sort_values('date') if not ctx.risk_hist_df.empty else pd.DataFrame()
 
     with r2_c1:
-        beta_badge = "" if beta_verified else """<span style="font-size:11px; color:#F59E0B; background:rgba(245,158,11,0.12); border:1px solid #F59E0B; border-radius:4px; padding:1px 6px; margin-left:8px;">ไม่ได้ตรวจสอบแหล่งที่มา</span>"""
         st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px 12px 0 0; padding:12px 14px 0 14px;">
-    <div style="font-size:14px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">MARKET RISK (BETA) — vs Peers{beta_badge}</div>
+    <div style="font-size:14px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">MARKET RISK (BETA) — vs Peers</div>
     <div style="font-size:19px; font-weight:bold; color:#FFFFFF; margin-top:2px;">{beta_val:.2f}</div></div>""", unsafe_allow_html=True)
         beta_cmp = ctx.scores_df[['ticker', 'beta']].sort_values('beta')
         colors_beta = ['#A855F7' if t == ctx.selected_ticker else '#38BDF8' for t in beta_cmp['ticker']]
