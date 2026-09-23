@@ -198,7 +198,7 @@ def render(ctx):
             max-width: 100% !important;
             min-width: 0 !important;
             height: auto !important;
-            min-height: 350px !important;
+            min-height: 0 !important;
             box-sizing: border-box !important;
             overflow: visible !important;
         }
@@ -362,7 +362,7 @@ def render(ctx):
     </tr>"""
 
         peer_html = f"""
-<div class="peer-comparison-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; min-height:350px; height:auto; width:100%; max-width:100%; min-width:0; box-sizing:border-box;">
+<div class="peer-comparison-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:auto; width:100%; max-width:100%; min-width:0; box-sizing:border-box;">
     <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:6px;">
         PEER COMPARISON — {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)
     </div>
@@ -382,7 +382,7 @@ def render(ctx):
 
     </table>
 
-    <div style="font-size:14px; color:#64748B; margin-top:6px;">
+    <div style="font-size:12px; color:#64748B; margin-top:8px; line-height:1.3;">
         *จัดอันดับจาก Overall Score ที่คำนวณจริงจากข้อมูลใน cis_summary_scores
     </div>
 </div>
