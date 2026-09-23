@@ -56,7 +56,7 @@ def _kpi_card(
 ):
     """การ์ด KPI ใบเดียว"""
     return (
-        f'<div style="background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:14px 10px; text-align:center; height:120px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center;">'
+        f'<div style="background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:14px 16px; text-align:left; height:120px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center;">'
         f'<div style="font-size:11px; font-weight:bold; color:{label_color}; letter-spacing:1px;">{label}</div>'
         f'<div style="font-size:{value_size}px; font-weight:bold; color:{value_color}; line-height:1.2; margin-top:4px;">{value_html}</div>'
         f'{sub_html}'
@@ -141,8 +141,8 @@ def render(ctx):
                 direction_th,
                 _kpi_sub("10 Trading Days"),
                 value_color=status_color,
-                border="#EF4444",
-                bg_color="#FFF7F7"
+                border=status_color,
+                bg_color=_hex_to_rgba(status_color, 0.08)
             ),
             unsafe_allow_html=True
         )
@@ -154,8 +154,8 @@ def render(ctx):
                 f"{prob_up:.0f}%",
                 _kpi_sub(f"Down: {down_prob:.0f}%"),
                 value_color=status_color,
-                border="#EF4444",
-                bg_color="#FFF7F7"
+                border=status_color,
+                bg_color=_hex_to_rgba(status_color, 0.08)
             ),
             unsafe_allow_html=True
         )
