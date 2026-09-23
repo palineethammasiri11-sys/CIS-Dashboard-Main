@@ -336,18 +336,32 @@ def render(ctx):
 
     with col_date:
 
-        selected_date = st.date_input(
-            "ข้อมูล ณ วันที่ (2023-2025):",
-            value=default_date,
-            min_value=min_limit,
-            max_value=max_limit,
-            key="health_data_as_of"
-        )
+        display_date_str = default_date.strftime("%Y-%m-%d")
+        ctx.stock_info['latest_date'] = display_date_str
 
-        display_date_str = selected_date.strftime(
-            "%Y-%m-%d"
-        )
+        st.html(f"""
+        <div style="
+            text-align:right;
+            padding-top:4px;
+        ">
+            <div style="
+                font-size:14px;
+                color:#64748B;
+                margin-bottom:2px;
+            ">
+                ข้อมูล ณ วันที่
+            </div>
 
+            <div style="
+                font-size:20px;
+                font-weight:800;
+                color:#F97316;
+                line-height:1.1;
+            ">
+                {display_date_str}
+            </div>
+        </div>
+        """)
         ctx.stock_info['latest_date'] = display_date_str
 
 
