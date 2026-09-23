@@ -27,10 +27,18 @@ from common import fmt_mb, fmt_ratio, safe, show_chart, render_nav_footer, COMPA
 
 def render(ctx):
     n_sector = len(ctx.sector_peers)
-    sector_rank = int(ctx.stock_info.get('sector_rank', 1))
-    overall_rank = int(ctx.stock_info.get('overall_rank', 1))
+
+    def _rank(v):
+        return None if pd.isna(v) else int(v)
+
+    sector_rank_raw = _rank(ctx.stock_info.get('sector_rank', 1))
+    overall_rank_raw = _rank(ctx.stock_info.get('overall_rank', 1))
+    no_data = sector_rank_raw is None or overall_rank_raw is None
+    sector_rank = sector_rank_raw or 0
+    overall_rank = overall_rank_raw or 0
     n_all = len(ctx.scores_df)
     pct_in_sector = round((sector_rank / max(n_sector, 1)) * 100)
+    rank_txt = lambda v: '-' if not v else v
 
     st.markdown(f"""
     <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px; border-bottom:1px solid #1E293B; padding-bottom:10px;">
@@ -49,12 +57,23 @@ def render(ctx):
 
     with r1_c1:
         single_member_sector = n_sector < 2
-        if single_member_sector:
+        if no_data:
+            position_label, pos_stars = "INSUFFICIENT DATA", 0
+        elif single_member_sector:
             position_label = "INDUSTRY LEADER" if overall_rank == 1 else ("STRONG COMPETITOR" if overall_rank <= max(2, n_all // 2) else "LAGGING PEER")
             pos_stars = 5 if overall_rank == 1 else (4 if overall_rank <= max(2, n_all // 2) else 2)
         else:
             position_label = "INDUSTRY LEADER" if sector_rank == 1 else ("STRONG COMPETITOR" if sector_rank <= max(2, n_sector // 2) else "LAGGING PEER")
             pos_stars = 5 if sector_rank == 1 else (4 if sector_rank <= max(2, n_sector // 2) else 2)
+        if no_data:
+            position_caption = "ข้อมูลคะแนนของหุ้นตัวนี้ไม่เพียงพอสำหรับการจัดอันดับ"
+        elif single_member_sector:
+            position_caption = (f"กลุ่ม {ctx.stock_info.get('sector','-')} มีเพียง 1 หุ้น จึงจัดอันดับเทียบทั้ง {n_all} หุ้น: "
+                                f"อันดับที่ {overall_rank} จาก Overall Score = {safe(ctx.stock_info.get('overall_score')):.1f}/100")
+        else:
+            position_caption = (f"อันดับที่ {sector_rank} จาก {n_sector} บริษัทในกลุ่ม {ctx.stock_info.get('sector','-')} "
+                                f"จาก Overall Score = {safe(ctx.stock_info.get('overall_score')):.1f}/100")  
+            
         st.markdown(f"""<div style="background-color:#151E2F; border:1px solid #1E293B; border-radius:8px; padding:14px; height:360px; display:flex; flex-direction:column; justify-content:space-between;">
     <div style="font-size:14.5px; color:#94A3B8; font-weight:bold; margin-bottom:8px;">STRATEGIC INVESTMENT POSITION</div>
     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; flex-grow:1;">
@@ -64,11 +83,13 @@ def render(ctx):
     <div style="color:#A855F7; font-size:22px; letter-spacing:4px; margin-top:6px;">{'★'*pos_stars}{'☆'*(5-pos_stars)}</div>
     </div>
     </div>
-    <p style="color:#94A3B8; font-size:13.5px; line-height:1.4; margin:0;">อันดับที่ {sector_rank} จาก {n_sector} บริษัทในกลุ่ม {ctx.stock_info.get('sector','-')} จาก Overall Score = {safe(ctx.stock_info.get('overall_score')):.1f}/100</p>
+    <p style="color:#94A3B8; font-size:13.5px; line-height:1.4; margin:0;">{position_caption}</p>
     </div>""", unsafe_allow_html=True)
         
     with r1_c2:
         pct_overall = round((overall_rank / max(n_all, 1)) * 100)
+        if no_data:
+            pct_overall = 0
         sector_block = f"""<span style="display:inline-block; margin-top:6px; background-color:rgba(100,116,139,0.15); color:#94A3B8; font-size:14px; font-weight:bold; padding:3px 14px; border-radius:8px;">กลุ่มมีเพียง 1 หุ้น</span>""" if single_member_sector else f"""<span style="display:inline-block; margin-top:6px; background-color:rgba(245,158,11,0.15); color:#F59E0B; font-size:14px; font-weight:bold; padding:3px 14px; border-radius:8px;">Top {pct_in_sector}%</span>"""
 
         st.markdown(f"""<div style="background-color:#151E2F; border:1px solid #1E293B; border-radius:8px; padding:14px; height:360px; text-align:center; display:flex; flex-direction:column; justify-content:space-between;">
@@ -76,13 +97,12 @@ def render(ctx):
     <div style="border-bottom:1px solid #1E293B; padding-bottom:10px; flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
     <div style="font-size:14px; color:#64748B;">ในกลุ่ม</div>
     <div style="font-size:13px; color:#94A3B8; margin-bottom:4px;">{ctx.stock_info.get('sector','-')}</div>
-    <div><span style="font-size:32px; color:#F8FAFC; font-weight:bold;">{sector_rank}</span> <span style="font-size:14px; color:#64748B;">/ {n_sector} หุ้น</span></div>
-    {sector_block}
+    <div><span style="font-size:32px; color:#F8FAFC; font-weight:bold;">{rank_txt(sector_rank)}</span> <span style="font-size:14px; color:#64748B;">/ {n_sector} หุ้น</span></div>
     </div>
     <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
     <div style="font-size:14px; color:#64748B;">ทั้งตลาด</div>
     <div style="font-size:13px; color:#94A3B8; margin-bottom:4px;">{n_all} หุ้นที่ติดตาม</div>
-    <div><span style="font-size:32px; color:#F8FAFC; font-weight:bold;">{overall_rank}</span> <span style="font-size:14px; color:#64748B;">/ {n_all} หุ้น</span></div>
+    <div><span style="font-size:32px; color:#F8FAFC; font-weight:bold;">{rank_txt(overall_rank)}</span> <span style="font-size:14px; color:#64748B;">/ {n_all} หุ้น</span></div>
     <span style="display:inline-block; margin-top:6px; background-color:rgba(56,189,248,0.15); color:#38BDF8; font-size:14px; font-weight:bold; padding:3px 14px; border-radius:8px;">Top {pct_overall}%</span>
     </div>
     </div>""", unsafe_allow_html=True)
@@ -91,8 +111,8 @@ def render(ctx):
         def calc_pct(df, col):
             s = df[col].rank(pct=True)
             match = df['ticker'] == ctx.selected_ticker
-            if not match.any():
-                return 50
+            if not match.any() or pd.isna(s[match].values[0]):
+                return None
             return int(round(100 - s[match].values[0] * 100))
 
         dims_cols = [
@@ -107,8 +127,8 @@ def render(ctx):
         def build_dims(df):
             result = []
             for label, col, color in dims_cols:
-                if col == 'revenue_growth_yoy' and ctx.stock_info.get('revenue_growth_yoy') is None:
-                    pct = 50
+                if col == 'revenue_growth_yoy' and pd.isna(ctx.stock_info.get('revenue_growth_yoy')):
+                    pct = None
                 else:
                     pct = calc_pct(df, col)
                 result.append((label, pct, color))
@@ -117,6 +137,10 @@ def render(ctx):
         dims_market = build_dims(ctx.scores_df)
 
         def dim_pct_card(label, pct, color):
+            if pct is None:
+                return f"""<div style="background:#0F172A; padding:6px 2px; border-radius:6px; border:1px solid #1E293B;">
+    <div style="color:#94A3B8; font-size:12px;">{label}</div><div style="color:#64748B; font-size:15px; font-weight:bold; margin:2px 0;">N/A</div>
+    <div style="color:#64748B; font-size:12px;">No data</div></div>"""
             tier = "Excellent" if pct <= 20 else ("Good" if pct <= 45 else ("Fair" if pct <= 70 else "Weak"))
             return f"""<div style="background:#0F172A; padding:6px 2px; border-radius:6px; border:1px solid #1E293B;">
     <div style="color:#94A3B8; font-size:12px;">{label}</div><div style="color:{color}; font-size:15px; font-weight:bold; margin:2px 0;">Top {max(pct,1)}%</div>
@@ -163,9 +187,9 @@ def render(ctx):
         for _, p in peers_sorted.iterrows():
             is_sel = p['ticker'] == ctx.selected_ticker
             row_bg = "background:rgba(168,85,247,0.08);" if is_sel else ""
-            star_n = min(5, max(1, round(safe(p['overall_score']) / 20)))
+            star_n = 0 if pd.isna(p['overall_score']) else min(5, max(1, round(safe(p['overall_score']) / 20)))
             health_b = badge(p['health_score'], [70, 45, 0], ["Excellent", "Good", "Weak"], ["#10B981", "#3B82F6", "#EF4444"])
-            val_b = "Undervalued" if p['margin_of_safety'] > 10 else ("Overvalued" if p['margin_of_safety'] < -10 else "Fair Value")
+            val_b = "N/A" if pd.isna(p['margin_of_safety']) else "Undervalued" if p['margin_of_safety'] > 10 else ("Overvalued" if p['margin_of_safety'] < -10 else "Fair Value")
             val_c = "#10B981" if p['margin_of_safety'] > 10 else ("#EF4444" if p['margin_of_safety'] < -10 else "#94A3B8")
             timing_b = badge(p['timing_score'], [65, 45, 0], ["Good Entry", "Neutral", "Bad Entry"], ["#10B981", "#F59E0B", "#EF4444"])
             ai_b = badge(p['ai_score'], [65, 45, 0], ["Bullish", "Neutral", "Bearish"], ["#10B981", "#94A3B8", "#EF4444"])
@@ -206,7 +230,7 @@ def render(ctx):
         show_chart(fig_radar, key="industry_radar", expand_height=650)
 
     with r2_c3:
-        matrix_df = ctx.scores_df[['ticker', 'health_score', 'overall_score']].copy()
+        matrix_df = ctx.scores_df[['ticker', 'health_score', 'overall_score']].dropna().copy()
         matrix_df.columns = ['Company', 'Business_Quality', 'Investment_Attract']
         color_map = {t: ('#C084FC' if t == ctx.selected_ticker else '#38BDF8') for t in matrix_df['Company']}
         fig_matrix = px.scatter(matrix_df, x='Business_Quality', y='Investment_Attract', text='Company', color='Company', color_discrete_map=color_map)
@@ -252,20 +276,35 @@ def render(ctx):
     with r3_c2:
         compare_desc = f"เทียบกับทั้ง {n_all} หุ้นที่ติดตาม (กลุ่มมีตัวเดียว)" if single_member_sector else "เทียบกับบริษัทในกลุ่มเดียวกัน"
         avg_label = "Overall avg" if single_member_sector else "Sector avg"
+
+        def _metric_row(label, col):
+            v = ctx.stock_info.get(col)
+            avg = compare_df[col].mean()
+            if pd.isna(v):
+                return f'<div><span style="color:#64748B;">–</span> {label}: N/A</div>'
+            ok = v >= avg
+            icon = '<span style="color:#10B981;">✔</span>' if ok else '<span style="color:#EF4444;">✘</span>'
+            return f'<div>{icon} {label}: {v:.1f} ({avg_label} {avg:.1f})</div>'
+        metric_rows = "".join(_metric_row(l, c) for l, c in [
+            ("Health Score", 'health_score'), ("Valuation Score", 'valuation_score'),
+            ("AI Prediction Score", 'ai_score'), ("Risk Score", 'risk_score')])
+        if no_data:
+            rank_sentence = "มีข้อมูลไม่เพียงพอสำหรับการจัดอันดับ"
+        elif single_member_sector:
+            rank_sentence = f"อยู่อันดับที่ <b>{overall_rank}</b> จาก {n_all} หุ้นที่ติดตาม (กลุ่ม {ctx.stock_info.get('sector','-')} มีหุ้นตัวเดียว)"
+        else:
+            rank_sentence = f"อยู่อันดับที่ <b>{sector_rank}</b> จาก {n_sector} บริษัทในกลุ่ม {ctx.stock_info.get('sector','-')}"
+
         st.markdown(f"""<div style="background-color:#151E2F; border:1px solid #1E293B; border-radius:8px; padding:14px; height:275px;">
     <div style="font-size:14.5px; color:#94A3B8; font-weight:bold; margin-bottom:6px;">EXPLAINABLE AI SUMMARY</div>
     <p style="color:#CBD5E1; font-size:14px; line-height:1.4; margin:0 0 8px 0;">
-    <b>{ctx.selected_ticker}</b> อยู่อันดับที่ <b>{sector_rank}</b> จาก {n_sector} บริษัทในกลุ่ม {ctx.stock_info.get('sector','-')} (Overall Score {safe(ctx.stock_info.get('overall_score')):.1f}/100) {compare_desc}:</p>
+    <b>{ctx.selected_ticker}</b> {rank_sentence} (Overall Score {safe(ctx.stock_info.get('overall_score')):.1f}/100) {compare_desc}:</p>
     <div style="color:#CBD5E1; font-size:13.5px; line-height:1.5;">
-    <div><span style="color:#10B981;">✔</span> Health Score: {safe(ctx.stock_info.get('health_score')):.1f} ({avg_label} {compare_df['health_score'].mean():.1f})</div>
-    <div><span style="color:#10B981;">✔</span> Valuation Score: {safe(ctx.stock_info.get('valuation_score')):.1f} ({avg_label} {compare_df['valuation_score'].mean():.1f})</div>
-    <div><span style="color:#10B981;">✔</span> AI Prediction Score: {safe(ctx.stock_info.get('ai_score')):.1f} ({avg_label} {compare_df['ai_score'].mean():.1f})</div>
-    <div><span style="color:#10B981;">✔</span> Risk Score: {safe(ctx.stock_info.get('risk_score')):.1f} ({avg_label} {compare_df['risk_score'].mean():.1f})</div>
+    {metric_rows}
     </div></div>""", unsafe_allow_html=True)
-
     with r3_c3:
         rec = ctx.stock_info.get('recommendation', 'ACCUMULATE')
-        rec_color2 = {"STRONG BUY": "#10B981", "BUY": "#10B981", "ACCUMULATE": "#84CC16", "REDUCE / SELL": "#EF4444"}.get(rec, "#F59E0B")
+        rec_color2 = {"STRONG BUY": "#10B981", "BUY": "#10B981", "ACCUMULATE": "#84CC16", "REDUCE / SELL": "#EF4444", "ข้อมูลไม่พอ": "#64748B"}.get(rec, "#F59E0B")
         conf_lvl = "High" if abs(safe(ctx.stock_info.get('margin_of_safety'))) > 15 else "Medium"
         st.markdown(f"""<div style="background-color:#151E2F; border:1px solid #1E293B; border-radius:8px; padding:14px; height:275px; text-align:center;">
     <div style="font-size:14.5px; color:#94A3B8; font-weight:bold; margin-bottom:4px; text-align:left;">FINAL RECOMMENDATION</div>
@@ -274,7 +313,7 @@ def render(ctx):
     <div style="text-align:left; font-size:13.5px; margin-top:8px; border-top:1px dashed #334155; padding-top:6px;">
     <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#94A3B8;">Confidence Level</span><span style="color:{rec_color2}; font-weight:bold;">{conf_lvl}</span></div>
     <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#94A3B8;">Overall Score</span><span style="color:#F59E0B; font-weight:bold;">{safe(ctx.stock_info.get('overall_score')):.1f}/100</span></div>
-    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#94A3B8;">Sector Rank</span><span style="color:#F59E0B; font-weight:bold;">{sector_rank} / {n_sector}</span></div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#94A3B8;">Sector Rank</span><span style="color:#F59E0B; font-weight:bold;">{(str(sector_rank) + ' / ' + str(n_sector)) if not single_member_sector and not no_data else ('ไม่มีเทียบกลุ่ม' if single_member_sector else '-')}</span></div>
     </div></div>""", unsafe_allow_html=True)
 
     import base64

@@ -28,27 +28,65 @@ compute_industry_rankings(df_res) รับ:
 """
 
 
+import json
+import numpy as np
+import pandas as pd
+
+BASE_WEIGHTS = {'health_score': 0.25, 'valuation_score': 0.25,
+                'timing_score': 0.15, 'ai_score': 0.10, 'risk_score': 0.15}
+INDUSTRY_WEIGHT = 0.10
+MIN_SECTOR_SIZE = 2
+NO_DATA_LABEL = "ข้อมูลไม่พอ"
+
+
+def sanitize_for_sqlite(df):          # ข้อ 1
+    df = df.copy()
+    for col in df.columns:
+        if df[col].map(lambda v: isinstance(v, (dict, list, tuple, set))).any():
+            df[col] = df[col].map(
+                lambda v: json.dumps(sorted(v) if isinstance(v, set) else v, ensure_ascii=False, default=str)
+                if isinstance(v, (dict, list, tuple, set)) else v)
+    return df
+
+
+def _weighted_mean(df, weights):      # ข้อ 2
+    vals = df[list(weights)].apply(pd.to_numeric, errors='coerce')
+    w = pd.Series(weights)
+    mask = vals.notna()
+    num = (vals.fillna(0) * w).sum(axis=1)
+    den = (mask * w).sum(axis=1)
+    return (num / den.where(den > 0)).round(1)
+    
 def compute_industry_rankings(df_res):
     """รับ DataFrame ที่มีคะแนนทุกโมดูลของทุกหุ้นแล้ว (แถวละ 1 หุ้น) คำนวณ Industry Benchmark
     + Overall Score + Recommendation แล้วคืน DataFrame เดิมที่เพิ่มคอลัมน์เหล่านี้เข้าไป"""
 
     # Percentile ของ health_score ภายในกลุ่ม sector เดียวกัน (0-100, ยิ่งสูงยิ่งดีกว่ากลุ่ม)
-    df_res['industry_score'] = df_res.groupby('sector')['health_score'].rank(pct=True).apply(lambda x: round(x * 100, 1))
+    df_res = df_res.copy()
+    for c in BASE_WEIGHTS:
+        df_res[c] = pd.to_numeric(df_res[c], errors='coerce')
+    sector_key = df_res['sector'].fillna('N/A')
+
+    df_res['base_score'] = _weighted_mean(df_res, BASE_WEIGHTS)                    # ข้อ 4
+    valid = df_res['base_score'].notna()
+    df_res['sector_size'] = valid.groupby(sector_key).transform('sum').astype(int)
+    df_res['sector_comparable'] = df_res['sector_size'] >= MIN_SECTOR_SIZE         # ข้อ 3
+
+    pct_sector = df_res['base_score'].groupby(sector_key).rank(pct=True) * 100
+    pct_universe = df_res['base_score'].rank(pct=True) * 100
+    df_res['industry_score'] = pd.Series(
+        np.where(df_res['sector_comparable'], pct_sector, pct_universe), index=df_res.index).round(1)
+    df_res['industry_score_basis'] = np.where(df_res['sector_comparable'], 'sector', 'universe')
 
     # คะแนนรวมถ่วงน้ำหนัก — น้ำหนักนี้เป็นค่าที่กำหนดเอง ปรับได้ตามที่ทีมเห็นสมควร
-    df_res['overall_score'] = (
-        (df_res['health_score'] * 0.25) +
-        (df_res['valuation_score'] * 0.25) +
-        (df_res['timing_score'] * 0.15) +
-        (df_res['ai_score'] * 0.10) +
-        (df_res['risk_score'] * 0.15) +
-        (df_res['industry_score'] * 0.10)
-    ).round(1)
+    df_res['overall_score'] = _weighted_mean(df_res, {**BASE_WEIGHTS, 'industry_score': INDUSTRY_WEIGHT})
 
-    df_res['sector_rank'] = df_res.groupby('sector')['overall_score'].rank(ascending=False, method='min').astype(int)
-    df_res['overall_rank'] = df_res['overall_score'].rank(ascending=False, method='min').astype(int)
+    df_res['sector_rank'] = df_res.groupby(sector_key)['overall_score'].rank(ascending=False, method='min').astype('Int64')
+    df_res['overall_rank'] = df_res['overall_score'].rank(ascending=False, method='min').astype('Int64')
 
     def get_rec(score):
+        if pd.isna(score):
+            return NO_DATA_LABEL
         if score >= 75:
             return "STRONG BUY"
         if score >= 65:
