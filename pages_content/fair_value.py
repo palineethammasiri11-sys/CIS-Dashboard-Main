@@ -124,16 +124,20 @@ def render(ctx):
         st.markdown(
             f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:16px 18px; min-height:190px; display:flex; flex-direction:column; justify-content:space-between;">
         <div style="display:flex; align-items:center; gap:6px; font-size:14px; font-weight:bold; color:#475569; letter-spacing:0.5px;">FAIR VALUE RANGE — DCF vs P/E RELATIVE</div>
-        <div style="position:relative; height:22px; margin-top:22px;">
-        <div style="position:absolute; top:7px; left:0; right:0; height:8px; border-radius:4px; background:linear-gradient(90deg, #10B981, #F59E0B, #38BDF8, #8B5CF6);"></div>
-        <div style="position:absolute; left:{pos_cur:.1f}%; top:3px; transform:translateX(-50%); width:14px; height:14px; border-radius:50%; background:#FFFFFF; border:3px solid #0EA5E9;"></div>
-        <div style="position:absolute; left:{pos_base:.1f}%; top:-1px; transform:translateX(-50%); width:4px; height:22px; background:{val_color};"></div>
+        <div style="position:relative; height:82px; margin-top:24px;">
+        <div style="position:absolute; top:8px; left:0; right:0; height:8px; border-radius:4px; background:linear-gradient(90deg, #10B981, #F59E0B, #38BDF8, #8B5CF6);"></div>
+        <div style="position:absolute; left:{pos_cur:.1f}%; top:4px; transform:translateX(-50%); width:14px; height:14px; border-radius:50%; background:#FFFFFF; border:3px solid #0EA5E9; z-index:2;"></div>
+        <div style="position:absolute; left:{pos_base:.1f}%; top:0px; transform:translateX(-50%); width:4px; height:22px; background:{val_color}; z-index:2;"></div>
+        <div style="position:absolute; left:{pos_cur:.1f}%; top:34px; transform:translateX(-50%); white-space:nowrap;">
+        <div style="width:0; height:0; margin:0 auto; border-left:6px solid transparent; border-right:6px solid transparent; border-bottom:7px solid #0EA5E9;"></div>
+        <div style="background:#0EA5E9; color:#FFFFFF; font-size:12px; font-weight:bold; border-radius:8px; padding:6px 12px;">Current Price <span style="font-weight:normal; opacity:0.9;">{val_cur_price:.2f} THB</span></div>
         </div>
-        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;">
-        <span style="display:inline-flex; align-items:center; gap:5px; background:#0EA5E9; color:#FFFFFF; font-size:12px; font-weight:bold; border-radius:8px; padding:5px 10px;">Current Price <span style="font-weight:normal; opacity:0.9;">{val_cur_price:.2f} THB</span></span>
-        <span style="display:inline-flex; align-items:center; gap:5px; background:{val_color}; color:#FFFFFF; font-size:12px; font-weight:bold; border-radius:8px; padding:5px 10px;">Blended Fair Value <span style="font-weight:normal; opacity:0.9;">{val_base:.2f} THB</span></span>
+        <div style="position:absolute; left:{pos_base:.1f}%; top:34px; transform:translateX(-50%); white-space:nowrap;">
+        <div style="width:0; height:0; margin:0 auto; border-left:6px solid transparent; border-right:6px solid transparent; border-bottom:7px solid {val_color};"></div>
+        <div style="background:{val_color}; color:#FFFFFF; font-size:12px; font-weight:bold; border-radius:8px; padding:6px 12px;">Blended Fair Value <span style="font-weight:normal; opacity:0.9;">{val_base:.2f} THB</span></div>
         </div>
-        <div style="display:flex; justify-content:space-between; font-size:12px; color:#64748B; margin-top:10px;">
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; color:#64748B; margin-top:4px;">
         <div>Min<br><b style="color:#0F172A; font-size:13px;">{val_bear:.2f} THB</b></div>
         <div style="text-align:right;">Max<br><b style="color:#0F172A; font-size:13px;">{val_bull:.2f} THB</b></div>
         </div>
