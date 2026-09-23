@@ -6,71 +6,31 @@ pages_content/risk_analysis.py
 วิธีทดสอบหน้านี้แบบเดี่ยว (ไม่ต้องรอทีมคนอื่น):
     streamlit run preview_my_page.py
     (แล้วเลือกโมดูลนี้จาก dropdown ในไฟล์ preview_my_page.py)
-
-ข้อมูลที่ใช้ได้ใน ctx (ดูนิยามเต็มใน common.py -> class PageContext):
-    ctx.selected_ticker, ctx.stock_info, ctx.stock_daily, ctx.fin_stock, ctx.sector_peers,
-    ctx.scores_df, ctx.fin_df, ctx.feat_imp_df, ctx.backtest_df, ctx.risk_hist_df,
-    ctx.health_yearly_df, ctx.fair_value_yearly_df,
-    ctx.current_price, ctx.change_pct, ctx.change_val, ctx.change_color, ctx.change_sign, ctx.arrow_sign
-
-ห้ามแก้ CSS ส่วนกลางหรือ helper function ใน common.py จากไฟล์นี้ — ถ้าจำเป็นต้องแก้ ให้แจ้ง Layout Lead ก่อน
-
-=== อัปเดตล่าสุด (รอบที่ 3 — แก้ตามรายงานตรวจสอบภายนอก Module5_RiskAnalysis_Review_C1-C5) ===
-- F-2: แก้จุดที่ UI พังเมื่อ recovery_days/cvar_95/psr อ่านกลับจาก SQLite เป็น NaN (float) แทน None
-  (เดิมเช็คแค่ `is not None` ซึ่ง NaN ก็ผ่านเงื่อนไขนี้ แล้ว int(nan) จะ error) → เปลี่ยนไปเช็คด้วย
-  pd.isna() ร่วมด้วยทุกจุด
-- F-7b: risk_score ที่คำนวณไม่ได้ (ข้อมูลราคาน้อยเกินไป) เดิม UI ใช้ safe(risk_score, 45) ทำให้แสดง
-  "45 / MODERATE RISK" ปลอมๆ เหมือนคำนวณได้จริง → เปลี่ยนเป็นแสดง "N/A" ชัดเจนแทน
-- F-6 (ข้อความ): แก้ป้ายกำกับ VaR ในการ์ดที่ CVaR คำนวณไม่ได้ ที่เคยเขียนผิดว่าเป็น "Historical
-  Simulation" ทั้งที่ VaR ในระบบนี้เป็น Parametric เสมอ
-- F-8(ข): แก้คำอธิบายที่บอกว่าประเมินจาก "Beta, Volatility, Max Drawdown" เฉยๆ ให้ตรงกับโมเดลจริง
-  (5 มิติถ่วงน้ำหนัก) + เพิ่มหมายเหตุว่าการ์ด RISK DIMENSION OVERVIEW ใช้สูตร/ตัวคูณคนละชุดกับ
-  risk_score หลัก (ความไม่สอดคล้องนี้มีอยู่แล้วในของเดิม แค่ไม่เคยเปิดเผย)
-- เพิ่มป้าย "ไม่ได้ตรวจสอบแหล่งที่มา" กำกับ Beta เสมอ (ตรงกับ beta_verified=False จาก backend — ดู F-4)
-
-=== รอบที่ 4 (แก้ F-6 ข้อความ + F-7 ส่วนที่ตกหล่นจากรอบที่ 3) ===
-- F-6 (ข้อความ): แก้คำว่า "ขาดทุนสูงสุดที่คาดใน 95% ของวัน" (ผิดนิยาม — VaR ไม่ใช่ขาดทุนสูงสุด ยังมี 5%
-  ของวันที่แย่กว่าได้) เป็น "ระดับขาดทุนรายวันที่ไม่ควรแย่ไปกว่านี้ใน 95% ของวัน" ทั้งสองที่ (การ์ดที่มี
-  CVaR และการ์ดที่ไม่มี) — ไม่ได้เปลี่ยนวิธีคำนวณ (ยังเป็น Parametric เหมือนเดิม รอ F-6 ตัดสินใจ)
-- F-7 (ต่อ): var_95, sharpe_ratio, sortino_ratio เป็น None ได้เมื่อข้อมูลราคาน้อยเกินไป (เช่น IPO ใหม่
-  <3 วัน) เดิมใช้ safe(x, 0.0) ตรงๆ ทำให้โชว์ "-0.00%"/"0.00" ปลอมบนหน้าจอ (ขัดกับข้อความอธิบายข้างๆ
-  ที่บอกว่า "ยังคำนวณไม่ได้") → เพิ่ม _fmt_or_na() แสดง "N/A" แทนทุกจุดที่เคยพลาด
 """
 import streamlit as st
 import pandas as pd
 import numpy as np
 import math
 import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
-
-from common import fmt_mb, fmt_ratio, safe, show_chart, render_nav_footer, COMPANY_NAMES, SECTOR_MAP
+from common import safe, show_chart, render_nav_footer
 
 
 def _fmt_or_na(val, spec="{:.2f}", na="N/A"):
-    """จัดรูปแบบตัวเลขแบบปลอดภัย — คืน N/A แทนตัวเลขปลอมเมื่อค่าเป็น None/NaN (แก้ F-7 ที่ตกหล่น:
-    เดิม VaR/Sharpe/Sortino ใช้ safe(x, 0.0) ตรงๆ ตอนคำนวณไม่ได้จริง จึงโชว์ "-0.00%"/"0.00" ปลอม
-    ทั้งที่ข้อความอธิบายข้างๆ กันบอกว่า "ยังคำนวณไม่ได้" อยู่แล้ว — สองอย่างขัดกันเอง)"""
     if _is_missing(val):
         return na
     return spec.format(val)
 
 
 def _is_missing(val):
-    """เช็คว่าค่าที่ได้จาก ctx.stock_info.get(...) ถือว่า 'ไม่มีค่า' หรือไม่ ครอบคลุมทั้ง None และ NaN
-    (float) ที่เกิดจากการอ่านค่า NULL ของ SQLite กลับผ่าน pandas — แก้ F-2 ที่เดิมเช็คแค่ `is not None`
-    ซึ่ง NaN ผ่านเงื่อนไขนั้นได้ (nan is not None -> True) แล้วโค้ดถัดไปที่เรียก int(nan) จะ error"""
     if val is None:
         return True
     try:
         return bool(pd.isna(val))
     except (TypeError, ValueError):
         return False
-    
+
 
 def _fallback_cvar_95(stock_daily, confidence=0.95):
-    """คำนวณ CVaR 95% (Historical Simulation) สดจาก ctx.stock_daily เป็น fallback กรณี cis_summary_scores
-    ยังไม่มีค่านี้ (เช่น ยังไม่ได้รัน calculate_scores.py ใหม่) คืน None เฉพาะข้อมูลน้อยกว่า 20 วันจริงๆ"""
     try:
         closes = stock_daily['close'].astype(float)
         returns = closes.pct_change().dropna()
@@ -86,8 +46,6 @@ def _fallback_cvar_95(stock_daily, confidence=0.95):
 
 
 def _fallback_psr(stock_daily, sr_benchmark=0.0):
-    """คำนวณ Probabilistic Sharpe Ratio สดจาก ctx.stock_daily เป็น fallback แบบเดียวกับ CVaR
-    คืน None เฉพาะข้อมูลน้อยกว่า 30 วัน หรือผลตอบแทนนิ่งสนิท (std=0) จริงๆ เท่านั้น"""
     try:
         closes = stock_daily['close'].astype(float)
         r = closes.pct_change().dropna()
@@ -109,8 +67,6 @@ def _fallback_psr(stock_daily, sr_benchmark=0.0):
 
 
 def render(ctx):
-    # F-7b: ห้ามแสดง risk_score ปลอมๆ ด้วย safe(..., 45) ถ้าข้อมูลจริงคำนวณไม่ได้ (NaN/None)
-    # ต้องแยกสถานะ "คำนวณได้" กับ "คำนวณไม่ได้" ออกจากกันให้ชัดเจน แล้วแสดง N/A เมื่อไม่มีค่าจริง
     raw_risk_score = ctx.stock_info.get('risk_score')
     risk_score_available = not _is_missing(raw_risk_score)
     risk_score = int(round(safe(raw_risk_score, 45))) if risk_score_available else None
@@ -125,7 +81,7 @@ def render(ctx):
     beta_val = safe(ctx.stock_info.get('beta'), 1.0)
     vol_val = safe(ctx.stock_info.get('volatility'), 25.0)
 
-    # คำนวณ Max Drawdown จากราคาปิดจริงสดๆ ทันที ไม่ต้องรอคำนวณฐานข้อมูลใหม่
+    # คำนวณ Max Drawdown จากราคาปิดจริงสดๆ ทันที
     if not ctx.stock_daily.empty and 'close' in ctx.stock_daily.columns:
         _closes = pd.to_numeric(ctx.stock_daily['close'], errors='coerce').dropna()
         _cum_max = _closes.cummax()
@@ -136,9 +92,6 @@ def render(ctx):
 
     de_val_r = safe(ctx.stock_info.get('de_ratio'), 1.0)
     cr_val_r = safe(ctx.stock_info.get('current_ratio'), 1.2)
-    # F-4: โค้ดไม่ได้คำนวณ Beta เอง และไม่มีข้อมูลดัชนีตลาดให้ตรวจสอบที่มาของค่าในไฟล์ต้นทาง
-    # beta_verified มาจาก backend เสมอเป็น False ในเวอร์ชันนี้ (ใช้ get(..., False) กันกรณี key ยังไม่มี)
-    beta_verified = bool(ctx.stock_info.get('beta_verified', False))
 
     st.markdown(f"""<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
     <div><div style="font-size:14.5px; color:#64748B; margin-bottom:2px;">Home / Module 5 / Risk Analysis</div>
@@ -152,18 +105,14 @@ def render(ctx):
 
     with r1_c1:
         if risk_score_available:
-            # risk_score นิยามว่า "higher = safer" แต่ arc วาดจากเขียว(ซ้าย)->แดง(ขวา)
-            # ต้อง invert (1 - ...) ไม่งั้นคะแนนสูง (ปลอดภัย) จะดันเข็มไปทางแดงแทนที่จะเป็นเขียว
             needle_frac = 1 - min(1.0, risk_score / 100)
             score_display = f"""{risk_score}<span style="font-size:13.5px; color:#64748B;">/100</span>"""
             needle_color = "#F8FAFC"
         else:
-            # F-7b: ข้อมูลไม่พอสำหรับคำนวณจริง — เข็มชี้กึ่งกลาง สีเทา ไม่ชี้ไปทางใดทางหนึ่ง (ไม่ใช่การเดา)
             needle_frac = 0.5
             score_display = """N/A"""
             needle_color = "#475569"
 
-    
         st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:16px; min-height:260px; display:flex; flex-direction:column; justify-content:space-between; text-align:center;">
     <div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px; text-align:left;">RISK SUMMARY</div>
     <div style="margin:auto 0;"><svg viewBox="0 0 100 55" style="width:140px; height:90px; display:block; margin:0 auto;">
@@ -179,9 +128,6 @@ def render(ctx):
     </div>""", unsafe_allow_html=True)
 
     with r1_c2:
-        # Risk dimensions - การ์ดนี้ใช้สูตร/ตัวคูณคนละชุดกับ risk_score หลักด้านบน (ทั้งสองชุดมีอยู่แล้ว
-        # ในโค้ดเดิม เพียงแต่ไม่เคยเปิดเผยความไม่สอดคล้องนี้ — ดู F-8(ข) ในรายงานตรวจสอบ) การ์ดนี้จึงเป็น
-        # "มุมมองแยกย่อยแบบง่าย" ไม่ใช่ breakdown ของ risk_score เป๊ะๆ
         market_risk = int(np.clip(beta_val * 40, 5, 95))
         price_risk = int(np.clip(vol_val * 1.3, 5, 95))
         financial_risk = int(np.clip(de_val_r * 25, 5, 95))
@@ -191,7 +137,6 @@ def render(ctx):
 
         def risk_dim_card(label, val):
             if val is None:
-                # F-7b: ไม่แสดงวงกลมคะแนนปลอมเมื่อคำนวณไม่ได้จริง
                 return f"""<div style="background:#151E2F; border:1px solid #1E293B; border-radius:10px; padding:10px 4px; text-align:center;">
     <div style="font-size:13px; font-weight:bold; color:#CBD5E1;">{label}</div>
     <div style="margin:8px auto; width:56px; height:56px; border-radius:50%; background:#1E293B; display:flex; align-items:center; justify-content:center;">
@@ -257,7 +202,6 @@ def render(ctx):
 
     with r2_c3:
         recovery_days = ctx.stock_info.get('recovery_days')
-        # F-2: เช็คด้วย _is_missing() (ครอบคลุม NaN) แทน `is not None` เพียวๆ ก่อน int(...)
         recovery_txt = f"ฟื้นตัวใน {int(recovery_days)} วัน" if not _is_missing(recovery_days) else "ยังไม่ฟื้นตัวกลับสู่จุดสูงสุดเดิม"
         st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px 12px 0 0; padding:12px 14px 0 14px;">
     <div style="font-size:14px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">DRAWDOWN — Actual (2023-2025)</div>
@@ -279,14 +223,10 @@ def render(ctx):
     r3_c1, r3_c2 = st.columns(2)
 
     with r3_c1:
-        # ลำดับความสำคัญ: 1) ใช้ cvar_95 จาก cis_summary_scores ถ้ามี 2) ไม่มี → คำนวณสดจาก stock_daily
-        # 3) คำนวณไม่ได้จริงๆ → ซ่อนช่อง CVaR ไม่โชว์ N/A (F-2: เช็คด้วย _is_missing รวม NaN ด้วย)
         cvar_val = ctx.stock_info.get('cvar_95')
         if _is_missing(cvar_val):
             cvar_val = _fallback_cvar_95(ctx.stock_daily)
 
-        # F-7 (ที่ตกหล่น): var_95 เองก็เป็น None ได้เมื่อข้อมูลราคาน้อยเกินไป (daily_vol คำนวณ std ไม่ได้)
-        # เดิมใช้ safe(var_95, 0.0) ตรงๆ ทำให้โชว์ "-0.00%" ปลอมทั้งที่ยังไม่มีค่าจริง — ใช้ _fmt_or_na แทน
         var_num_txt = _fmt_or_na(ctx.stock_info.get('var_95'))
         var_txt = var_num_txt if var_num_txt == 'N/A' else f'-{var_num_txt}%'
         if cvar_val is not None:
@@ -301,6 +241,7 @@ def render(ctx):
     <div style="font-size:24px; font-weight:bold; color:#EF4444;">{var_txt}</div><div style="font-size:12.5px; color:#64748B;">VaR 95% (Historical)</div>
     </div>
     <div style="font-size:12px; color:#64748B; border-top:1px solid #1E293B; padding-top:6px;">VaR = ระดับขาดทุนรายวันที่ไม่ควรแย่ไปกว่านี้ใน 95% ของวัน — CVaR ยังคำนวณไม่ได้เนื่องจากข้อมูลราคาย้อนหลังไม่พอ</div>"""
+
         st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:225px; display:flex; flex-direction:column; justify-content:space-between;">
     <div style="font-size:14px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">DOWNSIDE RISK (Daily)</div>
     {downside_metrics_html}
@@ -315,9 +256,6 @@ def render(ctx):
         if _is_missing(psr_val):
             psr_val = _fallback_psr(ctx.stock_daily)
 
-        # F-7 (ที่ตกหล่น): sharpe_ratio/sortino_ratio เป็น None ได้เมื่อข้อมูลราคาน้อยเกินไป
-        # (backend แยก "ราคานิ่งจริง=0.0" ออกจาก "ข้อมูลไม่พอ=None" แล้วตั้งแต่รอบที่ 4)
-        # เดิม UI ใช้ safe(x, 0.0) ตรงๆ ทำให้โชว์ "0.00" ปลอมเหมือนคำนวณได้จริงว่าไม่มีความเสี่ยงเลย
         base_cells = f"""<div style="background:#151E2F; border:1px solid #1E293B; border-radius:6px; padding:6px 2px;"><div style="font-size:12px; color:#64748B;">Sharpe</div><div style="font-size:15px; font-weight:bold; color:#F8FAFC;">{_fmt_or_na(ctx.stock_info.get('sharpe_ratio'))}</div></div>
     <div style="background:#151E2F; border:1px solid #1E293B; border-radius:6px; padding:6px 2px;"><div style="font-size:12px; color:#64748B;">Sortino</div><div style="font-size:15px; font-weight:bold; color:#F8FAFC;">{_fmt_or_na(ctx.stock_info.get('sortino_ratio'))}</div></div>
     <div style="background:#151E2F; border:1px solid #1E293B; border-radius:6px; padding:6px 2px;"><div style="font-size:12px; color:#64748B;">Calmar</div><div style="font-size:15px; font-weight:bold; color:#F8FAFC;">{calmar:.2f}</div></div>"""
