@@ -390,7 +390,7 @@ def render(ctx):
         </style>
         """, unsafe_allow_html=True)
 
-         st.html(f"""
+        st.html(f"""
             <div class="overview-decision-card"
                  style="background-color:#FFFFFF;border:1px solid #E2E8F0;
                         border-radius:12px;padding:16px;
