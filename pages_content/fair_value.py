@@ -144,9 +144,9 @@ def render(ctx):
     r2_c1, r2_c2, r2_c3 = st.columns([1.3, 1.3, 1.4])
 
     with r2_c1:
-        html(f"""
-        <div style="background:#FFF;border:1px solid #E2E8F0;border-radius:12px;padding:14px;min-height:315px;display:flex;flex-direction:column;justify-content:space-between;">
-            <div style="font-size:14px;font-weight:bold;color:#64748B;letter-spacing:.5px;">FAIR VALUE RANGE — DCF vs P/E RELATIVE</div>
+        _md(f"""
+        <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:14px;min-height:315px;display:flex;flex-direction:column;justify-content:space-between;">
+            <div style="font-size:14px;font-weight:bold;color:#64748B;letter-spacing:0.5px;">FAIR VALUE RANGE — DCF vs P/E RELATIVE</div>
 
             <div style="display:grid;grid-template-columns:1fr 1.1fr 1fr;gap:6px;margin-top:6px;">
                 <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:8px 4px;text-align:center;">
@@ -168,26 +168,45 @@ def render(ctx):
                 </div>
             </div>
 
-            <div style="background:rgba(16,185,129,.08);border-radius:6px;padding:6px 8px;display:flex;align-items:flex-start;gap:6px;margin-top:10px;">
+            <div style="background:rgba(16,185,129,0.08);border-radius:6px;padding:6px 8px;display:flex;align-items:flex-start;gap:6px;margin-top:10px;">
                 <span style="color:#10B981;font-size:14.5px;">✔</span>
                 <div style="font-size:12.5px;color:#475569;line-height:1.3;">
-                    <b>DCF Fair Value: {safe(ctx.stock_info.get('dcf_fair_value')):.2f} THB &nbsp;|&nbsp; P/E Fair Value: {safe(ctx.stock_info.get('pe_fair_value')):.2f} THB</b><br>
-                    <span style="color:#64748B;">คำนวณจากงบการเงินปีล่าสุด (FY{int(ctx.fin_stock['year'].max()) if not ctx.fin_stock.empty else '-'}) เทียบราคาตลาดปัจจุบัน {val_cur_price:.2f} THB</span>
+                    <b>DCF Fair Value: {safe(ctx.stock_info.get("dcf_fair_value")):.2f} THB &nbsp;|&nbsp; P/E Fair Value: {safe(ctx.stock_info.get("pe_fair_value")):.2f} THB</b><br>
+                    <span style="color:#64748B;">
+                        คำนวณจากงบการเงินปีล่าสุด
+                        (FY{int(ctx.fin_stock["year"].max()) if not ctx.fin_stock.empty else "-"})
+                        เทียบราคาตลาดปัจจุบัน {val_cur_price:.2f} THB
+                    </span>
                 </div>
             </div>
         </div>
         """)
 
     with r2_c2:
-        html(f"""
-        <div style="background:#FFF;border:1px solid #E2E8F0;border-radius:12px;padding:14px;min-height:315px;display:flex;flex-direction:column;justify-content:space-between;">
-            <div style="font-size:14px;font-weight:bold;color:#64748B;letter-spacing:.5px;">VALUATION DRIVERS ({ctx.selected_ticker})</div>
+        _md(f"""
+        <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:14px;min-height:315px;display:flex;flex-direction:column;justify-content:space-between;">
+            <div style="font-size:14px;font-weight:bold;color:#64748B;letter-spacing:0.5px;">VALUATION DRIVERS ({ctx.selected_ticker})</div>
 
             <div style="font-size:13px;color:#475569;line-height:1.45;display:flex;flex-direction:column;gap:6px;margin:auto 0;">
-                <div style="display:flex;gap:6px;"><span style="color:#10B981;">✔</span><div><b>Fair Value (Blended): {val_base:.2f} THB</b><br><span style="color:#64748B;font-size:12.5px;">ประเมินแบบผสมผสาน DCF + Relative P/E</span></div></div>
-                <div style="display:flex;gap:6px;"><span style="color:#10B981;">✔</span><div><b>Margin of Safety: {val_mos:.1f}%</b><br><span style="color:#64748B;font-size:12.5px;">ส่วนต่างความปลอดภัยจากราคาตลาดปัจจุบัน</span></div></div>
-                <div style="display:flex;gap:6px;"><span style="color:#10B981;">✔</span><div><b>P/E Ratio ปัจจุบัน: {fmt_ratio(ctx.stock_info.get('pe_ratio'), suffix='')} เท่า</b><br><span style="color:#64748B;font-size:12.5px;">เทียบ EPS ล่าสุด {ctx.stock_info.get('eps','-')} บาท/หุ้น</span></div></div>
-                <div style="display:flex;gap:6px;"><span style="color:#10B981;">✔</span><div><b>สถานะมูลค่า: {val_status}</b><br><span style="color:#64748B;font-size:12.5px;">ระดับความน่าดึงดูดเชิงมูลค่าพื้นฐาน</span></div></div>
+                <div style="display:flex;gap:6px;">
+                    <span style="color:#10B981;">✔</span>
+                    <div><b>Fair Value (Blended): {val_base:.2f} THB</b><br><span style="color:#64748B;font-size:12.5px;">ประเมินแบบผสมผสาน DCF + Relative P/E</span></div>
+                </div>
+
+                <div style="display:flex;gap:6px;">
+                    <span style="color:#10B981;">✔</span>
+                    <div><b>Margin of Safety: {val_mos:.1f}%</b><br><span style="color:#64748B;font-size:12.5px;">ส่วนต่างความปลอดภัยจากราคาตลาดปัจจุบัน</span></div>
+                </div>
+
+                <div style="display:flex;gap:6px;">
+                    <span style="color:#10B981;">✔</span>
+                    <div><b>P/E Ratio ปัจจุบัน: {fmt_ratio(ctx.stock_info.get("pe_ratio"), suffix="")} เท่า</b><br><span style="color:#64748B;font-size:12.5px;">เทียบ EPS ล่าสุด {ctx.stock_info.get("eps","-")} บาท/หุ้น</span></div>
+                </div>
+
+                <div style="display:flex;gap:6px;">
+                    <span style="color:#10B981;">✔</span>
+                    <div><b>สถานะมูลค่า: {val_status}</b><br><span style="color:#64748B;font-size:12.5px;">ระดับความน่าดึงดูดเชิงมูลค่าพื้นฐาน</span></div>
+                </div>
             </div>
         </div>
         """)
@@ -195,9 +214,9 @@ def render(ctx):
     with r2_c3:
         safety_score = int(min(100, max(20, int(val_mos + 50))))
 
-        html(f"""
-        <div style="background:#FFF;border:1px solid #E2E8F0;border-radius:12px;padding:14px;min-height:315px;display:flex;flex-direction:column;justify-content:space-between;">
-            <div style="font-size:14px;font-weight:bold;color:#64748B;letter-spacing:.5px;">FAIR VALUE SCORE BY DIMENSION</div>
+        _md(f"""
+        <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:14px;min-height:315px;display:flex;flex-direction:column;justify-content:space-between;">
+            <div style="font-size:14px;font-weight:bold;color:#64748B;letter-spacing:0.5px;">FAIR VALUE SCORE BY DIMENSION</div>
 
             <div style="display:flex;flex-direction:column;gap:10px;margin:auto 0;">
                 <div>
