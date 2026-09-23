@@ -355,7 +355,7 @@ def render(ctx):
             <div style="
                 font-size:20px;
                 font-weight:800;
-                color:#F97316;
+                color:#64748B;
                 line-height:1.1;
             ">
                 {display_date_str}
