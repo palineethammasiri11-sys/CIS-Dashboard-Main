@@ -335,8 +335,9 @@ def render(ctx):
             color = score_color(score, green_at, yellow_at)
             badge_bg = score_bg(score, green_at, yellow_at)
             return f"""
-            <div style="background-color:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;
-                        padding:16px 14px;text-align:center;position:relative;
+            <div class="overview-module-card"
+                 style="background-color:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;
+                        padding:12px 12px;text-align:center;position:relative;
                         width:100%;min-width:0;max-width:100%;box-sizing:border-box;">
                 <div style="position:absolute;top:10px;left:10px;background:{badge_bg};color:{color};
                             font-size:14px;font-weight:bold;padding:3px 7px;border-radius:5px;">
@@ -374,19 +375,55 @@ def render(ctx):
 
         st.markdown("""
         <style>
-        @media (max-width: 768px) {
-            .overview-module-grid {
-                grid-template-columns:1fr !important;
-                width:100% !important;
-                max-width:100% !important;
-            }
-            .overview-module-grid > div {
-                width:100% !important;
-                max-width:100% !important;
-                min-width:0 !important;
-                box-sizing:border-box !important;
-            }
+
+        .overview-decision-card {
+            width:100% !important;
+            max-width:100% !important;
+            min-width:0 !important;
+            box-sizing:border-box !important;
         }
+
+        .overview-module-grid {
+            width:100% !important;
+            max-width:100% !important;
+            min-width:0 !important;
+            box-sizing:border-box !important;
+
+            height:calc(100% - 32px) !important;
+            grid-template-rows:repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        .overview-module-card {
+            width:100% !important;
+            max-width:100% !important;
+            min-width:0 !important;
+            min-height:0 !important;
+            height:100% !important;
+            box-sizing:border-box !important;
+            overflow:hidden !important;
+        }
+
+        @media (max-width: 768px) {
+
+            .overview-decision-card {
+                height:auto !important;
+                margin-top:0 !important;
+            }
+
+            .overview-module-grid {
+                height:auto !important;
+                grid-template-columns:1fr !important;
+                grid-template-rows:none !important;
+            }
+
+            .overview-module-card {
+                height:auto !important;
+                min-height:0 !important;
+                overflow:visible !important;
+            }
+
+        }
+
         </style>
         """, unsafe_allow_html=True)
 
@@ -394,15 +431,22 @@ def render(ctx):
             <div class="overview-decision-card"
                  style="background-color:#FFFFFF;border:1px solid #E2E8F0;
                         border-radius:12px;padding:16px;
-                        height:532px;box-sizing:border-box;">
+                        height:532px;box-sizing:border-box;
+                        margin-top:-16px;">
                 <div style="font-size:15px;font-weight:bold;color:#0F172A;
                             letter-spacing:0.5px;margin-bottom:12px;">
                     INVESTMENT DECISION OVERVIEW ({ctx.selected_ticker})
                 </div>
 
                 <div class="overview-module-grid"
-                     style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
-                            gap:12px;width:100%;min-width:0;">
+                     style="display:grid;
+                            grid-template-columns:repeat(3,minmax(0,1fr));
+                            grid-template-rows:repeat(2,minmax(0,1fr));
+                            gap:12px;
+                            width:100%;
+                            min-width:0;
+                            height:calc(100% - 32px);
+                            box-sizing:border-box;">
                     {cards_html}
                 </div>
             </div>
