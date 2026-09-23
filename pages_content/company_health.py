@@ -21,14 +21,12 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
-import datetime
 
 from common import fmt_mb, fmt_ratio, safe, show_chart, render_nav_footer, COMPANY_NAMES, SECTOR_MAP
 
 
 def render(ctx):
 
-    # ฟังก์ชันดึงค่างบการเงิน
     def get_fin_val(target_yr, col_name, default="-", fmt="{:.1f}"):
         match = ctx.fin_stock[ctx.fin_stock['year'] == target_yr]
         if not match.empty:
@@ -46,36 +44,11 @@ def render(ctx):
     de_23, de_24, de_25 = get_fin_val(2023, 'de_ratio', fmt="{:.2f}"), get_fin_val(2024, 'de_ratio', fmt="{:.2f}"), get_fin_val(2025, 'de_ratio', fmt="{:.2f}")
     cr_23, cr_24, cr_25 = get_fin_val(2023, 'current_ratio', fmt="{:.2f}"), get_fin_val(2024, 'current_ratio', fmt="{:.2f}"), get_fin_val(2025, 'current_ratio', fmt="{:.2f}")
 
-    # --- ส่วนเลือกวันที่: ล็อกเฉพาะช่วงปี 2023 - 2025 ---
-    min_limit = datetime.date(2023, 1, 1)
-    max_limit = datetime.date(2025, 12, 31)
-    
-    # กำหนดค่า default เริ่มต้นจากข้อมูลจริง (ถ้าเกินช่วงให้ fallback เป็น 2025-12-30)
-    try:
-        raw_date = pd.to_datetime(ctx.stock_info.get('latest_date', '2025-12-30')).date()
-        default_date = max(min_limit, min(max_limit, raw_date))
-    except Exception:
-        default_date = datetime.date(2025, 12, 30)
-
-    # วาง Header และตัวเลือกวันที่ไว้มุมขวาบนอย่างสวยงาม
-    col_title, col_date = st.columns([3, 1.2])
-    with col_title:
-        st.markdown("""<div style="margin-bottom:10px;">
-            <h2 style="margin:0; font-size:23px; font-weight:bold; color:#F8FAFC; letter-spacing:0.5px;">COMPANY HEALTH</h2>
-            <div style="font-size:15px; color:#94A3B8; margin-top:2px;">ประเมินสุขภาพทางการเงินของบริษัทจากมิติสำคัญตามงบการเงินจริง</div>
-        </div>""", unsafe_allow_html=True)
-    
-    with col_date:
-        selected_date = st.date_input(
-            "ข้อมูล ณ วันที่ (2023-2025):",
-            value=default_date,
-            min_value=min_limit,
-            max_value=max_limit,
-            key="health_data_as_of"
-        )
-        display_date_str = selected_date.strftime("%Y-%m-%d")
-        # อัปเดตลง context เพื่อให้จุดอื่นๆ ที่อ้างอิง stock_info นำไปใช้ต่อได้ด้วย
-        ctx.stock_info['latest_date'] = display_date_str
+    st.markdown(f"""<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
+<div><div style="display:flex; align-items:center; gap:8px;"><h2 style="margin:0; font-size:23px; font-weight:bold; color:#F8FAFC; letter-spacing:0.5px;">COMPANY HEALTH</h2></div>
+<div style="font-size:15px; color:#94A3B8; margin-top:2px;">ประเมินสุขภาพทางการเงินของบริษัทจากมิติสำคัญตามงบการเงินจริง</div></div>
+<div style="text-align:right;"><span style="font-size:13px; color:#64748B;">ข้อมูล ณ วันที่</span><br><b style="color:#CBD5E1; font-size:15px;">{ctx.stock_info.get('latest_date','-')}</b></div>
+</div>""", unsafe_allow_html=True)
 
     r1_c1, r1_c2, r1_c3 = st.columns([1.1, 1.4, 1.5])
 
@@ -120,11 +93,14 @@ def render(ctx):
             textfont=dict(size=12.5, color='#F8FAFC'), line=dict(color='#10B981', width=2),
             marker=dict(size=10, color='#10B981', line=dict(width=1.5, color='#FFFFFF'))
         ))
+        
+        # แก้ไขตรงนี้: เพิ่ม type='category' เข้าไปใน xaxis
         fig_health_trend.update_layout(
             height=168, margin=dict(l=25, r=15, t=10, b=20), paper_bgcolor="#0F172A", plot_bgcolor="#0F172A",
             yaxis=dict(range=[0, 110], tickvals=[0, 25, 50, 75, 100], tickfont=dict(size=11.5, color="#64748B"), gridcolor="#1E293B", zeroline=False),
-            xaxis=dict(tickfont=dict(size=12, color="#94A3B8"), gridcolor="#1E293B"), showlegend=False
+            xaxis=dict(type='category', tickfont=dict(size=12, color="#94A3B8"), gridcolor="#1E293B"), showlegend=False
         )
+        
         show_chart(fig_health_trend, key="health_trend", expand_height=650)
 
     st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
@@ -219,12 +195,7 @@ def render(ctx):
             return int(np.clip(ratio * 50, 5, 100))
 
         if peer_options:
-            competitor = st.selectbox(
-                "เทียบกับคู่แข่ง", peer_options,
-                key="health_competitor_select",
-                format_func=lambda t: f"{t} — {COMPANY_NAMES.get(t, t)}"
-            )
-
+            competitor = st.selectbox("เทียบกับคู่แข่ง", peer_options, key="health_competitor_select", format_func=lambda t: f"{t} — {COMPANY_NAMES.get(t, t)}")
             comp_fin_all = ctx.fin_df[ctx.fin_df['ticker'] == competitor].sort_values('year')
             comp_fin_row = comp_fin_all[comp_fin_all['year'] == latest_year]
             if comp_fin_row.empty and not comp_fin_all.empty:
@@ -248,7 +219,6 @@ def render(ctx):
         else:
             target_label = "Industry Avg"
             sub_label = f"ไม่มีคู่แข่งตรงในกลุ่ม &bull; เทียบค่าเฉลี่ยตลาดรวม (ปี {latest_year})"
-
             market_latest = ctx.fin_df[ctx.fin_df['year'] == latest_year] if not ctx.fin_df.empty else pd.DataFrame()
             if market_latest.empty and not ctx.fin_df.empty:
                 market_latest = ctx.fin_df
