@@ -23,10 +23,16 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 
 from common import fmt_mb, fmt_ratio, safe, show_chart, render_nav_footer, COMPANY_NAMES, SECTOR_MAP
+from calculate_modules.fair_value import calculate_valuation_module
 
 
 def render(ctx):
     val_cur_price = ctx.current_price
+
+    # เรียก calculate_valuation_module ตรง ๆ แทนการพึ่ง ctx.stock_info
+    # (ctx.stock_info จาก calculate_scores.py ไม่ได้ merge key wacc_used/terminal_growth_used/
+    # fcf_growth_assumed/target_pe เข้ามา ทำให้ค่าพวกนี้ขึ้น "-" — แก้เฉพาะในไฟล์นี้ ไม่แตะ calculate_scores.py)
+    val_detail = calculate_valuation_module(ctx.fin_stock, val_cur_price, ctx.selected_ticker) or {}
     val_fair_value = safe(ctx.stock_info.get('fair_value'), val_cur_price * 1.1)
     val_mos = safe(ctx.stock_info.get('margin_of_safety'), 10.0)
     val_score = int(round(safe(ctx.stock_info.get('valuation_score'), 75)))
@@ -37,344 +43,188 @@ def render(ctx):
     val_bear = safe(ctx.stock_info.get('dcf_fair_value'), val_fair_value * 0.9)
     val_base = val_fair_value
     val_bull = safe(ctx.stock_info.get('pe_fair_value'), val_fair_value * 1.1)
-
     # เรียงให้ bear <= base <= bull เสมอเพื่อความสวยงามของภาพ
     lo, hi = min(val_bear, val_bull), max(val_bear, val_bull)
     val_bear, val_bull = lo, hi
 
-    st.markdown(
-        """<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
-        <div><div style="display:flex; align-items:center; gap:8px;"><h2 style="margin:0; font-size:23px; font-weight:bold; color:#0F172A; letter-spacing:0.5px;">FAIR VALUE</h2></div>
-        <div style="font-size:16px; color:#64748B; margin-top:2px;">ประเมินมูลค่าที่เหมาะสมของหุ้นโดยใช้แบบจำลอง DCF ผสาน P/E Relative</div></div>
-        </div>""",
-        unsafe_allow_html=True
-    )
+    st.markdown("""<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
+    <div><div style="display:flex; align-items:center; gap:8px;"><h2 style="margin:0; font-size:23px; font-weight:bold; color:#F8FAFC; letter-spacing:0.5px;">FAIR VALUE ASSESSMENT</h2></div>
+    <div style="font-size:15px; color:#94A3B8; margin-top:2px;">ประเมินมูลค่าที่เหมาะสมของหุ้นโดยใช้แบบจำลอง DCF ผสาน P/E Relative</div></div>
+    </div>""", unsafe_allow_html=True)
 
-    # ---------------------------------------------------------------
-    # ตัวแปรช่วยสำหรับการ์ดแถวบน (เลย์เอาต์ใหม่ตามภาพตัวอย่าง)
-    # ---------------------------------------------------------------
-    def _hex_to_rgb(h):
-        h = h.lstrip('#')
-        return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
-
-    val_rgb = _hex_to_rgb(val_color)
+    r1_c1, r1_c2, r1_c3, r1_c4, r1_c5, r1_c6 = st.columns([1.5, 0.9, 0.9, 0.9, 0.9, 1.1])
     val_stars = min(5, max(1, round(val_score / 20)))
-    conf = "High" if abs(val_mos) > 15 else ("Medium" if abs(val_mos) > 5 else "Low")
-    conf_score = 85 if conf == "High" else (60 if conf == "Medium" else 35)
-    conf_sweep = conf_score / 100 * 180
-    status_th = {
-        "UNDERVALUED": "ราคาต่ำกว่ามูลค่าที่เหมาะสม",
-        "OVERVALUED": "ราคาสูงกว่ามูลค่าที่เหมาะสม",
-        "FAIR VALUE": "ราคาใกล้เคียงมูลค่าที่เหมาะสม",
-    }.get(val_status, "ราคาใกล้เคียงมูลค่าที่เหมาะสม")
-    mos_arrow = "▲" if val_mos >= 0 else "▼"
 
-    # ---- แถว 1: Estimated Fair Value / Current Price / Margin of Safety / Recommendation ----
-    top_c1, top_c2, top_c3, top_c4 = st.columns([1.3, 1, 1, 1.1])
+    with r1_c1:
+        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:170px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div style="font-size:13.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">FAIR VALUE SUMMARY</div>
+    <div style="display:flex; align-items:center; gap:12px;">
+    <div style="width:76px; height:76px; border-radius:50%; background:conic-gradient({val_color} 0% {val_score}%, #1E293B {val_score}% 100%); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+    <div style="width:62px; height:62px; border-radius:50%; background-color:#0F172A; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+    <span style="font-size:19px; font-weight:bold; color:#FFFFFF; line-height:1;">{val_score}</span><span style="font-size:12px; color:#64748B;">/100</span></div></div>
+    <div><div style="color:{val_color}; font-size:16.5px; font-weight:bold; line-height:1.2;">{val_status}</div>
+    <div style="font-size:13px; color:#CBD5E1; line-height:1.35; margin-top:3px;">Margin of Safety อยู่ที่ {val_mos:.1f}% เมื่อเทียบกับมูลค่าพื้นฐานที่แท้จริง</div>
+    <div style="color:{val_color}; font-size:14.5px; letter-spacing:1px; margin-top:4px;">{'★'*val_stars}{'☆'*(5-val_stars)}</div></div>
+    </div></div>""", unsafe_allow_html=True)
 
-    with top_c1:
-        st.markdown(
-            f"""<div style="background-color:{val_color}; border-radius:12px; padding:14px; min-height:120px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:rgba(255,255,255,0.9); letter-spacing:0.5px;">ESTIMATED FAIR VALUE</div>
-        <div style="margin-top:6px;"><span style="font-size:30px; font-weight:bold; color:#FFFFFF;">{val_base:.2f}</span> <span style="font-size:14px; color:rgba(255,255,255,0.85);">THB</span></div>
-        <div style="font-size:12px; color:rgba(255,255,255,0.85); margin-top:2px;">(Blended: 55% DCF + 45% P/E)</div>
-        </div>""",
-            unsafe_allow_html=True
-        )
+    with r1_c2:
+        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:12px; min-height:170px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div style="font-size:13px; font-weight:bold; color:#94A3B8;">CURRENT PRICE</div>
+    <div><div style="font-size:21px; font-weight:bold; color:#FFFFFF; line-height:1;">{val_cur_price:.2f} <span style="font-size:13.5px; color:#94A3B8;">THB</span></div>
+    <div style="font-size:12px; color:#64748B; margin-top:2px;">({ctx.stock_info.get('latest_date','-')})</div></div>
+    </div>""", unsafe_allow_html=True)
 
-    with top_c2:
-        st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:120px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px;">CURRENT PRICE</div>
-        <div style="margin-top:6px;"><span style="font-size:30px; font-weight:bold; color:#0F172A;">{val_cur_price:.2f}</span> <span style="font-size:14px; color:#64748B;">THB</span></div>
-        <div style="font-size:12px; color:#64748B; margin-top:2px;">({ctx.stock_info.get('latest_date', '-')})</div>
-        </div>""",
-            unsafe_allow_html=True
-        )
+    with r1_c3:
+        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:12px; min-height:170px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div style="font-size:13px; font-weight:bold; color:#94A3B8;">ESTIMATED FAIR VALUE<br><span style="font-size:12px; color:#64748B;">(BLENDED: 55% DCF + 45% P/E)</span></div>
+    <div><div style="font-size:21px; font-weight:bold; color:#FFFFFF; line-height:1;">{val_base:.2f} <span style="font-size:13.5px; color:#94A3B8;">THB</span></div></div>
+    </div>""", unsafe_allow_html=True)
 
-    with top_c3:
-        st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:120px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px;">MARGIN OF SAFETY</div>
-        <div style="margin-top:6px;"><span style="font-size:30px; font-weight:bold; color:{val_color};">{val_mos:.1f}%</span> <span style="font-size:16px; color:{val_color};">{mos_arrow}</span></div>
-        <div style="font-size:12px; color:#64748B; margin-top:2px;">(vs. fair value)</div>
-        </div>""",
-            unsafe_allow_html=True
-        )
+    with r1_c4:
+        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:12px; min-height:170px; display:flex; flex-direction:column; justify-content:space-between; text-align:center;">
+    <div style="font-size:13px; font-weight:bold; color:#94A3B8; text-align:left;">MARGIN OF SAFETY</div>
+    <div><div style="font-size:21px; font-weight:bold; color:{val_color}; line-height:1;">{val_mos:.1f}%</div></div>
+    <div style="margin-top:auto; display:flex; justify-content:center;"><div style="background:rgba(16,185,129,0.15); border:1px solid #10B981; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:15px; color:#10B981;">🛡️</div></div>
+    </div>""", unsafe_allow_html=True)
 
-    with top_c4:
-        st.markdown(
-            f"""<div style="background-color:rgba({val_rgb[0]},{val_rgb[1]},{val_rgb[2]},0.08); border:2px solid {val_color}; border-radius:12px; padding:14px; min-height:120px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px;">RECOMMENDATION</div>
-        <div style="margin-top:8px; display:flex; justify-content:center;"><span style="background-color:{val_color}; color:#FFFFFF; font-weight:bold; font-size:16px; padding:6px 22px; border-radius:20px;">{val_rec_label}</span></div>
-        <div style="font-size:12px; color:#64748B; margin-top:8px; text-align:center;">{status_th}</div>
-        </div>""",
-            unsafe_allow_html=True
-        )
+    with r1_c5:
+        conf = "High" if abs(val_mos) > 15 else ("Medium" if abs(val_mos) > 5 else "Low")
+        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:12px; min-height:170px; display:flex; flex-direction:column; justify-content:space-between; text-align:center;">
+    <div style="font-size:13px; font-weight:bold; color:#94A3B8; text-align:left;">CONFIDENCE LEVEL</div>
+    <div><div style="font-size:18.5px; font-weight:bold; color:#10B981; line-height:1;">{conf.upper()}</div></div>
+    </div>""", unsafe_allow_html=True)
 
-    st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
-
-    # ---- แถว 2: Fair Value Range (gradient bar) / Confidence Level (arc) / Fair Value Summary Score (donut) ----
-    mid_c1, mid_c2, mid_c3 = st.columns([1.6, 1, 1])
-
-    with mid_c1:
-        rng_span = (val_bull - val_bear) if (val_bull - val_bear) != 0 else 1
-        pos_cur = min(97, max(3, (val_cur_price - val_bear) / rng_span * 100))
-        pos_base = min(97, max(3, (val_base - val_bear) / rng_span * 100))
-        st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:16px 18px; min-height:190px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:6px; font-size:14px; font-weight:bold; color:#475569; letter-spacing:0.5px;">FAIR VALUE RANGE — DCF vs P/E RELATIVE</div>
-        <div style="position:relative; height:82px; margin-top:24px;">
-        <div style="position:absolute; top:8px; left:0; right:0; height:8px; border-radius:4px; background:linear-gradient(90deg, #10B981, #F59E0B, #38BDF8, #8B5CF6);"></div>
-        <div style="position:absolute; left:{pos_cur:.1f}%; top:4px; transform:translateX(-50%); width:14px; height:14px; border-radius:50%; background:#FFFFFF; border:3px solid #0EA5E9; z-index:2;"></div>
-        <div style="position:absolute; left:{pos_base:.1f}%; top:0px; transform:translateX(-50%); width:4px; height:22px; background:{val_color}; z-index:2;"></div>
-        <div style="position:absolute; left:{pos_cur:.1f}%; top:34px; transform:translateX(-50%); white-space:nowrap;">
-        <div style="width:0; height:0; margin:0 auto; border-left:6px solid transparent; border-right:6px solid transparent; border-bottom:7px solid #0EA5E9;"></div>
-        <div style="background:#0EA5E9; color:#FFFFFF; font-size:12px; font-weight:bold; border-radius:8px; padding:6px 12px;">Current Price <span style="font-weight:normal; opacity:0.9;">{val_cur_price:.2f} THB</span></div>
-        </div>
-        <div style="position:absolute; left:{pos_base:.1f}%; top:34px; transform:translateX(-50%); white-space:nowrap;">
-        <div style="width:0; height:0; margin:0 auto; border-left:6px solid transparent; border-right:6px solid transparent; border-bottom:7px solid {val_color};"></div>
-        <div style="background:{val_color}; color:#FFFFFF; font-size:12px; font-weight:bold; border-radius:8px; padding:6px 12px;">Blended Fair Value <span style="font-weight:normal; opacity:0.9;">{val_base:.2f} THB</span></div>
-        </div>
-        </div>
-        <div style="display:flex; justify-content:space-between; font-size:12px; color:#64748B; margin-top:4px;">
-        <div>Min<br><b style="color:#0F172A; font-size:13px;">{val_bear:.2f} THB</b></div>
-        <div style="text-align:right;">Max<br><b style="color:#0F172A; font-size:13px;">{val_bull:.2f} THB</b></div>
-        </div>
-        </div>""",
-            unsafe_allow_html=True
-        )
-
-    with mid_c2:
-        st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:190px; display:flex; flex-direction:column; align-items:center; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px; align-self:flex-start;">CONFIDENCE LEVEL</div>
-        <div style="position:relative; width:120px; height:60px; margin-top:6px;">
-        <div style="width:120px; height:60px; border-radius:120px 120px 0 0; overflow:hidden; background:conic-gradient(from 270deg at 50% 100%, {val_color} 0deg {conf_sweep:.0f}deg, #E2E8F0 {conf_sweep:.0f}deg 180deg);"></div>
-        <div style="position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:88px; height:44px; border-radius:88px 88px 0 0; background:#FFFFFF;"></div>
-        </div>
-        <div style="text-align:center; margin-top:-6px;">
-        <div style="font-size:17px; font-weight:bold; color:{val_color};">{conf.upper()}</div>
-        <div style="font-size:12px; color:#64748B;">({conf_score}/100)</div>
-        </div>
-        </div>""",
-            unsafe_allow_html=True
-        )
-
-    with mid_c3:
-        st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:190px; display:flex; flex-direction:column; align-items:center; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#475569; letter-spacing:0.5px; align-self:flex-start;">FAIR VALUE SUMMARY SCORE</div>
-        <div style="width:88px; height:88px; border-radius:50%; background:conic-gradient({val_color} 0% {val_score}%, #E2E8F0 {val_score}% 100%); display:flex; align-items:center; justify-content:center; margin-top:4px;">
-        <div style="width:72px; height:72px; border-radius:50%; background-color:#FFFFFF; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-        <span style="font-size:22px; font-weight:bold; color:#0F172A; line-height:1;">{val_score}</span><span style="font-size:12px; color:#64748B;">/100</span>
-        </div></div>
-        <div style="text-align:center; margin-top:4px;">
-        <div style="font-size:15px; font-weight:bold; color:{val_color};">{val_rec_label}</div>
-        <div style="color:{val_color}; font-size:14px; letter-spacing:1px;">{'★' * val_stars}{'☆' * (5 - val_stars)}</div>
-        </div>
-        </div>""",
-            unsafe_allow_html=True
-        )
+    with r1_c6:
+        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:12px; min-height:170px; display:flex; flex-direction:column; justify-content:space-between; text-align:center;">
+    <div style="font-size:13px; font-weight:bold; color:#94A3B8; text-align:left;">RECOMMENDATION</div>
+    <div><div style="font-size:17.5px; font-weight:bold; color:{val_color}; line-height:1.1;">{val_rec_label}</div></div>
+    </div>""", unsafe_allow_html=True)
 
     st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
     r2_c1, r2_c2, r2_c3 = st.columns([1.3, 1.3, 1.4])
 
     with r2_c1:
-        st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:315px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div style="font-size:15px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">FAIR VALUE RANGE — DCF vs P/E RELATIVE</div>
-        <div style="display:grid; grid-template-columns:1fr 1.1fr 1fr; gap:6px; margin-top:6px;">
-        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:8px 4px; text-align:center;">
-        <div style="color:#EF4444; font-size:14px; font-weight:bold;">Lower Estimate</div><div style="color:#64748B; font-size:13px;">Min(DCF, P/E)</div>
-        <div style="color:#0F172A; font-size:17px; font-weight:bold; margin-top:4px;">{val_bear:.2f} <span style="font-size:13px; color:#64748B;">THB</span></div></div>
-        <div style="background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:8px; padding:8px 4px; text-align:center;">
-        <div style="color:#F59E0B; font-size:14px; font-weight:bold;">Blended Fair Value</div><div style="color:#64748B; font-size:13px;">55% DCF + 45% P/E</div>
-        <div style="color:#0F172A; font-size:17.5px; font-weight:bold; margin-top:4px;">{val_base:.2f} <span style="font-size:13px; color:#64748B;">THB</span></div></div>
-        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:8px 4px; text-align:center;">
-        <div style="color:#10B981; font-size:14px; font-weight:bold;">Upper Estimate</div><div style="color:#64748B; font-size:13px;">Max(DCF, P/E)</div>
-        <div style="color:#0F172A; font-size:17px; font-weight:bold; margin-top:4px;">{val_bull:.2f} <span style="font-size:13px; color:#64748B;">THB</span></div></div>
-        </div>
-        <div style="background:rgba(16,185,129,0.08); border-radius:6px; padding:6px 8px; display:flex; align-items:flex-start; gap:6px; margin-top:10px;">
-        <div style="font-size:13px; color:#475569; line-height:1.3;">
-        <b>DCF Fair Value: {safe(ctx.stock_info.get('dcf_fair_value')):.2f} THB &nbsp;|&nbsp; P/E Fair Value: {safe(ctx.stock_info.get('pe_fair_value')):.2f} THB</b><br>
-        <span style="color:#64748B;">คำนวณจากงบการเงินปีล่าสุด (FY{int(ctx.fin_stock['year'].max()) if not ctx.fin_stock.empty else '-'}) เทียบราคาตลาดปัจจุบัน {val_cur_price:.2f} THB</span></div></div>
-        </div>""",
-            unsafe_allow_html=True
-        )
+        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:315px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div style="font-size:14px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">FAIR VALUE RANGE — DCF vs P/E RELATIVE</div>
+    <div style="display:grid; grid-template-columns: 1fr 1.1fr 1fr; gap:6px; margin-top:6px;">
+    <div style="background:#151E2F; border:1px solid #1E293B; border-radius:8px; padding:8px 4px; text-align:center;">
+    <div style="color:#38BDF8; font-size:13.5px; font-weight:bold;">Lower Estimate</div><div style="color:#64748B; font-size:12px;">Min(DCF, P/E)</div>
+    <div style="color:#F8FAFC; font-size:16px; font-weight:bold; margin-top:4px;">{val_bear:.2f} <span style="font-size:12px; color:#64748B;">THB</span></div></div>
+    <div style="background:#151E2F; border:1.5px solid #8B5CF6; border-radius:8px; padding:8px 4px; text-align:center;">
+    <div style="color:#C084FC; font-size:13.5px; font-weight:bold;">Blended Fair Value</div><div style="color:#94A3B8; font-size:12px;">55% DCF + 45% P/E</div>
+    <div style="color:#FFFFFF; font-size:16.5px; font-weight:bold; margin-top:4px;">{val_base:.2f} <span style="font-size:12px; color:#94A3B8;">THB</span></div></div>
+    <div style="background:#151E2F; border:1px solid #1E293B; border-radius:8px; padding:8px 4px; text-align:center;">
+    <div style="color:#10B981; font-size:13.5px; font-weight:bold;">Upper Estimate</div><div style="color:#64748B; font-size:12px;">Max(DCF, P/E)</div>
+    <div style="color:#F8FAFC; font-size:16px; font-weight:bold; margin-top:4px;">{val_bull:.2f} <span style="font-size:12px; color:#64748B;">THB</span></div></div>
+    </div>
+    <div style="background:rgba(16,185,129,0.08); border-radius:6px; padding:6px 8px; display:flex; align-items:flex-start; gap:6px; margin-top:10px;">
+    <span style="color:#10B981; font-size:14.5px;">✔</span><div style="font-size:12.5px; color:#CBD5E1; line-height:1.3;">
+    <b>DCF Fair Value: {safe(ctx.stock_info.get('dcf_fair_value')):.2f} THB &nbsp;|&nbsp; P/E Fair Value: {safe(ctx.stock_info.get('pe_fair_value')):.2f} THB</b><br>
+    <span style="color:#94A3B8;">คำนวณจากงบการเงินปีล่าสุด (FY{int(ctx.fin_stock['year'].max()) if not ctx.fin_stock.empty else '-'}) เทียบราคาตลาดปัจจุบัน {val_cur_price:.2f} THB</span></div></div>
+    </div>""", unsafe_allow_html=True)
 
     with r2_c2:
-        st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:315px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div style="font-size:15px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">VALUATION DRIVERS ({ctx.selected_ticker})</div>
-        <div style="font-size:14px; color:#475569; line-height:1.45; display:flex; flex-direction:column; gap:6px; margin:auto 0;">
-        <div style="display:flex; gap:6px;"><div><b>Fair Value (Blended): {val_base:.2f} THB</b><br><span style="color:#64748B; font-size:13px;">ประเมินแบบผสมผสาน DCF + Relative P/E</span></div></div>
-        <div style="display:flex; gap:6px;"><div><b>Margin of Safety: {val_mos:.1f}%</b><br><span style="color:#64748B; font-size:13px;">ส่วนต่างความปลอดภัยจากราคาตลาดปัจจุบัน</span></div></div>
-        <div style="display:flex; gap:6px;"><div><b>P/E Ratio ปัจจุบัน: {fmt_ratio(ctx.stock_info.get('pe_ratio'), suffix='')} เท่า</b><br><span style="color:#64748B; font-size:13px;">เทียบ EPS ล่าสุด {ctx.stock_info.get('eps', '-')} บาท/หุ้น</span></div></div>
-        <div style="display:flex; gap:6px;"><div><b>สถานะมูลค่า: {val_status}</b><br><span style="color:#64748B; font-size:13px;">ระดับความน่าดึงดูดเชิงมูลค่าพื้นฐาน</span></div></div>
-        </div></div>""",
-            unsafe_allow_html=True
-        )
+        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:315px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div style="font-size:14px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">VALUATION DRIVERS ({ctx.selected_ticker})</div>
+    <div style="font-size:13px; color:#CBD5E1; line-height:1.45; display:flex; flex-direction:column; gap:6px; margin:auto 0;">
+    <div style="display:flex; gap:6px;"><span style="color:#10B981;">✔</span><div><b>Fair Value (Blended): {val_base:.2f} THB</b><br><span style="color:#64748B; font-size:12.5px;">ประเมินแบบผสมผสาน DCF + Relative P/E</span></div></div>
+    <div style="display:flex; gap:6px;"><span style="color:#10B981;">✔</span><div><b>Margin of Safety: {val_mos:.1f}%</b><br><span style="color:#64748B; font-size:12.5px;">ส่วนต่างความปลอดภัยจากราคาตลาดปัจจุบัน</span></div></div>
+    <div style="display:flex; gap:6px;"><span style="color:#10B981;">✔</span><div><b>P/E Ratio ปัจจุบัน: {fmt_ratio(ctx.stock_info.get('pe_ratio'), suffix='')} เท่า</b><br><span style="color:#64748B; font-size:12.5px;">เทียบ EPS ล่าสุด {ctx.stock_info.get('eps','-')} บาท/หุ้น</span></div></div>
+    <div style="display:flex; gap:6px;"><span style="color:#10B981;">✔</span><div><b>สถานะมูลค่า: {val_status}</b><br><span style="color:#64748B; font-size:12.5px;">ระดับความน่าดึงดูดเชิงมูลค่าพื้นฐาน</span></div></div>
+    </div></div>""", unsafe_allow_html=True)
 
     with r2_c3:
         safety_score = int(min(100, max(20, int(val_mos + 50))))
-        st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:315px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div style="font-size:15px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">FAIR VALUE SCORE BY DIMENSION</div>
-        <div style="display:flex; flex-direction:column; gap:10px; margin:auto 0;">
-        <div><div style="display:flex; justify-content:space-between; font-size:14px; color:#475569; margin-bottom:3px;"><span>Relative Valuation (P/E)</span><span style="font-weight:bold; color:#0F172A;">{val_score} <span style="font-size:13px; color:#64748B;">/100</span></span></div>
-        <div style="background:#E2E8F0; height:9px; border-radius:4px; overflow:hidden;"><div style="background:{val_color}; width:{val_score}%; height:100%;"></div></div></div>
-        <div><div style="display:flex; justify-content:space-between; font-size:14px; color:#475569; margin-bottom:3px;"><span>Intrinsic Valuation (DCF)</span><span style="font-weight:bold; color:#0F172A;">{val_score} <span style="font-size:13px; color:#64748B;">/100</span></span></div>
-        <div style="background:#E2E8F0; height:9px; border-radius:4px; overflow:hidden;"><div style="background:{val_color}; width:{val_score}%; height:100%;"></div></div></div>
-        <div><div style="display:flex; justify-content:space-between; font-size:14px; color:#475569; margin-bottom:3px;"><span>Margin of Safety</span><span style="font-weight:bold; color:#0F172A;">{safety_score} <span style="font-size:13px; color:#64748B;">/100</span></span></div>
-        <div style="background:#E2E8F0; height:9px; border-radius:4px; overflow:hidden;"><div style="background:{val_color}; width:{safety_score}%; height:100%;"></div></div></div>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #E2E8F0; padding-top:8px;">
-        <span style="font-size:14px; font-weight:bold; color:#475569;">OVERALL FAIR VALUE SCORE</span><span style="font-size:19px; font-weight:bold; color:{val_color};">{val_score} <span style="font-size:14px; color:#64748B;">/100</span></span>
-        </div></div>""",
-            unsafe_allow_html=True
-        )
+        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:315px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div style="font-size:14px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">FAIR VALUE SCORE BY DIMENSION</div>
+    <div style="display:flex; flex-direction:column; gap:10px; margin:auto 0;">
+    <div><div style="display:flex; justify-content:space-between; font-size:13px; color:#CBD5E1; margin-bottom:3px;"><span>📊 Relative Valuation (P/E)</span><span style="font-weight:bold; color:#F8FAFC;">{val_score} <span style="font-size:12px; color:#64748B;">/100</span></span></div>
+    <div style="background:#1E293B; height:9px; border-radius:4px; overflow:hidden;"><div style="background:#10B981; width:{val_score}%; height:100%;"></div></div></div>
+    <div><div style="display:flex; justify-content:space-between; font-size:13px; color:#CBD5E1; margin-bottom:3px;"><span>🎯 Intrinsic Valuation (DCF)</span><span style="font-weight:bold; color:#F8FAFC;">{val_score} <span style="font-size:12px; color:#64748B;">/100</span></span></div>
+    <div style="background:#1E293B; height:9px; border-radius:4px; overflow:hidden;"><div style="background:#10B981; width:{val_score}%; height:100%;"></div></div></div>
+    <div><div style="display:flex; justify-content:space-between; font-size:13px; color:#CBD5E1; margin-bottom:3px;"><span>🛡️ Margin of Safety</span><span style="font-weight:bold; color:#F8FAFC;">{safety_score} <span style="font-size:12px; color:#64748B;">/100</span></span></div>
+    <div style="background:#1E293B; height:9px; border-radius:4px; overflow:hidden;"><div style="background:#10B981; width:{safety_score}%; height:100%;"></div></div></div>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #1E293B; padding-top:8px;">
+    <span style="font-size:13.5px; font-weight:bold; color:#CBD5E1;">OVERALL FAIR VALUE SCORE</span><span style="font-size:18.5px; font-weight:bold; color:{val_color};">{val_score} <span style="font-size:13px; color:#64748B;">/100</span></span>
+    </div></div>""", unsafe_allow_html=True)
 
     st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
-    st.markdown(
-        """<div style="font-size:15px; font-weight:bold; color:#64748B; letter-spacing:0.5px; margin-bottom:8px;">DETAIL BREAKDOWN</div>""",
-        unsafe_allow_html=True
-    )
-
+    st.markdown("""<div style="font-size:14.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px; margin-bottom:8px;">DETAIL BREAKDOWN</div>""", unsafe_allow_html=True)
     d_c1, d_c2, d_c3, d_c4 = st.columns(4)
 
     with d_c1:
-        st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:12px; min-height:190px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div><div style="font-size:14px; font-weight:bold; color:#475569;">RELATIVE VALUATION (P/E)</div>
-        <table style="width:100%; font-size:14px; color:#475569; border-collapse:collapse; margin-top:6px;">
-        <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:13px;"><th style="text-align:left; padding:2px 0;">Metric</th><th>Value</th></tr>
-        <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:3px 0;">P/E Ratio ปัจจุบัน</td><td>{fmt_ratio(ctx.stock_info.get('pe_ratio'))}</td></tr>
-        <tr><td style="padding:3px 0;">P/E Fair Value</td><td>{safe(ctx.stock_info.get('pe_fair_value')):.2f} THB</td></tr>
-        </table></div></div>""",
-            unsafe_allow_html=True
-        )
+        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:10px; padding:12px; min-height:190px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div><div style="font-size:13px; font-weight:bold; color:#CBD5E1;">RELATIVE VALUATION (P/E)</div>
+    <table style="width:100%; font-size:13px; color:#CBD5E1; border-collapse:collapse; margin-top:6px;">
+    <tr style="border-bottom:1px solid #1E293B; color:#64748B; font-size:12.5px;"><th style="text-align:left; padding:2px 0;">Metric</th><th>Value</th></tr>
+    <tr style="border-bottom:1px solid #1E293B;"><td style="padding:3px 0;">P/E Ratio ปัจจุบัน</td><td>{fmt_ratio(ctx.stock_info.get('pe_ratio'))}</td></tr>
+    <tr><td style="padding:3px 0;">P/E Fair Value</td><td>{safe(ctx.stock_info.get('pe_fair_value')):.2f} THB</td></tr>
+    </table></div></div>""", unsafe_allow_html=True)
 
     with d_c2:
-        st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:12px; min-height:190px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div><div style="font-size:14px; font-weight:bold; color:#475569;">INTRINSIC VALUATION (DCF)</div>
-        <table style="width:100%; font-size:14px; color:#475569; border-collapse:collapse; margin-top:6px;">
-        <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:13px;"><th style="text-align:left; padding:2px 0;">Metric</th><th>Value</th></tr>
-        <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:3px 0;">WACC</td><td>{fmt_ratio(ctx.stock_info.get('wacc_used'), suffix="%", decimals=1)}</td></tr>
-        <tr><td style="padding:3px 0;">DCF Fair Value</td><td>{safe(ctx.stock_info.get('dcf_fair_value')):.2f} THB</td></tr>
-        </table></div></div>""",
-            unsafe_allow_html=True
-        )
+        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:10px; padding:12px; min-height:190px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div><div style="font-size:13px; font-weight:bold; color:#CBD5E1;">INTRINSIC VALUATION (DCF)</div>
+    <table style="width:100%; font-size:13px; color:#CBD5E1; border-collapse:collapse; margin-top:6px;">
+    <tr style="border-bottom:1px solid #1E293B; color:#64748B; font-size:12.5px;"><th style="text-align:left; padding:2px 0;">Metric</th><th>Value</th></tr>
+    <tr style="border-bottom:1px solid #1E293B;"><td style="padding:3px 0;">WACC</td><td>{fmt_ratio(val_detail.get('wacc_used'), suffix="%", decimals=1)}</td></tr>
+    <tr><td style="padding:3px 0;">DCF Fair Value</td><td>{safe(ctx.stock_info.get('dcf_fair_value')):.2f} THB</td></tr>
+    </table></div></div>""", unsafe_allow_html=True)
 
     with d_c3:
-        st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:12px; min-height:190px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div><div style="font-size:14px; font-weight:bold; color:#475569;">PRICE COMPARISON</div>
-        <table style="width:100%; font-size:14px; color:#475569; border-collapse:collapse; margin-top:6px;">
-        <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:3px 0;">Current</td><td>{val_cur_price:.2f}</td></tr>
-        <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:3px 0;">Fair Value</td><td>{val_base:.2f}</td></tr>
-        <tr><td style="padding:3px 0;">Difference</td><td>{(val_base - val_cur_price):+.2f}</td></tr>
-        </table></div></div>""",
-            unsafe_allow_html=True
-        )
+        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:10px; padding:12px; min-height:190px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div><div style="font-size:13px; font-weight:bold; color:#CBD5E1;">PRICE COMPARISON</div>
+    <table style="width:100%; font-size:13px; color:#CBD5E1; border-collapse:collapse; margin-top:6px;">
+    <tr style="border-bottom:1px solid #1E293B;"><td style="padding:3px 0;">Current</td><td>{val_cur_price:.2f}</td></tr>
+    <tr style="border-bottom:1px solid #1E293B;"><td style="padding:3px 0;">Fair Value</td><td>{val_base:.2f}</td></tr>
+    <tr><td style="padding:3px 0;">Difference</td><td>{(val_base - val_cur_price):+.2f}</td></tr>
+    </table></div></div>""", unsafe_allow_html=True)
 
     with d_c4:
-        st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:12px; min-height:190px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div><div style="font-size:14px; font-weight:bold; color:#475569;">MARGIN OF SAFETY</div>
-        <table style="width:100%; font-size:14px; color:#475569; border-collapse:collapse; margin-top:6px;">
-        <tr><td style="padding:3px 0;">Margin of Safety</td><td style="color:{val_color}; font-weight:bold;">{val_mos:.1f}%</td></tr>
-        </table></div></div>""",
-            unsafe_allow_html=True
-        )
+        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:10px; padding:12px; min-height:190px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div><div style="font-size:13px; font-weight:bold; color:#CBD5E1;">MARGIN OF SAFETY</div>
+    <table style="width:100%; font-size:13px; color:#CBD5E1; border-collapse:collapse; margin-top:6px;">
+    <tr><td style="padding:3px 0;">Margin of Safety</td><td style="color:{val_color}; font-weight:bold;">{val_mos:.1f}%</td></tr>
+    </table></div></div>""", unsafe_allow_html=True)
 
     st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
     r4_c1, r4_c2 = st.columns([1.3, 1.7])
 
     with r4_c1:
-        wacc_disp = fmt_ratio(ctx.stock_info.get('wacc_used'), suffix="%", decimals=1)
-        g_disp = fmt_ratio(ctx.stock_info.get('terminal_growth_used'), suffix="%", decimals=1)
-        fcf_g_disp = fmt_ratio(ctx.stock_info.get('fcf_growth_assumed'), suffix="%", decimals=1)
-
-        st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:220px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div style="font-size:14px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">DCF ASSUMPTIONS <span style="font-size:12px; color:#64748B; font-weight:normal;">({ctx.stock_info.get('sector', '-')})</span></div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; font-size:14px; color:#475569; margin:auto 0;">
-        <div><span style="color:#64748B;">WACC</span><br><b style="color:#0F172A;">{wacc_disp}</b></div>
-        <div><span style="color:#64748B;">Terminal Growth</span><br><b style="color:#0F172A;">{g_disp}</b></div>
-        <div><span style="color:#64748B;">FCF Growth (Yr 1)</span><br><b style="color:#0F172A;">{fcf_g_disp}</b></div>
-        <div><span style="color:#64748B;">Target P/E</span><br><b style="color:#0F172A;">18-22x (by sector)</b></div>
-        <div><span style="color:#64748B;">DCF Weight</span><br><b style="color:#0F172A;">55%</b></div>
-        <div><span style="color:#64748B;">P/E Weight</span><br><b style="color:#0F172A;">45%</b></div>
-        </div>
-        <div style="font-size:12px; color:#64748B; border-top:1px solid #E2E8F0; padding-top:6px; margin-top:4px;">WACC/Growth ปรับตามกลุ่มอุตสาหกรรม (ไม่ใช่ค่าคงที่เดียวทุกหุ้นแล้ว) &bull; FCF ฐานใช้ค่าเฉลี่ย 2 ปีล่าสุด</div>
-        </div>""",
-            unsafe_allow_html=True
-        )
+        wacc_disp = fmt_ratio(val_detail.get('wacc_used'), suffix="%", decimals=1)
+        g_disp = fmt_ratio(val_detail.get('terminal_growth_used'), suffix="%", decimals=1)
+        fcf_g_disp = fmt_ratio(val_detail.get('fcf_growth_assumed'), suffix="%", decimals=1)
+        target_pe_disp = val_detail.get('target_pe_str') or "-"
+        st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:220px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div style="font-size:13.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">DCF ASSUMPTIONS <span style="font-size:11.5px; color:#64748B; font-weight:normal;">({ctx.stock_info.get('sector','-')})</span></div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; font-size:13px; color:#CBD5E1; margin:auto 0;">
+    <div><span style="color:#64748B;">WACC</span><br><b style="color:#F8FAFC;">{wacc_disp}</b></div>
+    <div><span style="color:#64748B;">Terminal Growth</span><br><b style="color:#F8FAFC;">{g_disp}</b></div>
+    <div><span style="color:#64748B;">FCF Growth (Yr 1)</span><br><b style="color:#F8FAFC;">{fcf_g_disp}</b></div>
+    <div><span style="color:#64748B;">Target P/E</span><br><b style="color:#F8FAFC;">{target_pe_disp}</b></div>
+    <div><span style="color:#64748B;">DCF Weight</span><br><b style="color:#F8FAFC;">55%</b></div>
+    <div><span style="color:#64748B;">P/E Weight</span><br><b style="color:#F8FAFC;">45%</b></div>
+    </div>
+    <div style="font-size:11px; color:#64748B; border-top:1px solid #1E293B; padding-top:6px; margin-top:4px;">WACC/Growth ปรับตามกลุ่มอุตสาหกรรม (ไม่ใช่ค่าคงที่เดียวทุกหุ้นแล้ว) &bull; FCF ฐานใช้ค่าเฉลี่ย 2 ปีล่าสุด</div>
+    </div>""", unsafe_allow_html=True)
 
     with r4_c2:
-        st.markdown(
-            """<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px 12px 0 0; padding:12px 16px 0 16px;">
-        <div style="font-size:14px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">HISTORICAL FAIR VALUE VS PRICE (Actual, year-end 2023-2025)</div></div>""",
-            unsafe_allow_html=True
-        )
+        st.markdown("""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px 12px 0 0; padding:12px 16px 0 16px;">
+    <div style="font-size:13.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">HISTORICAL FAIR VALUE VS PRICE (Actual, year-end 2023-2025)</div></div>""", unsafe_allow_html=True)
 
-        fv_hist = ctx.fair_value_yearly_df[
-            ctx.fair_value_yearly_df['ticker'] == ctx.selected_ticker
-        ].sort_values('year') if not ctx.fair_value_yearly_df.empty else pd.DataFrame()
-
+        fv_hist = ctx.fair_value_yearly_df[ctx.fair_value_yearly_df['ticker'] == ctx.selected_ticker].sort_values('year') if not ctx.fair_value_yearly_df.empty else pd.DataFrame()
         if not fv_hist.empty:
             fig_hist_val = go.Figure()
-
-            fig_hist_val.add_trace(
-                go.Scatter(
-                    x=fv_hist['year'].astype(str),
-                    y=fv_hist['fair_value'],
-                    mode='lines+markers',
-                    name='Fair Value',
-                    line=dict(color='#A855F7', width=1.8, dash='dash')
-                )
-            )
-
-            fig_hist_val.add_trace(
-                go.Scatter(
-                    x=fv_hist['year'].astype(str),
-                    y=fv_hist['price'],
-                    mode='lines+markers',
-                    name='Actual Price',
-                    line=dict(color='#38BDF8', width=2),
-                    marker=dict(size=9, color='#38BDF8')
-                )
-            )
-
+            fig_hist_val.add_trace(go.Scatter(x=fv_hist['year'].astype(str), y=fv_hist['fair_value'], mode='lines+markers', name='Fair Value', line=dict(color='#A855F7', width=1.8, dash='dash')))
+            fig_hist_val.add_trace(go.Scatter(x=fv_hist['year'].astype(str), y=fv_hist['price'], mode='lines+markers', name='Actual Price', line=dict(color='#38BDF8', width=2), marker=dict(size=9, color='#38BDF8')))
             fig_hist_val.update_layout(
-                height=150,
-                margin=dict(l=25, r=15, t=10, b=20),
-                paper_bgcolor="#FFFFFF",
-                plot_bgcolor="#FFFFFF",
-                yaxis=dict(
-                    tickfont=dict(size=12, color="#64748B"),
-                    gridcolor="#E2E8F0",
-                    zeroline=False
-                ),
-                xaxis=dict(
-                    tickfont=dict(size=12, color="#64748B"),
-                    gridcolor="#E2E8F0"
-                ),
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=-0.35,
-                    xanchor="center",
-                    x=0.5,
-                    font=dict(size=12, color="#64748B")
-                )
+                height=190, margin=dict(l=25, r=15, t=10, b=55), paper_bgcolor="#0F172A", plot_bgcolor="#0F172A",
+                yaxis=dict(tickfont=dict(size=11.5, color="#64748B"), gridcolor="#1E293B", zeroline=False),
+                xaxis=dict(type='category', tickmode='array', tickvals=list(fv_hist['year'].astype(str)), ticktext=list(fv_hist['year'].astype(str)), tickfont=dict(size=11, color="#94A3B8"), gridcolor="#1E293B"),
+                legend=dict(orientation="h", yanchor="top", y=-0.28, xanchor="center", x=0.5, font=dict(size=11.5, color="#94A3B8"))
             )
-
             show_chart(fig_hist_val, key="fair_value_hist", expand_height=650)
-
         else:
             st.info("ไม่มีข้อมูลย้อนหลังเพียงพอ")
 
-    render_nav_footer("m2", prev_page=" Company Health", next_page=" Entry Timing")
+    render_nav_footer("m2", prev_page=" 💚 Company Health", next_page=" ⏱️ Entry Timing")
