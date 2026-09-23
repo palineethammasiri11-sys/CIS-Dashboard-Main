@@ -374,7 +374,14 @@ def render(ctx):
     <div style="font-size:18px; font-weight:bold; color:#0F172A;">{psr_val:.0f}%</div>
     </div>"""
 
-            footnote = f"""คำนวณหัก Risk-free Rate (~{rf_pct:.1f}%/ปี, BOT Policy Rate เฉลี่ย 2023-2025) แล้ว | PSR = ความน่าจะเป็นที่ Sharpe Ratio จริง &gt; 0 เมื่อพิจารณาความเบ้/โด่งของข้อมูล (Bailey &amp; López de Prado, 2012)"""
+            footnote = f"""
+        <div style="line-height:1.6; font-size:11px; color:#94A3B8;">
+            <b>• Sharpe:</b> ผลตอบแทนส่วนเกินเทียบความผันผวนรวม (หัก Rf ~{rf_pct:.1f}%/ปี)<br>
+            <b>• Sortino:</b> ผลตอบแทนส่วนเกินเทียบความผันผวนเฉพาะขาลง (Downside Risk)<br>
+            <b>• Calmar:</b> ผลตอบแทนเฉลี่ยต่อปีเทียบกับการขาดทุนลึกสุด (Max Drawdown)<br>
+            <b>• PSR:</b> ความน่าจะเป็นทางสถิติที่ Sharpe จริง &gt; 0 โดยปรับแก้ความเบ้/โด่ง (Bailey & López de Prado)
+        </div>
+        """
 
         else:
             grid_cols = 3
