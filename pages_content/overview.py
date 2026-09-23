@@ -219,7 +219,10 @@ def render(ctx):
     # TOP SECTION
     # ============================================================
 
-    col_left, col_center = st.columns([1.1, 2.3])
+   col_left, col_center = st.columns(
+        [1.1, 2.3],
+        vertical_alignment="top"
+    )
 
     with col_left:
 
@@ -387,19 +390,22 @@ def render(ctx):
         </style>
         """, unsafe_allow_html=True)
 
-        st.html(f"""
-        <div style="background-color:#FFFFFF;border:1px solid #E2E8F0;
-                    border-radius:12px;padding:16px;">
-            <div style="font-size:15px;font-weight:bold;color:#0F172A;
-                        letter-spacing:0.5px;margin-bottom:12px;">
-                INVESTMENT DECISION OVERVIEW ({ctx.selected_ticker})
+         st.html(f"""
+            <div class="overview-decision-card"
+                 style="background-color:#FFFFFF;border:1px solid #E2E8F0;
+                        border-radius:12px;padding:16px;
+                        height:532px;box-sizing:border-box;">
+                <div style="font-size:15px;font-weight:bold;color:#0F172A;
+                            letter-spacing:0.5px;margin-bottom:12px;">
+                    INVESTMENT DECISION OVERVIEW ({ctx.selected_ticker})
+                </div>
+
+                <div class="overview-module-grid"
+                     style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+                            gap:12px;width:100%;min-width:0;">
+                    {cards_html}
+                </div>
             </div>
-            <div class="overview-module-grid"
-                 style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
-                        gap:12px;width:100%;min-width:0;">
-                {cards_html}
-            </div>
-        </div>
         """)
 
     rev_g = ctx.stock_info.get('revenue_growth_yoy')
@@ -460,16 +466,21 @@ def render(ctx):
     st.markdown("""
     <style>
     @media (max-width: 768px) {
-        .key-highlights-grid {
+        .overview-module-grid {
             grid-template-columns:1fr !important;
             width:100% !important;
             max-width:100% !important;
         }
-        .key-highlights-grid > div {
+
+        .overview-module-grid > div {
             width:100% !important;
             max-width:100% !important;
             min-width:0 !important;
             box-sizing:border-box !important;
+        }
+
+        .overview-decision-card {
+            height:auto !important;
         }
     }
     </style>
