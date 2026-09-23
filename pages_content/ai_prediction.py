@@ -56,7 +56,7 @@ def _kpi_card(
 ):
     """การ์ด KPI ใบเดียว"""
     return (
-        f'<div style="width:100%; height:175px; box-sizing:border-box; background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:18px 10px; text-align:center; display:flex; flex-direction:column; justify-content:center;">'
+        f'<div style="width:100%; height:155px; box-sizing:border-box; background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:14px 8px; text-align:center; display:flex; flex-direction:column; justify-content:center;">'
         f'<div style="font-size:11px; font-weight:bold; color:{label_color}; letter-spacing:1px;">{label}</div>'
         f'<div style="font-size:{value_size}px; font-weight:bold; color:{value_color}; line-height:1.2; margin-top:4px;">{value_html}</div>'
         f'{sub_html}'
@@ -171,12 +171,12 @@ def render(ctx):
             f"""
 <div style="
     width:100%;
-    height:175px;
+    height:155px;
     box-sizing:border-box;
     background:#FFFFFF;
     border:1px solid #D9E2EC;
     border-radius:12px;
-    padding:18px 10px;
+    padding:14px 8px;
     text-align:center;
     display:flex;
     flex-direction:column;
@@ -189,14 +189,14 @@ def render(ctx):
     font-weight:bold;
     color:{MUTED};
     letter-spacing:1px;
-    margin-bottom:7px;
+    margin-bottom:5px;
 ">
 SCORE
 </div>
 
 <div style="
-    width:76px;
-    height:76px;
+    width:68px;
+    height:68px;
     border-radius:50%;
     background:conic-gradient(
         {status_color} 0deg {score_angle:.1f}deg,
@@ -208,8 +208,8 @@ SCORE
 ">
 
 <div style="
-    width:58px;
-    height:58px;
+    width:52px;
+    height:52px;
     border-radius:50%;
     background:#FFFFFF;
     display:flex;
@@ -219,7 +219,7 @@ SCORE
 ">
 
 <div style="
-    font-size:21px;
+    font-size:19px;
     font-weight:bold;
     color:#0F172A;
     line-height:1;
@@ -228,9 +228,9 @@ SCORE
 </div>
 
 <div style="
-    font-size:11px;
+    font-size:10px;
     color:{MUTED};
-    margin-top:4px;
+    margin-top:3px;
 ">
 /100
 </div>
@@ -239,9 +239,9 @@ SCORE
 </div>
 
 <div style="
-    font-size:12px;
+    font-size:11px;
     color:{MUTED};
-    margin-top:7px;
+    margin-top:5px;
 ">
 Prediction Score
 </div>
