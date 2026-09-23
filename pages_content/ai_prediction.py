@@ -56,8 +56,7 @@ def _kpi_card(
 ):
     """การ์ด KPI ใบเดียว"""
     return (
-        f'<div style="background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:18px 10px; '
-        f'text-align:center; height:176px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center;">'
+        f'<div style="background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:18px 10px; text-align:center; height:205px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center;">'
         f'<div style="font-size:11px; font-weight:bold; color:{label_color}; letter-spacing:1px;">{label}</div>'
         f'<div style="font-size:{value_size}px; font-weight:bold; color:{value_color}; line-height:1.2; margin-top:4px;">{value_html}</div>'
         f'{sub_html}'
