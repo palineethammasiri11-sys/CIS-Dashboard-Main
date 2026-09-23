@@ -375,7 +375,7 @@ def render(ctx):
     </div>"""
 
             footnote = f"""
-        <div style="line-height:1.6; font-size:11px; color:#94A3B8;">
+        <div style="line-height:1.6; font-size:14px; color:#94A3B8;">
             <b>• Sharpe:</b> ผลตอบแทนส่วนเกินเทียบความผันผวนรวม (หัก Rf ~{rf_pct:.1f}%/ปี)<br>
             <b>• Sortino:</b> ผลตอบแทนส่วนเกินเทียบความผันผวนเฉพาะขาลง (Downside Risk)<br>
             <b>• Calmar:</b> ผลตอบแทนเฉลี่ยต่อปีเทียบกับการขาดทุนลึกสุด (Max Drawdown)<br>
