@@ -288,13 +288,13 @@ def render(ctx):
 
                 <div style="
                     margin:0 auto;
-                    width:180px;
+                    width:200px;
                     max-width:100%;
                 ">
                     <svg viewBox="0 0 100 58"
                          style="
-                            width:175px;
-                            height:105px;
+                            width:195px;
+                            height:117px;
                             display:block;
                             margin:0 auto;
                          ">
@@ -342,18 +342,20 @@ def render(ctx):
 
                 <div style="
                     color:#F59E0B;
-                    font-size:15px;
+                    font-size:20px;
                     letter-spacing:3px;
                     margin-top:-2px;
+                    line-height:1.2;
                 ">
                     {'★' * stars}{'☆' * (5-stars)}
                 </div>
 
                 <div style="
                     color:{rec_color};
-                    font-size:17px;
+                    font-size:21px;
                     font-weight:800;
-                    margin-top:3px;
+                    margin-top:5px;
+                    letter-spacing:0.3px;
                 ">
                     {label}
                 </div>
