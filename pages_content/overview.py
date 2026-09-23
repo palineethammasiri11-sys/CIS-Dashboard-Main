@@ -466,13 +466,14 @@ def render(ctx):
     st.markdown("""
     <style>
     @media (max-width: 768px) {
-        .overview-module-grid {
+
+        .key-highlights-grid {
             grid-template-columns:1fr !important;
             width:100% !important;
             max-width:100% !important;
-        }
+        }    
 
-        .overview-module-grid > div {
+        .key-highlights-grid > div {
             width:100% !important;
             max-width:100% !important;
             min-width:0 !important;
@@ -482,6 +483,7 @@ def render(ctx):
         .overview-decision-card {
             height:auto !important;
         }
+
     }
     </style>
     """, unsafe_allow_html=True)
