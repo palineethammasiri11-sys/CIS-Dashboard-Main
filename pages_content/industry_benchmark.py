@@ -388,7 +388,7 @@ def render(ctx):
 </div>
 """
 
-        st.markdown(peer_html, unsafe_allow_html=True)
+        st.html(peer_html)
 
     with r2_c2:
         cats = ['Health', 'Valuation', 'Timing', 'AI Pred.', 'Risk', 'Industry']
