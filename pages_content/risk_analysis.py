@@ -90,10 +90,10 @@ def render(ctx):
 
     st.markdown("""
     <div style="margin-bottom:20px;">
-        <div style="font-size:23px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
+        <div style="font-size:26px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
             RISK ANALYSIS
         </div>
-        <div style="font-size:15px; color:#64748B; margin-top:4px;">
+        <div style="font-size:16px; color:#64748B; margin-top:4px;">
             วิเคราะห์ความเสี่ยงของหุ้นจาก Beta, Volatility, Drawdown และ Risk-adjusted Return
         </div>
     </div>
@@ -102,29 +102,26 @@ def render(ctx):
     r1_c1, r1_c2 = st.columns([1.15, 2.85])
 
     with r1_c1:
-        # risk_score นิยามว่า "higher = safer" แต่ arc วาดจากเขียว(ซ้าย)->แดง(ขวา)
-        # ต้อง invert (1 - ...) ไม่งั้นคะแนนสูง (ปลอดภัย) จะดันเข็มไปทางแดงแทนที่จะเป็นเขียว
         needle_frac = 1 - min(1.0, risk_score / 100)
 
         st.markdown(
             f"""<div style="background-color:#FFFFFF; border:2px solid {risk_color}; border-radius:12px; padding:16px; min-height:260px; display:flex; flex-direction:column; justify-content:space-between; text-align:center;">
-    <div style="font-size:14.5px; font-weight:bold; color:#64748B; letter-spacing:0.5px; text-align:left;">RISK SUMMARY</div>
+    <div style="font-size:16px; font-weight:bold; color:#64748B; letter-spacing:0.5px; text-align:left;">RISK SUMMARY</div>
     <div style="margin:auto 0;"><svg viewBox="0 0 100 55" style="width:140px; height:90px; display:block; margin:0 auto;">
     <path d="M 12 50 A 38 38 0 0 1 35 15" fill="none" stroke="#10B981" stroke-width="8" stroke-linecap="round" />
     <path d="M 35 15 A 38 38 0 0 1 65 15" fill="none" stroke="#F59E0B" stroke-width="8" />
     <path d="M 65 15 A 38 38 0 0 1 88 50" fill="none" stroke="#EF4444" stroke-width="8" stroke-linecap="round" />
     <line x1="50" y1="50" x2="{50 - 30*np.cos(np.pi*needle_frac):.1f}" y2="{50 - 40*np.sin(np.pi*needle_frac):.1f}" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round"/>
     <circle cx="50" cy="50" r="4" fill="#0F172A"/></svg></div>
-    <div style="color:{risk_color}; font-size:19px; font-weight:bold; margin-top:2px;">{risk_status}</div>
-    <div style="font-size:12px; color:#64748B; margin-top:1px;">Risk Score (higher = safer)</div>
-    <div style="font-size:21px; font-weight:bold; color:#0F172A; line-height:1.1;">{risk_score}<span style="font-size:13.5px; color:#64748B;">/100</span></div></div>
-    <div style="font-size:12.5px; color:#64748B; line-height:1.35;">ระดับความเสี่ยงของ {ctx.selected_ticker} ประเมินจาก Beta, Volatility และ Max Drawdown จริง</div>
+    <div style="color:{risk_color}; font-size:21px; font-weight:bold; margin-top:2px;">{risk_status}</div>
+    <div style="font-size:14px; color:#64748B; margin-top:1px;">Risk Score (higher = safer)</div>
+    <div style="font-size:24px; font-weight:bold; color:#0F172A; line-height:1.1;">{risk_score}<span style="font-size:15px; color:#64748B;">/100</span></div></div>
+    <div style="font-size:14px; color:#64748B; line-height:1.35;">ระดับความเสี่ยงของ {ctx.selected_ticker} ประเมินจาก Beta, Volatility และ Max Drawdown จริง</div>
     </div>""",
             unsafe_allow_html=True
         )
 
     with r1_c2:
-        # Risk dimensions - คำนวณจากข้อมูลจริงแต่ละมิติ
         market_risk = int(np.clip(beta_val * 40, 5, 95))
         price_risk = int(np.clip(vol_val * 1.3, 5, 95))
         financial_risk = int(np.clip(de_val_r * 25, 5, 95))
@@ -137,10 +134,10 @@ def render(ctx):
             lvl = "Low" if val <= 35 else ("Moderate" if val <= 60 else "High")
 
             return f"""<div style="background:#F8FAFC; border:1px solid #D9E2EC; border-radius:10px; padding:10px 4px; text-align:center;">
-    <div style="font-size:13px; font-weight:bold; color:#334155;">{label}</div>
+    <div style="font-size:16px; font-weight:bold; color:#334155;">{label}</div>
     <div style="margin:8px auto; width:56px; height:56px; border-radius:50%; background:conic-gradient({c} 0% {val}%, #D9E2EC {val}% 100%); display:flex; align-items:center; justify-content:center;">
-    <div style="width:46px; height:46px; border-radius:50%; background-color:#FFFFFF; display:flex; align-items:center; justify-content:center;"><span style="font-size:15px; color:#0F172A;">{val}</span></div></div>
-    <div style="color:{c}; font-size:12.5px; font-weight:bold;">{lvl}</div></div>"""
+    <div style="width:46px; height:46px; border-radius:50%; background-color:#FFFFFF; display:flex; align-items:center; justify-content:center;"><span style="font-size:16px; color:#0F172A;">{val}</span></div></div>
+    <div style="color:{c}; font-size:15px; font-weight:bold;">{lvl}</div></div>"""
 
         dims_html = "".join([
             risk_dim_card("Market Risk (Beta)", market_risk),
@@ -153,7 +150,7 @@ def render(ctx):
 
         st.markdown(
             f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px; padding:16px; min-height:260px; display:flex; flex-direction:column; justify-content:space-between;">
-    <div style="font-size:14.5px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">RISK DIMENSION OVERVIEW ({ctx.selected_ticker})</div>
+    <div style="font-size:16px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">RISK DIMENSION OVERVIEW ({ctx.selected_ticker})</div>
     <div style="display:grid; grid-template-columns: repeat(6, 1fr); gap:8px; margin:auto 0;">{dims_html}</div>
     </div>""",
             unsafe_allow_html=True
@@ -173,8 +170,8 @@ def render(ctx):
     with r2_c1:
         st.markdown(
             f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px 12px 0 0; padding:12px 14px 0 14px;">
-    <div style="font-size:14px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">MARKET RISK (BETA) — vs Peers</div>
-    <div style="font-size:19px; font-weight:bold; color:#0F172A; margin-top:2px;">{beta_val:.2f}</div></div>""",
+    <div style="font-size:16px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">MARKET RISK (BETA) — vs Peers</div>
+    <div style="font-size:22px; font-weight:bold; color:#0F172A; margin-top:2px;">{beta_val:.2f}</div></div>""",
             unsafe_allow_html=True
         )
 
@@ -207,11 +204,11 @@ def render(ctx):
             paper_bgcolor="#FFFFFF",
             plot_bgcolor="#FFFFFF",
             xaxis=dict(
-                tickfont=dict(size=11, color="#64748B"),
+                tickfont=dict(size=12, color="#64748B"),
                 gridcolor="#D9E2EC"
             ),
             yaxis=dict(
-                tickfont=dict(size=11, color="#334155"),
+                tickfont=dict(size=12, color="#334155"),
                 gridcolor="#D9E2EC"
             ),
             showlegend=False
@@ -222,8 +219,8 @@ def render(ctx):
     with r2_c2:
         st.markdown(
             f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px 12px 0 0; padding:12px 14px 0 14px;">
-    <div style="font-size:14px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">PRICE RISK — Rolling 30D Volatility (actual)</div>
-    <div style="font-size:19px; font-weight:bold; color:#0F172A; margin-top:2px;">{vol_val:.1f}%</div></div>""",
+    <div style="font-size:16px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">PRICE RISK — Rolling 30D Volatility (actual)</div>
+    <div style="font-size:22px; font-weight:bold; color:#0F172A; margin-top:2px;">{vol_val:.1f}%</div></div>""",
             unsafe_allow_html=True
         )
 
@@ -245,11 +242,11 @@ def render(ctx):
                 paper_bgcolor="#FFFFFF",
                 plot_bgcolor="#FFFFFF",
                 xaxis=dict(
-                    tickfont=dict(size=11, color="#64748B"),
-                    gridcolor="#D9E2EC"
+                    tickfont=dict(size=12, color="#64748B"),
+                    gridcolor="#D9E2EC",
                 ),
                 yaxis=dict(
-                    tickfont=dict(size=11, color="#64748B"),
+                    tickfont=dict(size=12, color="#64748B"),
                     gridcolor="#D9E2EC",
                     zeroline=False
                 ),
@@ -257,11 +254,13 @@ def render(ctx):
             )
 
             show_chart(fig_vol, key="risk_volatility", expand_height=550)
+
         else:
             st.info("ไม่มีข้อมูล")
 
     with r2_c3:
         recovery_days = ctx.stock_info.get('recovery_days')
+
         recovery_txt = (
             f"ฟื้นตัวใน {int(recovery_days)} วัน"
             if recovery_days is not None
@@ -270,9 +269,9 @@ def render(ctx):
 
         st.markdown(
             f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px 12px 0 0; padding:12px 14px 0 14px;">
-    <div style="font-size:14px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">DRAWDOWN — Actual (2023-2025)</div>
-    <div style="font-size:19px; font-weight:bold; color:#EF4444; margin-top:2px;">-{dd_val:.1f}%</div>
-    <div style="font-size:11.5px; color:#64748B; margin-top:2px;">Recovery: {recovery_txt}</div></div>""",
+    <div style="font-size:16px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">DRAWDOWN — Actual (2023-2025)</div>
+    <div style="font-size:22px; font-weight:bold; color:#EF4444; margin-top:2px;">-{dd_val:.1f}%</div>
+    <div style="font-size:13px; color:#64748B; margin-top:2px;">Recovery: {recovery_txt}</div></div>""",
             unsafe_allow_html=True
         )
 
@@ -296,11 +295,11 @@ def render(ctx):
                 paper_bgcolor="#FFFFFF",
                 plot_bgcolor="#FFFFFF",
                 xaxis=dict(
-                    tickfont=dict(size=11, color="#64748B"),
+                    tickfont=dict(size=12, color="#64748B"),
                     gridcolor="#D9E2EC"
                 ),
                 yaxis=dict(
-                    tickfont=dict(size=11, color="#64748B"),
+                    tickfont=dict(size=12, color="#64748B"),
                     gridcolor="#D9E2EC",
                     zeroline=False
                 ),
@@ -308,6 +307,7 @@ def render(ctx):
             )
 
             show_chart(fig_dd, key="risk_drawdown", expand_height=550)
+
         else:
             st.info("ไม่มีข้อมูล")
 
@@ -316,20 +316,23 @@ def render(ctx):
 
     with r3_c1:
         cvar_val = ctx.stock_info.get('cvar_95')
+
         if cvar_val is None:
             cvar_val = _fallback_cvar_95(ctx.stock_daily)
 
         if cvar_val is not None:
             downside_metrics_html = f"""<div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; text-align:center; margin:auto 0;">
-    <div><div style="font-size:27px; font-weight:bold; color:#EF4444;">-{safe(ctx.stock_info.get('var_95')):.2f}%</div><div style="font-size:16px; color:#64748B;">VaR 95%</div></div>
-    <div><div style="font-size:27px; font-weight:bold; color:#EF4444;">-{safe(cvar_val):.2f}%</div><div style="font-size:16px; color:#64748B;">CVaR 95%</div></div>
+    <div><div style="font-size:24px; font-weight:bold; color:#EF4444;">-{safe(ctx.stock_info.get('var_95')):.2f}%</div><div style="font-size:14px; color:#64748B;">VaR 95%</div></div>
+    <div><div style="font-size:24px; font-weight:bold; color:#EF4444;">-{safe(cvar_val):.2f}%</div><div style="font-size:14px; color:#64748B;">CVaR 95%</div></div>
     </div>
-    <div style="font-size:16px; color:#64748B; border-top:1px solid #D9E2EC; padding-top:8px;">VaR = ขาดทุนสูงสุดที่คาดใน 95% ของวัน (Parametric) | CVaR = ขาดทุนเฉลี่ยจริงในวันที่แย่กว่านั้น (Historical, จับ tail risk ได้ดีกว่า)</div>"""
+    <div style="font-size:14px; color:#64748B; border-top:1px solid #D9E2EC; padding-top:7px;">VaR = ขาดทุนสูงสุดที่คาดใน 95% ของวัน (Parametric) | CVaR = ขาดทุนเฉลี่ยจริงในวันที่แย่กว่านั้น (Historical, จับ tail risk ได้ดีกว่า)</div>"""
+
         else:
             downside_metrics_html = f"""<div style="margin:auto 0;">
-    <div style="font-size:28px; font-weight:bold; color:#EF4444;">-{safe(ctx.stock_info.get('var_95')):.2f}%</div><div style="font-size:16px; color:#64748B;">VaR 95% — Expected 1-Day Maximum Loss</div>
+    <div style="font-size:25px; font-weight:bold; color:#EF4444;">-{safe(ctx.stock_info.get('var_95')):.2f}%</div>
+    <div style="font-size:14px; color:#64748B;">VaR 95% — Expected 1-Day Maximum Loss</div>
     </div>
-    <div style="font-size:16px; color:#64748B; border-top:1px solid #D9E2EC; padding-top:8px;">คำนวณจาก Historical Simulation (2023-2025) — CVaR ยังคำนวณไม่ได้เนื่องจากข้อมูลราคาย้อนหลังไม่พอ</div>"""
+    <div style="font-size:14px; color:#64748B; border-top:1px solid #D9E2EC; padding-top:7px;">คำนวณจาก Historical Simulation (2023-2025) — CVaR ยังคำนวณไม่ได้เนื่องจากข้อมูลราคาย้อนหลังไม่พอ</div>"""
 
         st.markdown(
             f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px; padding:14px; min-height:225px; display:flex; flex-direction:column; justify-content:space-between;">
@@ -343,33 +346,36 @@ def render(ctx):
         avg_ret = ctx.stock_daily['close'].pct_change().mean() * 252
         calmar = round(avg_ret * 100 / dd_val, 2) if dd_val > 0 else 0
         rf_pct = safe(ctx.stock_info.get('risk_free_rate_annual'), 0.02) * 100
+
         psr_val = ctx.stock_info.get('psr')
 
         if psr_val is None:
             psr_val = _fallback_psr(ctx.stock_daily)
 
-        base_cells = f"""<div style="background:#F8FAFC; border:1px solid #D9E2EC; border-radius:6px; padding:7px 2px;">
-    <div style="font-size:16px; color:#64748B;">Sharpe</div>
-    <div style="font-size:21px; font-weight:bold; color:#0F172A;">{safe(ctx.stock_info.get('sharpe_ratio')):.2f}</div>
+        base_cells = f"""<div style="background:#F8FAFC; border:1px solid #D9E2EC; border-radius:6px; padding:6px 2px;">
+    <div style="font-size:14px; color:#64748B;">Sharpe</div>
+    <div style="font-size:18px; font-weight:bold; color:#0F172A;">{safe(ctx.stock_info.get('sharpe_ratio')):.2f}</div>
     </div>
-    <div style="background:#F8FAFC; border:1px solid #D9E2EC; border-radius:6px; padding:7px 2px;">
-    <div style="font-size:16px; color:#64748B;">Sortino</div>
-    <div style="font-size:21px; font-weight:bold; color:#0F172A;">{safe(ctx.stock_info.get('sortino_ratio')):.2f}</div>
+    <div style="background:#F8FAFC; border:1px solid #D9E2EC; border-radius:6px; padding:6px 2px;">
+    <div style="font-size:14px; color:#64748B;">Sortino</div>
+    <div style="font-size:18px; font-weight:bold; color:#0F172A;">{safe(ctx.stock_info.get('sortino_ratio')):.2f}</div>
     </div>
-    <div style="background:#F8FAFC; border:1px solid #D9E2EC; border-radius:6px; padding:7px 2px;">
-    <div style="font-size:16px; color:#64748B;">Calmar</div>
-    <div style="font-size:21px; font-weight:bold; color:#0F172A;">{calmar:.2f}</div>
+    <div style="background:#F8FAFC; border:1px solid #D9E2EC; border-radius:6px; padding:6px 2px;">
+    <div style="font-size:14px; color:#64748B;">Calmar</div>
+    <div style="font-size:18px; font-weight:bold; color:#0F172A;">{calmar:.2f}</div>
     </div>"""
 
         if psr_val is not None:
             grid_cols = 4
+
             ratio_cells = base_cells + f"""
-    <div style="background:#F8FAFC; border:1px solid #D9E2EC; border-radius:6px; padding:7px 2px;">
-    <div style="font-size:16px; color:#64748B;">PSR</div>
-    <div style="font-size:21px; font-weight:bold; color:#0F172A;">{psr_val:.0f}%</div>
+    <div style="background:#F8FAFC; border:1px solid #D9E2EC; border-radius:6px; padding:6px 2px;">
+    <div style="font-size:14px; color:#64748B;">PSR</div>
+    <div style="font-size:18px; font-weight:bold; color:#0F172A;">{psr_val:.0f}%</div>
     </div>"""
 
             footnote = f"""คำนวณหัก Risk-free Rate (~{rf_pct:.1f}%/ปี, BOT Policy Rate เฉลี่ย 2023-2025) แล้ว | PSR = ความน่าจะเป็นที่ Sharpe Ratio จริง &gt; 0 เมื่อพิจารณาความเบ้/โด่งของข้อมูล (Bailey &amp; López de Prado, 2012)"""
+
         else:
             grid_cols = 3
             ratio_cells = base_cells
@@ -381,7 +387,7 @@ def render(ctx):
     <div style="display:grid; grid-template-columns: repeat({grid_cols}, 1fr); gap:6px; text-align:center; margin:auto 0;">
     {ratio_cells}
     </div>
-    <div style="font-size:16px; color:#475569; border-top:1px solid #D9E2EC; padding-top:8px;">{footnote}</div>
+    <div style="font-size:14px; color:#475569; border-top:1px solid #D9E2EC; padding-top:7px;">{footnote}</div>
     </div>""",
             unsafe_allow_html=True
         )
@@ -415,7 +421,7 @@ def render(ctx):
         st.markdown(
             f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px; padding:14px; min-height:210px; display:flex; flex-direction:column; justify-content:space-between;">
     <div style="font-size:16px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">RISK FACTORS HIGHLIGHT ({ctx.selected_ticker})</div>
-    <div style="font-size:17px; color:#334155; line-height:1.5; margin:auto 0;">{risk_pts_html}</div>
+    <div style="font-size:15px; color:#334155; line-height:1.45; margin:auto 0;">{risk_pts_html}</div>
     </div>""",
             unsafe_allow_html=True
         )
@@ -424,12 +430,12 @@ def render(ctx):
         st.markdown(
             f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px; padding:14px; min-height:210px; display:flex; flex-direction:column; justify-content:space-between;">
     <div>
-    <div style="font-size:16px; font-weight:bold; color:#64748B; letter-spacing:0.5px; margin-bottom:8px;">EXPLAINABLE RISK SUMMARY</div>
-    <p style="font-size:16px; color:#334155; line-height:1.6; margin:0;">
+    <div style="font-size:16px; font-weight:bold; color:#64748B; letter-spacing:0.5px; margin-bottom:6px;">EXPLAINABLE RISK SUMMARY</div>
+    <p style="font-size:14px; color:#334155; line-height:1.5; margin:0;">
     หุ้น <b>{ctx.selected_ticker}</b> มีคะแนนความเสี่ยงรวมอยู่ที่ <b>{risk_score}/100 ({risk_status})</b> โดย Beta = {beta_val:.2f}, Volatility รายปี = {vol_val:.1f}%, และ Max Drawdown สูงสุด = {dd_val:.1f}% ในช่วง 2023-2025
     </p>
     </div>
-    <div style="font-size:16px; color:#B45309; background:rgba(245,158,11,0.08); border-left:3px solid #F59E0B; padding:6px 8px; border-radius:4px;">
+    <div style="font-size:14px; color:#B45309; background:rgba(245,158,11,0.08); border-left:3px solid #F59E0B; padding:5px 8px; border-radius:4px;">
     <b>ข้อสังเกต:</b> ควรติดตามความผันผวนของตลาดโลกและนโยบายอัตราดอกเบี้ยอย่างต่อเนื่อง
     </div>
     </div>""",
