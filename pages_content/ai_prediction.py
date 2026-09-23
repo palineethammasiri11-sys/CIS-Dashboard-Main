@@ -56,7 +56,7 @@ def _kpi_card(
 ):
     """การ์ด KPI ใบเดียว"""
     return (
-        f'<div style="width:100%; height:205px; box-sizing:border-box; background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:18px 10px; text-align:center; display:flex; flex-direction:column; justify-content:center;">'
+        f'<div style="width:100%; height:175px; box-sizing:border-box; background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:18px 10px; text-align:center; display:flex; flex-direction:column; justify-content:center;">'
         f'<div style="font-size:11px; font-weight:bold; color:{label_color}; letter-spacing:1px;">{label}</div>'
         f'<div style="font-size:{value_size}px; font-weight:bold; color:{value_color}; line-height:1.2; margin-top:4px;">{value_html}</div>'
         f'{sub_html}'
@@ -171,7 +171,7 @@ def render(ctx):
             f"""
 <div style="
     width:100%;
-    height:205px;
+    height:175px;
     box-sizing:border-box;
     background:#FFFFFF;
     border:1px solid #D9E2EC;
