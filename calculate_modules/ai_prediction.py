@@ -30,8 +30,14 @@ scikit-learn คำนวณให้ ไม่มีการปรับแต
 จะกระทบข้อความอธิบายในหน้า UI (pages_content/ai_prediction.py) ที่เขียนว่า "10 วัน" ไว้ด้วย ต้องแก้คู่กัน
 
 === CHANGELOG ===
-- เพิ่ม key 'baseline_accuracy' (ค่า accuracy ถ้าทายกลุ่มส่วนใหญ่เฉยๆ) ใน metrics_dict ทั้ง 2 return path
-  เพื่อให้หน้า UI แสดงเทียบกับ accuracy จริงได้ ว่าโมเดล "เก่งกว่าทายมั่ว" จริงหรือไม่
+- เพิ่ม key 'baseline_accuracy' ใน metrics_dict ทั้ง 2 return path
+- [BUG-1 Critical แก้แล้ว — พบโดยทีม B] target ใช้ (future_close > close).astype(int) ตรงๆ ทำให้ 10 แถวสุดท้าย
+  ของชุดข้อมูล (ที่ future_close เป็น NaN เพราะไม่มีราคาจริงในอนาคตให้เทียบ) ได้ target=0 ("ลง") แบบผิดๆ
+  แทนที่จะเป็น NaN เพราะใน pandas การเทียบ `NaN > ตัวเลข` ได้ False เสมอ ทำให้ dropna(subset=['target'])
+  ไม่ตัดแถวเหล่านี้ทิ้งตามที่ตั้งใจไว้ กระทบ ~4% ของ Test set ทุกหุ้น (เอนเอียงไปทาง label=0 เสมอ ไม่ใช่ noise สุ่ม)
+  แก้โดยใช้ np.where(...) ให้ target เป็น NaN จริงเมื่อไม่มี future_close ให้เทียบ
+- [BUG-2 High แก้แล้ว — พบโดยทีม B] เพิ่ม key 'is_fallback' (True/False) ใน metrics_dict ทั้ง 2 return path
+  เพื่อให้หน้า UI แยกออกว่าค่าที่แสดงเป็นผลจากการเทรนโมเดลจริง หรือเป็นค่าคงที่สำรองตอนข้อมูลไม่พอ
 """
 
 import numpy as np
@@ -55,7 +61,10 @@ def train_and_predict_ai(df_price_ticker, ticker):
     for col in FEATURES:
         df[col] = df[col].apply(clean_float)
 
-    df['target'] = (df['close'].shift(-PREDICTION_HORIZON_DAYS) > df['close']).astype(int)
+    # --- BUG-1 fix: ห้ามใช้ (future_close > close).astype(int) ตรงๆ เพราะ NaN > ตัวเลข = False เสมอ
+    # ทำให้แถวที่ไม่มีราคาจริงในอนาคต (10 แถวสุดท้ายของข้อมูล) ได้ target=0 ปลอมแทนที่จะเป็น NaN
+    future_close = df['close'].shift(-PREDICTION_HORIZON_DAYS)
+    df['target'] = np.where(future_close.notna(), (future_close > df['close']).astype(int), np.nan)
     df_model = df.dropna(subset=FEATURES + ['target'])
 
     train_data = df_model[df_model['date'] < '2025-01-01']
@@ -65,8 +74,9 @@ def train_and_predict_ai(df_price_ticker, ticker):
     backtest_df = pd.DataFrame(columns=['date', 'actual_close', 'predicted_up_prob'])
 
     if len(train_data) < 50 or len(test_data) < 20:
+        # --- BUG-2 fix: ติด flag is_fallback=True ชัดเจน ไม่ให้ UI เข้าใจผิดว่าเป็นผลจากโมเดลจริง
         return ({'ai_score': 65.0, 'prob_up': 65.0, 'accuracy': 75.0, 'baseline_accuracy': 65.0,
-                 'ai_signal': 'ACCUMULATE',
+                 'ai_signal': 'ACCUMULATE', 'is_fallback': True,
                  'precision': 70.0, 'recall': 70.0, 'f1_score': 70.0, 'roc_auc': 0.70},
                 feature_importance, backtest_df)
 
@@ -113,4 +123,5 @@ def train_and_predict_ai(df_price_ticker, ticker):
         'f1_score': round(float(f1), 1),
         'roc_auc': round(float(auc), 2),
         'ai_signal': sig,
+        'is_fallback': False,
     }, feature_importance, backtest_df)

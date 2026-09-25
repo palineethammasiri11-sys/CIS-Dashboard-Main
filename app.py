@@ -68,13 +68,13 @@ common.render_header_bar(ctx)
 
 # 7. Routing → เรียกหน้าที่เลือกอยู่
 PAGE_RENDERERS = {
-    " 🏠 Overview": overview.render,
-    " 💚 Company Health": company_health.render,
-    " ⚖️ Fair Value": fair_value.render,
-    " ⏱️ Entry Timing": entry_timing.render,
-    " 🔮 AI Prediction": ai_prediction.render,
-    " 🛡️ Risk Analysis": risk_analysis.render,
-    " 📊 Industry Benchmark": industry_benchmark.render,
+    " Overview": overview.render,
+    " Company Health": company_health.render,
+    " Fair Value": fair_value.render,
+    " Entry Timing": entry_timing.render,
+    " AI Prediction": ai_prediction.render,
+    " Risk Analysis": risk_analysis.render,
+    " Industry Benchmark": industry_benchmark.render,
 }
 
 render_fn = PAGE_RENDERERS.get(nav_page, overview.render)
