@@ -23,10 +23,16 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 
 from common import fmt_mb, fmt_ratio, safe, show_chart, render_nav_footer, COMPANY_NAMES, SECTOR_MAP
+from calculate_modules.fair_value import calculate_valuation_module
 
 
 def render(ctx):
     val_cur_price = ctx.current_price
+
+    # เรียก calculate_valuation_module ตรง ๆ แทนการพึ่ง ctx.stock_info
+    # (ctx.stock_info จาก calculate_scores.py ไม่ได้ merge key wacc_used/terminal_growth_used/
+    # fcf_growth_assumed/target_pe เข้ามา ทำให้ค่าพวกนี้ขึ้น "-" — แก้เฉพาะในไฟล์นี้ ไม่แตะ calculate_scores.py)
+    val_detail = calculate_valuation_module(ctx.fin_stock, val_cur_price, ctx.selected_ticker) or {}
     val_fair_value = safe(ctx.stock_info.get('fair_value'), val_cur_price * 1.1)
     val_mos = safe(ctx.stock_info.get('margin_of_safety'), 10.0)
     val_score = int(round(safe(ctx.stock_info.get('valuation_score'), 75)))
@@ -161,7 +167,7 @@ def render(ctx):
     <div><div style="font-size:13px; font-weight:bold; color:#CBD5E1;">INTRINSIC VALUATION (DCF)</div>
     <table style="width:100%; font-size:13px; color:#CBD5E1; border-collapse:collapse; margin-top:6px;">
     <tr style="border-bottom:1px solid #1E293B; color:#64748B; font-size:12.5px;"><th style="text-align:left; padding:2px 0;">Metric</th><th>Value</th></tr>
-    <tr style="border-bottom:1px solid #1E293B;"><td style="padding:3px 0;">WACC</td><td>{fmt_ratio(ctx.stock_info.get('wacc_used'), suffix="%", decimals=1)}</td></tr>
+    <tr style="border-bottom:1px solid #1E293B;"><td style="padding:3px 0;">WACC</td><td>{fmt_ratio(val_detail.get('wacc_used'), suffix="%", decimals=1)}</td></tr>
     <tr><td style="padding:3px 0;">DCF Fair Value</td><td>{safe(ctx.stock_info.get('dcf_fair_value')):.2f} THB</td></tr>
     </table></div></div>""", unsafe_allow_html=True)
 
@@ -185,16 +191,17 @@ def render(ctx):
     r4_c1, r4_c2 = st.columns([1.3, 1.7])
 
     with r4_c1:
-        wacc_disp = fmt_ratio(ctx.stock_info.get('wacc_used'), suffix="%", decimals=1)
-        g_disp = fmt_ratio(ctx.stock_info.get('terminal_growth_used'), suffix="%", decimals=1)
-        fcf_g_disp = fmt_ratio(ctx.stock_info.get('fcf_growth_assumed'), suffix="%", decimals=1)
+        wacc_disp = fmt_ratio(val_detail.get('wacc_used'), suffix="%", decimals=1)
+        g_disp = fmt_ratio(val_detail.get('terminal_growth_used'), suffix="%", decimals=1)
+        fcf_g_disp = fmt_ratio(val_detail.get('fcf_growth_assumed'), suffix="%", decimals=1)
+        target_pe_disp = val_detail.get('target_pe_str') or "-"
         st.markdown(f"""<div style="background-color:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:14px; min-height:220px; display:flex; flex-direction:column; justify-content:space-between;">
     <div style="font-size:13.5px; font-weight:bold; color:#94A3B8; letter-spacing:0.5px;">DCF ASSUMPTIONS <span style="font-size:11.5px; color:#64748B; font-weight:normal;">({ctx.stock_info.get('sector','-')})</span></div>
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; font-size:13px; color:#CBD5E1; margin:auto 0;">
     <div><span style="color:#64748B;">WACC</span><br><b style="color:#F8FAFC;">{wacc_disp}</b></div>
     <div><span style="color:#64748B;">Terminal Growth</span><br><b style="color:#F8FAFC;">{g_disp}</b></div>
     <div><span style="color:#64748B;">FCF Growth (Yr 1)</span><br><b style="color:#F8FAFC;">{fcf_g_disp}</b></div>
-    <div><span style="color:#64748B;">Target P/E</span><br><b style="color:#F8FAFC;">18-22x (by sector)</b></div>
+    <div><span style="color:#64748B;">Target P/E</span><br><b style="color:#F8FAFC;">{target_pe_disp}</b></div>
     <div><span style="color:#64748B;">DCF Weight</span><br><b style="color:#F8FAFC;">55%</b></div>
     <div><span style="color:#64748B;">P/E Weight</span><br><b style="color:#F8FAFC;">45%</b></div>
     </div>
@@ -211,14 +218,13 @@ def render(ctx):
             fig_hist_val.add_trace(go.Scatter(x=fv_hist['year'].astype(str), y=fv_hist['fair_value'], mode='lines+markers', name='Fair Value', line=dict(color='#A855F7', width=1.8, dash='dash')))
             fig_hist_val.add_trace(go.Scatter(x=fv_hist['year'].astype(str), y=fv_hist['price'], mode='lines+markers', name='Actual Price', line=dict(color='#38BDF8', width=2), marker=dict(size=9, color='#38BDF8')))
             fig_hist_val.update_layout(
-                height=150, margin=dict(l=25, r=15, t=10, b=20), paper_bgcolor="#0F172A", plot_bgcolor="#0F172A",
+                height=190, margin=dict(l=25, r=15, t=10, b=55), paper_bgcolor="#0F172A", plot_bgcolor="#0F172A",
                 yaxis=dict(tickfont=dict(size=11.5, color="#64748B"), gridcolor="#1E293B", zeroline=False),
-                xaxis=dict(tickfont=dict(size=11, color="#94A3B8"), gridcolor="#1E293B"),
-                legend=dict(orientation="h", yanchor="bottom", y=-0.35, xanchor="center", x=0.5, font=dict(size=11.5, color="#94A3B8"))
+                xaxis=dict(type='category', tickmode='array', tickvals=list(fv_hist['year'].astype(str)), ticktext=list(fv_hist['year'].astype(str)), tickfont=dict(size=11, color="#94A3B8"), gridcolor="#1E293B"),
+                legend=dict(orientation="h", yanchor="top", y=-0.28, xanchor="center", x=0.5, font=dict(size=11.5, color="#94A3B8"))
             )
             show_chart(fig_hist_val, key="fair_value_hist", expand_height=650)
         else:
             st.info("ไม่มีข้อมูลย้อนหลังเพียงพอ")
 
     render_nav_footer("m2", prev_page=" 💚 Company Health", next_page=" ⏱️ Entry Timing")
-

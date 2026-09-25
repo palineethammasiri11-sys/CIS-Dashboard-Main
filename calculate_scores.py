@@ -27,30 +27,54 @@ calculate_scores.py — Orchestrator (Data Pipeline / Integration Lead ดูแ
 - fair_value_yearly       : Fair Value ย้อนหลังรายปี เทียบราคาจริง (ใช้วาดกราฟหน้า Fair Value)
 """
 
+import json
+from datetime import datetime
 import pandas as pd
 from sqlalchemy import create_engine
-from datetime import datetime
 
 from calculate_modules.common import clean_float, SECTOR_MAP
-from calculate_modules import company_health, fair_value, entry_timing, ai_prediction, risk_analysis, industry_benchmark
+from calculate_modules import (
+    company_health,
+    fair_value,
+    entry_timing,
+    ai_prediction,
+    risk_analysis,
+    industry_benchmark,
+)
 
-DB_NAME = 'cis_database.db'
-TARGET_STOCKS = ['ADVANC', 'CCET', 'DELTA', 'HANA', 'JMART', 'KCE', 'THCOM', 'TRUE']
+DB_NAME = "cis_database.db"
+TARGET_STOCKS = ["ADVANC", "CCET", "DELTA", "HANA", "JMART", "KCE", "THCOM", "TRUE"]
+
+
+def _sanitize_for_sql(record: dict) -> dict:
+    """แปลงค่าที่เป็น dict, list, tuple หรือ set ให้เป็น JSON string
+    เนื่องจาก SQLite / Pandas to_sql ไม่รองรับการ bind ข้อมูลแบบ dictionary/list ลง column ตรง ๆ
+    การแปลงเป็น JSON string จะช่วยป้องกันข้อผิดพลาด sqlite3.ProgrammingError: type 'dict' is not supported
+    """
+    clean = {}
+    for k, v in record.items():
+        if isinstance(v, (dict, list, tuple, set)):
+            clean[k] = json.dumps(v, ensure_ascii=False, default=str)
+        else:
+            clean[k] = v
+    return clean
 
 
 def load_data_from_db(engine):
     df_fin = pd.read_sql("SELECT * FROM stock_financials", con=engine)
     df_price = pd.read_sql("SELECT * FROM stock_daily_prices", con=engine)
-    df_price['date'] = pd.to_datetime(df_price['date'])
+    df_price["date"] = pd.to_datetime(df_price["date"])
     try:
         df_risk = pd.read_sql("SELECT * FROM stock_risk_static", con=engine)
     except Exception:
-        df_risk = pd.DataFrame(columns=['ticker', 'beta', 'volatility_pct', 'max_drawdown_pct'])
+        df_risk = pd.DataFrame(
+            columns=["ticker", "beta", "volatility_pct", "max_drawdown_pct"]
+        )
     return df_fin, df_price, df_risk
 
 
 def run_full_pipeline():
-    engine = create_engine(f'sqlite:///{DB_NAME}')
+    engine = create_engine(f"sqlite:///{DB_NAME}")
     df_fin_all, df_price_all, df_risk_all = load_data_from_db(engine)
 
     print("\n--- เริ่มประมวลผลระบบ CIS Scoring สำหรับหุ้นทั้ง 8 ตัว (ใช้ข้อมูลจริงทั้งหมด) ---")
@@ -62,111 +86,165 @@ def run_full_pipeline():
     all_fair_value_yearly = []
 
     for ticker in TARGET_STOCKS:
-        fin_sub = df_fin_all[df_fin_all['ticker'] == ticker]
-        price_sub = df_price_all[df_price_all['ticker'] == ticker].sort_values(by='date')
-        risk_sub = df_risk_all[df_risk_all['ticker'] == ticker] if not df_risk_all.empty else None
+        fin_sub = df_fin_all[df_fin_all["ticker"] == ticker]
+        price_sub = df_price_all[df_price_all["ticker"] == ticker].sort_values(by="date")
+        risk_sub = (
+            df_risk_all[df_risk_all["ticker"] == ticker]
+            if not df_risk_all.empty
+            else None
+        )
 
         if price_sub.empty:
             continue
 
-        current_price = round(clean_float(price_sub.iloc[-1]['close'], default=10.0), 2)
-        latest_date = str(price_sub.iloc[-1]['date'])[:10]
+        current_price = round(clean_float(price_sub.iloc[-1]["close"], default=10.0), 2)
+        latest_date = str(price_sub.iloc[-1]["date"])[:10]
         if len(price_sub) >= 2:
-            prev_close = clean_float(price_sub.iloc[-2]['close'], default=current_price)
+            prev_close = clean_float(price_sub.iloc[-2]["close"], default=current_price)
             change_val = round(current_price - prev_close, 2)
             change_pct = round((change_val / prev_close) * 100, 2) if prev_close else 0.0
         else:
             change_val, change_pct = 0.0, 0.0
 
-        # ===== เรียกฟังก์ชันคำนวณของทั้ง 5 โมดูล (สูตรจริงอยู่ใน calculate_modules/) =====
+        # ===== เรียกฟังก์ชันคำนวณของทั้ง 5 โมดูล =====
         m1 = company_health.calculate_health_module(fin_sub)
         m2 = fair_value.calculate_valuation_module(fin_sub, current_price, ticker)
         m3 = entry_timing.calculate_timing_module(price_sub)
         m4, feat_imp, backtest_df = ai_prediction.train_and_predict_ai(price_sub, ticker)
         m5 = risk_analysis.calculate_risk_module(price_sub, risk_sub)
 
-        # เมตริกจริงเพิ่มเติมสำหรับ Overview / Key Highlights (คำนวณตรงนี้เพราะใช้งบ 2 ปีเทียบกัน ไม่ผูกกับโมดูลไหนเป็นพิเศษ)
-        fin_sorted = fin_sub.sort_values('year')
+        # เมตริกเพิ่มเติมสำหรับ Overview / Key Highlights
+        fin_sorted = fin_sub.sort_values("year")
         rev_growth, ni_growth = None, None
         if len(fin_sorted) >= 2:
-            rev_prev, rev_curr = fin_sorted.iloc[-2]['total_revenue'], fin_sorted.iloc[-1]['total_revenue']
-            ni_prev, ni_curr = fin_sorted.iloc[-2]['net_income'], fin_sorted.iloc[-1]['net_income']
+            rev_prev = fin_sorted.iloc[-2]["total_revenue"]
+            rev_curr = fin_sorted.iloc[-1]["total_revenue"]
+            ni_prev = fin_sorted.iloc[-2]["net_income"]
+            ni_curr = fin_sorted.iloc[-1]["net_income"]
             if rev_prev and clean_float(rev_prev) != 0:
-                rev_growth = round((clean_float(rev_curr) - clean_float(rev_prev)) / clean_float(rev_prev) * 100, 1)
+                rev_growth = round(
+                    (clean_float(rev_curr) - clean_float(rev_prev))
+                    / clean_float(rev_prev)
+                    * 100,
+                    1,
+                )
             if ni_prev and clean_float(ni_prev) != 0:
-                ni_growth = round((clean_float(ni_curr) - clean_float(ni_prev)) / clean_float(ni_prev) * 100, 1)
+                ni_growth = round(
+                    (clean_float(ni_curr) - clean_float(ni_prev))
+                    / clean_float(ni_prev)
+                    * 100,
+                    1,
+                )
         latest_row = fin_sorted.iloc[-1] if not fin_sorted.empty else None
-        fcf_latest = round(clean_float(latest_row.get('free_cash_flow')), 1) if latest_row is not None else None
+        fcf_latest = (
+            round(clean_float(latest_row.get("free_cash_flow")), 1)
+            if latest_row is not None
+            else None
+        )
 
-        all_summary.append({
-            'ticker': ticker,
-            'current_price': current_price,
-            'change_val': change_val,
-            'change_pct': change_pct,
-            'latest_date': latest_date,
-            'sector': SECTOR_MAP.get(ticker, 'Technology'),
-            'revenue_growth_yoy': rev_growth,
-            'net_income_growth_yoy': ni_growth,
-            'free_cash_flow_latest': fcf_latest,
-            **m1, **m2, **m3, **m4, **m5
-        })
+        # ห่อด้วย _sanitize_for_sql เพื่อแปลง dict/list ทุกตัว (เช่น risk_score_breakdown) เป็น string ที่ SQLite บันทึกได้
+        all_summary.append(
+            _sanitize_for_sql(
+                {
+                    "ticker": ticker,
+                    "current_price": current_price,
+                    "change_val": change_val,
+                    "change_pct": change_pct,
+                    "latest_date": latest_date,
+                    "sector": SECTOR_MAP.get(ticker, "Technology"),
+                    "revenue_growth_yoy": rev_growth,
+                    "net_income_growth_yoy": ni_growth,
+                    "free_cash_flow_latest": fcf_latest,
+                    **m1,
+                    **m2,
+                    **m3,
+                    **m4,
+                    **m5,
+                }
+            )
+        )
 
         for f, imp in feat_imp.items():
-            all_feature_importance.append({'ticker': ticker, 'feature': f, 'importance': imp})
+            all_feature_importance.append(
+                {"ticker": ticker, "feature": f, "importance": imp}
+            )
 
         if not backtest_df.empty:
             bt = backtest_df.copy()
-            bt['ticker'] = ticker
+            bt["ticker"] = ticker
             all_backtest.append(bt)
 
         rh = risk_analysis.build_risk_rolling_history(price_sub)
-        rh['ticker'] = ticker
+        rh["ticker"] = ticker
         all_risk_history.append(rh)
 
         hy = company_health.build_health_score_yearly(fin_sub)
-        hy['ticker'] = ticker
+        hy["ticker"] = ticker
         all_health_yearly.append(hy)
 
         fv = fair_value.build_fair_value_yearly(fin_sub, price_sub, ticker)
-        fv['ticker'] = ticker
+        fv["ticker"] = ticker
         all_fair_value_yearly.append(fv)
 
     df_res = pd.DataFrame(all_summary)
 
-    # ===== โมดูลสุดท้าย: Industry Benchmark ต้องรอผลจากทุกหุ้น/ทุกโมดูลก่อน ถึงจะจัดอันดับได้ =====
+    # ===== โมดูลสุดท้าย: Industry Benchmark =====
     df_res = industry_benchmark.compute_industry_rankings(df_res)
-    df_res['updated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    df_res["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # แปลงคอลัมน์คงค้างที่เป็น dict/list อีกชั้นหนึ่งเพื่อความปลอดภัย 100%
+    for col in df_res.columns:
+        df_res[col] = df_res[col].apply(
+            lambda x: json.dumps(x, ensure_ascii=False, default=str)
+            if isinstance(x, (dict, list, tuple, set))
+            else x
+        )
 
     # ===== บันทึกผลลัพธ์ทั้งหมดลงฐานข้อมูล =====
-    df_res.to_sql('cis_summary_scores', con=engine, if_exists='replace', index=False)
+    df_res.to_sql("cis_summary_scores", con=engine, if_exists="replace", index=False)
 
     df_feat = pd.DataFrame(all_feature_importance)
-    df_feat.to_sql('ai_feature_importance', con=engine, if_exists='replace', index=False)
+    df_feat.to_sql("ai_feature_importance", con=engine, if_exists="replace", index=False)
 
     if all_backtest:
         df_bt = pd.concat(all_backtest, ignore_index=True)
-        df_bt['date'] = df_bt['date'].astype(str)
-        df_bt.to_sql('ai_backtest_history', con=engine, if_exists='replace', index=False)
+        df_bt["date"] = df_bt["date"].astype(str)
+        df_bt.to_sql("ai_backtest_history", con=engine, if_exists="replace", index=False)
 
     if all_risk_history:
         df_rh = pd.concat(all_risk_history, ignore_index=True)
-        df_rh['date'] = df_rh['date'].astype(str)
-        df_rh.to_sql('risk_rolling_history', con=engine, if_exists='replace', index=False)
+        df_rh["date"] = df_rh["date"].astype(str)
+        df_rh.to_sql("risk_rolling_history", con=engine, if_exists="replace", index=False)
 
     if all_health_yearly:
         df_hy = pd.concat(all_health_yearly, ignore_index=True)
-        df_hy.to_sql('health_score_yearly', con=engine, if_exists='replace', index=False)
+        df_hy["date"] = df_hy["date"].astype(str) if "date" in df_hy.columns else ""
+        df_hy.to_sql("health_score_yearly", con=engine, if_exists="replace", index=False)
 
     if all_fair_value_yearly:
         df_fv = pd.concat(all_fair_value_yearly, ignore_index=True)
-        df_fv.to_sql('fair_value_yearly', con=engine, if_exists='replace', index=False)
+        df_fv["date"] = df_fv["date"].astype(str) if "date" in df_fv.columns else ""
+        df_fv.to_sql("fair_value_yearly", con=engine, if_exists="replace", index=False)
 
     print("\n✅ ประมวลผลและบันทึกคะแนนจริงของหุ้นทั้ง 8 ตัวลง cis_database.db เรียบร้อยแล้ว:")
     print("=" * 85)
-    print(df_res[['ticker', 'current_price', 'fair_value', 'margin_of_safety', 'overall_score',
-                   'recommendation', 'health_score', 'ai_score', 'beta']])
+    print(
+        df_res[
+            [
+                "ticker",
+                "current_price",
+                "fair_value",
+                "margin_of_safety",
+                "overall_score",
+                "recommendation",
+                "health_score",
+                "ai_score",
+                "beta",
+            ]
+        ]
+    )
     print("=" * 85)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run_full_pipeline()
