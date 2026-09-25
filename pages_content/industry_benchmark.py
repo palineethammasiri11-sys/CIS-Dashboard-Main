@@ -334,6 +334,8 @@ def render(ctx):
             )
 
             name_disp = f"⭐ {p['ticker']}" if is_sel else p['ticker']
+            
+            # ใช้การจัด Style แบบ Light Theme ตามทีม Layout เป็นหลัก
             name_c = star_color if is_sel else "#0F172A"
 
             rows_html += f"""<tr style="border-bottom:1px solid #E2E8F0; {row_bg}">
@@ -462,7 +464,7 @@ def render(ctx):
         show_chart(fig_matrix, key="industry_matrix", expand_height=650)
 
     st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
-    r3_c1, r3_c2, r3_c3 = st.columns([1.3, 1.5, 1.2])
+    r3_c1, r3_c2, r3_c3 = st.columns([1.3, 1.3, 1.4])  # ปรับสัดส่วน Column ให้รองรับ FINAL RECOMMENDATION
 
     # ---------------- COMPETITIVE ADVANTAGE ----------------
     with r3_c1:
