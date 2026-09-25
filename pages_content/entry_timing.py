@@ -1,4 +1,3 @@
-# ไฟล์ pages_content/entry_timing.py
 """
 pages_content/entry_timing.py
 --------------------------------------------------------------------
@@ -459,7 +458,13 @@ def render(ctx):
             <div style="font-size:20px;font-weight:900;color:{TEXT_WHITE};margin-top:4px;">{bullish_count} / {total_checks}</div>
             <div style="margin-top:4px;">{confidence_dots}</div>
         </div>
-        {_metric_card("ℹ️ สรุปสั้น ๆ", summary_text, "ภาพรวมสถานะการลงทุนเชิงปริมาณ", TEXT, is_summary=True)}
+        {_metric_card(
+            "ⓘ สรุปสั้น ๆ",
+            summary_text,
+            "ภาพรวมสถานะการลงทุนเชิงปริมาณ",
+            TEXT,
+            is_summary=True
+        )}
     </div>
     """
 
@@ -741,9 +746,15 @@ def render(ctx):
         _render_html(
             f"""
             <div style="{_card_style()}">
-                <div style="font-size:16px;font-weight:800;color:{TEXT_WHITE};margin-bottom:6px;
-                            border-bottom:2px solid {ACCENT};padding-bottom:4px;">
-                    ℹ️ SYSTEM SCORING METHODOLOGY
+                <div style="
+                    font-size:16px;
+                    font-weight:800;
+                    color:{TEXT_WHITE};
+                    margin-bottom:6px;
+                    border-bottom:2px solid {ACCENT};
+                    padding-bottom:4px;
+                ">
+                    ⓘ SYSTEM SCORING METHODOLOGY
                 </div>
                 <div style="font-size:14px;color:{TEXT_MUTED};line-height:1.45;">
                     <b style="color:{TEXT_WHITE};">Trend --- 40 pts</b><br>

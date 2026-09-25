@@ -333,8 +333,20 @@ def render(ctx):
         if psr_val is not None:
             grid_cols = 4
             ratio_cells = base_cells + f"""
-    <div style="background:#F8FAFC; border:1px solid #D9E2EC; border-radius:6px; padding:6px 2px;"><div style="font-size:14px; color:#64748B;">PSR</div><div style="font-size:18px; font-weight:bold; color:#0F172A;">{psr_val:.0f}%</div></div>"""
-            footnote = f"""คำนวณหัก Risk-free Rate (~{rf_pct:.1f}%/ปี) แล้ว | PSR = ความน่าจะเป็นที่ Sharpe Ratio จริง &gt; 0 เมื่อพิจารณาความเบ้/โด่งของข้อมูล"""
+    <div style="background:#F8FAFC; border:1px solid #D9E2EC; border-radius:6px; padding:6px 2px;">
+    <div style="font-size:14px; color:#64748B;">PSR</div>
+    <div style="font-size:18px; font-weight:bold; color:#0F172A;">{psr_val:.0f}%</div>
+    </div>"""
+
+            footnote = f"""
+        <div style="line-height:1.6; font-size:14px; color:#64748B;">
+            <b>• Sharpe:</b> ผลตอบแทนส่วนเกินเทียบความผันผวนรวม (หัก Rf ~{rf_pct:.1f}%/ปี)<br>
+            <b>• Sortino:</b> ผลตอบแทนส่วนเกินเทียบความผันผวนเฉพาะขาลง (Downside Risk)<br>
+            <b>• Calmar:</b> ผลตอบแทนเฉลี่ยต่อปีเทียบกับการขาดทุนลึกสุด (Max Drawdown)<br>
+            <b>• PSR:</b> ความน่าจะเป็นทางสถิติที่ Sharpe จริง &gt; 0 โดยปรับแก้ความเบ้/โด่ง (Bailey & López de Prado)
+        </div>
+        """
+
         else:
             grid_cols = 3
             ratio_cells = base_cells
@@ -346,7 +358,7 @@ def render(ctx):
     <div style="display:grid; grid-template-columns: repeat({grid_cols}, 1fr); gap:6px; text-align:center; margin:auto 0;">
     {ratio_cells}
     </div>
-    <div style="font-size:14px; color:#475569; border-top:1px solid #D9E2EC; padding-top:7px;">{footnote}</div>
+    <div style="font-size:14px; color:#475569; padding-top:10px;">{footnote}</div>
     </div>""",
             unsafe_allow_html=True
         )
