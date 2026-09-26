@@ -84,12 +84,17 @@ def _kpi_card(
     label_color=MUTED,
     height=KPI_CARD_HEIGHT
 ):
-    """การ์ด KPI ใบเดียว"""
+    """การ์ด KPI ใบเดียว — label อยู่บนสุดชิดซ้ายเสมอ ส่วน value/sub จะถูกจัดกลุ่ม
+    แล้วดันไปอยู่ล่างสุดชิดซ้าย (justify-content:space-between ระหว่าง label กับ
+    กลุ่ม value+sub) แทนการจัดกึ่งกลางแนวตั้งแบบเดิม เพื่อให้ทุกการ์ดในแถวมีหัวข้อ
+    ชิดซ้ายบนและข้อมูลชิดซ้ายล่างตรงกันหมด"""
     return (
-        f'<div style="background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:14px 16px; text-align:left; height:{height}px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center;">'
+        f'<div style="background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:14px 16px; text-align:left; height:{height}px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between;">'
         f'<div style="font-size:11px; font-weight:bold; color:{label_color}; letter-spacing:1px;">{label}</div>'
-        f'<div style="font-size:{value_size}px; font-weight:bold; color:{value_color}; line-height:1.2; margin-top:4px;">{value_html}</div>'
+        f'<div>'
+        f'<div style="font-size:{value_size}px; font-weight:bold; color:{value_color}; line-height:1.2;">{value_html}</div>'
         f'{sub_html}'
+        f'</div>'
         f'</div>'
     )
 
@@ -108,13 +113,15 @@ def _metric_cell(label, value):
 
 
 def _score_donut_card(label, score, badge, desc, color, height=None):
-    """การ์ด SCORE แบบวงแหวน (donut) — สไตล์เดียวกับการ์ด module ในหน้า Overview
-    ใช้ conic-gradient เดียวกัน (สัดส่วนคะแนน 0-100) ความสูงผูกกับ KPI_CARD_HEIGHT
-    เดียวกับ _kpi_card ตัวอื่นในแถว เพื่อให้ทุกการ์ดสูงเท่ากันเสมอ ไม่ว่าจะปรับ
-    ขนาด donut ใหญ่ขึ้นแค่ไหนก็ตาม"""
+    """การ์ด SCORE แบบวงแหวน (donut) — เป็นการ์ด "ไม่ไฮไลต์" เหมือนการ์ด KPI ทั่วไป
+    (พื้นขาว ขอบเทาอ่อนมาตรฐาน #D9E2EC เหมือนการ์ด PRICE) วงแหวนเองยังคงใช้สี
+    ตามสถานะคะแนน (color) เพื่อสื่อความหมาย แต่ตัวการ์ดไม่มีการไฮไลต์กรอบ/พื้นหลัง
+    label อยู่บนสุดชิดซ้าย ส่วนวงแหวน+badge/คำอธิบายถูกดันไปอยู่ล่างสุดชิดซ้าย
+    (justify-content:space-between) เหมือนการ์ด KPI ใบอื่นทุกประการ ความสูงผูกกับ
+    KPI_CARD_HEIGHT เดียวกัน เพื่อให้ทุกการ์ดในแถวสูงเท่ากันเสมอ"""
     h = height or KPI_CARD_HEIGHT
-    return f"""<div style="background-color:#FFFFFF; border:1px solid {color}; border-radius:12px; padding:14px 12px; text-align:center; height:{h}px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-<div style="font-size:11px; font-weight:bold; color:{MUTED}; letter-spacing:1px; margin-bottom:8px;">{label}</div>
+    return f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px; padding:14px 16px; text-align:left; height:{h}px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between;">
+<div style="font-size:11px; font-weight:bold; color:{MUTED}; letter-spacing:1px;">{label}</div>
 <div style="display:flex; align-items:center; gap:12px;">
 <div style="width:78px; height:78px; border-radius:50%;
             background:conic-gradient({color} 0% {score}%, #E2E8F0 {score}% 100%);
@@ -170,13 +177,25 @@ def render(ctx):
 
     reliability_low = (acc_val <= baseline_val) or (prec_val == 0) or (rec_val == 0)
 
-    if prob_up >= 70:
-        status_color = GREEN
-    elif prob_up >= 50:
-        status_color = AMBER
+    # ============================================================
+    # ธีมสีของทั้งหน้า (PATCH: เปลี่ยนให้ยึดตามสีของการ์ด AI SCORE เป็นหลัก
+    # แทนการคำนวณจาก prob_up เหมือนเดิม — ai_score_val/score_color ถูกย้ายมา
+    # คำนวณตรงนี้ก่อน เพื่อให้ status_color ที่ใช้ระบายสีทั่วทั้งหน้า (การ์ด
+    # DIRECTION, RECOMMENDATION, จุดสัญญาณข้าง PROBABILITY, กราฟ FORECAST ฯลฯ)
+    # อ้างอิงจากสีเดียวกับวงแหวน AI SCORE เสมอ ไม่กระทบ logic คำนวณ prob_up /
+    # signal / reliability_low ที่ยังใช้แสดงข้อความ direction/คำแนะนำตามเดิม)
+    # ============================================================
+    ai_score_val = int(round(safe(ctx.stock_info.get('ai_score'), 50)))
+    if ai_score_val >= 70:
+        score_badge, score_desc = "POSITIVE", "โอกาสปรับตัวขึ้นในระดับที่ดี"
+    elif ai_score_val >= 50:
+        score_badge, score_desc = "NEUTRAL", "แนวโน้มเคลื่อนไหวในกรอบ"
     else:
-        status_color = RED
+        score_badge, score_desc = "CAUTION", "โอกาสปรับตัวขึ้นในระดับต่ำ"
 
+    score_color = GREEN if ai_score_val >= 70 else (AMBER if ai_score_val >= 50 else RED)
+
+    status_color = score_color
     if reliability_low and status_color == GREEN:
         status_color = AMBER
 
