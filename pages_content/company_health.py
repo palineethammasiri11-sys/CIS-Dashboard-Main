@@ -20,6 +20,11 @@ pages_content/company_health.py
 - คงจุดแก้บั๊กของทีมเจ้าของโมดูลไว้ 1 จุด: กราฟ HEALTH SCORE TREND ใช้ xaxis type='category'
   (ป้องกันแกน X แสดงผลเพี้ยนเมื่อค่าปีเป็นตัวเลข 2023/2024/2025)
 - เพิ่ม `import datetime` ที่ยังขาดไป เพื่อให้ฟังก์ชันตรวจสอบช่วงวันที่ทำงานได้จริง
+
+=== PATCH NOTE ===
+- ตาราง "COMPETITOR COMPARISON" เปลี่ยนจาก st.dataframe (พื้นเทาแบบ default ของ glide-data-grid
+  ที่ไม่รับ CSS override ตรงๆ) เป็น st.html แบบตาราง HTML ธรรมดา เพื่อให้พื้นหลังเป็นสีขาว
+  และสไตล์ตรงกับการ์ด "KEY FINANCIAL HIGHLIGHTS" ด้านซ้าย
 """
 
 import datetime
@@ -269,10 +274,10 @@ def render(ctx):
     with col_title:
         st.html("""
         <div style="margin-bottom:10px;">
-            <h2 style="margin:0; font-size:23px; font-weight:bold; color:#0F172A; letter-spacing:0.5px;">
+            <div style="font-size:26px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
                 COMPANY HEALTH
             </h2>
-            <div style="font-size:15px; color:#64748B; margin-top:2px;">
+            <div style="font-size:16px; color:#64748B; margin-top:4px;">
                 ประเมินสุขภาพทางการเงินของบริษัทจากมิติสำคัญตามงบการเงินจริง
             </div>
         </div>
@@ -760,18 +765,44 @@ def render(ctx):
             ("Current Ratio (x)", cr_25, f"{comp_cr:.2f}", pct_bar(safe(cr_25 if cr_25 != '-' else 0), comp_cr)),
         ]
 
-        st.caption(sub_label)
+        # --------------------------------------------------------
+        # PATCH: เปลี่ยนจาก st.dataframe -> ตาราง HTML พื้นสีขาว
+        # (st.dataframe ใช้ glide-data-grid วาดบน canvas
+        #  ทำให้ override สีพื้นหลังด้วย CSS ไม่ได้ผล)
+        # --------------------------------------------------------
 
-        comparison_df = pd.DataFrame(
-            rows_cmp,
-            columns=["Metric", ctx.selected_ticker, target_label, f"vs {target_label}"]
-        )
+        cmp_rows_html = "".join([
+            f"""
+            <tr style="border-bottom:1px solid #E2E8F0;">
+                <td style="padding:6px 4px; font-weight:bold; color:#0F172A;">{metric}</td>
+                <td style="padding:6px 4px; text-align:right; color:#475569;">{stock_v}</td>
+                <td style="padding:6px 4px; text-align:right; color:#475569;">{comp_v}</td>
+                <td style="padding:6px 4px; text-align:right; font-weight:bold; color:#0F172A;">{vs_v}</td>
+            </tr>
+            """
+            for metric, stock_v, comp_v, vs_v in rows_cmp
+        ])
 
-        st.dataframe(comparison_df, use_container_width=True, hide_index=True)
+        st.html(f"""
+        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px;">
+            <div style="font-size:13px; color:#64748B; margin-bottom:10px;">
+                {sub_label}
+            </div>
+            <table style="width:100%; border-collapse:collapse; background-color:#FFFFFF;">
+                <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:13px;">
+                    <th style="padding:4px; text-align:left;">Metric</th>
+                    <th style="padding:4px; text-align:right;">{ctx.selected_ticker}</th>
+                    <th style="padding:4px; text-align:right;">{target_label}</th>
+                    <th style="padding:4px; text-align:right;">vs {target_label}</th>
+                </tr>
+                {cmp_rows_html}
+            </table>
+        </div>
+        """)
 
 
     # ============================================================
     # FOOTER NAVIGATION
     # ============================================================
 
-    render_nav_footer("m1", prev_page=" Overview", next_page=" Fair Value")
+    render_nav_footer("m1", prev_page=" Stock Overview", next_page=" Fair Value")
