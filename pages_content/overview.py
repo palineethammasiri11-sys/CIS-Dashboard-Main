@@ -861,6 +861,15 @@ def render(ctx):
             st.session_state["pending_nav"] = "Industry Benchmark"
             st.rerun()
 
+    with col_home:
+        if st.button(
+            "หน้าหลัก",
+            key="overview_home",
+            use_container_width=True
+        ):
+            st.session_state["pending_nav"] = "Industry Benchmark"
+            st.rerun()
+
     with col_next:
         if st.button(
             "หน้าถัดไป ➡",
