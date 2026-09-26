@@ -20,14 +20,16 @@ app.py — CIS Dashboard (Entry Point)
 
 import common
 from pages_content import (
-    overview,
-    company_health,
-    fair_value,
-    entry_timing,
-    ai_prediction,
-    risk_analysis,
-    industry_benchmark,
-)
+    " Industry Benchmark",
+    " Overview",
+    " Company Health",
+    " Fair Value",
+    " Entry Timing",
+    " AI Prediction",
+    " Risk Analysis"
+]
+
+
 
 # 1. ตั้งค่าหน้าเว็บ + CSS ธีมทั้งหมด (ต้องเรียกเป็นคำสั่งแรกสุดของแอป)
 common.setup_page_and_css()
