@@ -474,7 +474,7 @@ def render(ctx):
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=13, color="#475569"))
         )
 
-        show_chart(fig_radar, key="industry_radar", expand_height=650)
+        show_chart(fig_radar, key="industry_radar")
 
     # ---------------- DIMENSION PERCENTILE RANK (เต็มความกว้าง แทนที่พื้นที่ว่างใต้ Peer Comparison / Radar) ----------------
     def calc_pct(df, col):
