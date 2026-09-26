@@ -220,7 +220,7 @@ def render(ctx):
             yaxis=dict(tickfont=dict(size=12, color="#334155"), gridcolor="#D9E2EC"),
             showlegend=False
         )
-        show_chart(fig_beta, key="risk_beta", expand_height=550)
+        show_chart(fig_beta, key="risk_beta", expand_height=580)
 
     # ---------------- PRICE RISK (VOLATILITY) ----------------
     with r2_c2:
