@@ -86,6 +86,7 @@ def render(ctx):
         m6_badge, m6_desc = "PARITY", "มีผลการดำเนินงานใกล้เคียงกับค่ากลางของกลุ่ม"
     else:
         m6_badge, m6_desc = "LAGGING", "มีผลการดำเนินงานต่ำกว่าบริษัทอื่นในกลุ่ม"
+
     def score_color(score, green_at, yellow_at):
         if score >= green_at: return "#10B981"
         elif score >= yellow_at: return "#F59E0B"
@@ -95,6 +96,11 @@ def render(ctx):
         if score >= green_at: return "rgba(16,185,129,0.20)"
         elif score >= yellow_at: return "rgba(245,158,11,0.20)"
         return "rgba(239,68,68,0.20)"
+
+    def score_bg_light(score, green_at, yellow_at):
+        if score >= green_at: return "rgba(16,185,129,0.08)"
+        elif score >= yellow_at: return "rgba(245,158,11,0.08)"
+        return "rgba(239,68,68,0.08)"
 
     overall = safe(ctx.stock_info.get('overall_score'), 50)
     rec = ctx.stock_info.get('recommendation', 'ACCUMULATE')
@@ -112,14 +118,13 @@ def render(ctx):
         "ACCUMULATE": "rgba(16,185,129,0.12)",
         "REDUCE / SELL": "rgba(239,68,68,0.12)"
     }.get(rec, "rgba(245,158,11,0.12)")
-    
+
     ai_bg = {
         "STRONG BUY": "#ECFDF5",
         "BUY": "#ECFDF5",
         "ACCUMULATE": "#ECFDF5",
         "REDUCE / SELL": "#FEF2F2"
     }.get(rec, "#FFFBEB")
-
 
     stars = min(5, max(1, round(overall / 20)))
     label = "ATTRACTIVE" if overall >= 65 else "FAIR" if overall >= 45 else "CAUTION"
@@ -610,20 +615,36 @@ def render(ctx):
 
     with col_center:
 
-        def module_card(num, label, score, badge, desc, green_at, yellow_at, display_value=None, display_total=None):
+        def module_card(num, label, score, badge, desc, green_at, yellow_at,
+                         display_value=None, display_total=None, highlight=False):
             color = score_color(score, green_at, yellow_at)
             badge_bg = score_bg(score, green_at, yellow_at)
             top_val = score if display_value is None else display_value
             bottom_val = 100 if display_total is None else display_total
-            return f"""
-            <div class="overview-module-card"
-                 style="background-color:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;
-                        padding:12px 12px;text-align:center;position:relative;
-                        width:100%;min-width:0;max-width:100%;box-sizing:border-box;">
-                <div style="position:absolute;top:10px;left:10px;background:{badge_bg};color:{color};
+
+            # การ์ดที่ highlight=True (Industry Benchmark) จะได้พื้นหลังสีอ่อน
+            # และขอบหนาขึ้นตามสีสถานะ (เขียว/เหลือง/แดง) ส่วนการ์ดอื่นยังพื้นขาว/
+            # ขอบเทาเหมือนเดิมทั้งหมด ไม่กระทบ logic การคำนวณคะแนนใด ๆ
+            card_bg = score_bg_light(score, green_at, yellow_at) if highlight else "#FFFFFF"
+            card_border = color if highlight else "#E2E8F0"
+            border_width = "1.5px" if highlight else "1px"
+
+            # เลขมุมการ์ด: ถ้า num เป็น None (กรณี Industry Benchmark ที่ขึ้นเป็น
+            # การ์ดหลักตัวแรก) จะไม่ render เลขกำกับเลย
+            num_html = (
+                f"""<div style="position:absolute;top:10px;left:10px;background:{badge_bg};color:{color};
                             font-size:14px;font-weight:bold;padding:3px 7px;border-radius:5px;">
                     {num}
-                </div>
+                </div>"""
+                if num else ""
+            )
+
+            return f"""
+            <div class="overview-module-card"
+                 style="background-color:{card_bg};border:{border_width} solid {card_border};border-radius:10px;
+                        padding:12px 12px;text-align:center;position:relative;
+                        width:100%;min-width:0;max-width:100%;box-sizing:border-box;">
+                {num_html}
                 <div style="display:flex;justify-content:center;align-items:center;margin-bottom:10px;">
                     <span style="font-size:15px;font-weight:bold;color:#0F172A;">{label}</span>
                 </div>
@@ -645,14 +666,17 @@ def render(ctx):
             </div>
             """
 
+        # Industry Benchmark ขึ้นเป็นการ์ดแรก (ตัวหลัก) ไม่มีเลขกำกับ และมี
+        # พื้นหลัง/ขอบไฮไลต์ตามสถานะคะแนน ส่วนการ์ดที่เหลือ (01-05) เรียงลำดับ
+        # และใช้เลขกำกับเหมือนเดิมทุกประการ
         cards_html = "".join([
+            module_card(None, "INDUSTRY BENCHMARK", m6_s, m6_badge, m6_desc, 70, 45,
+                        display_value=overall_rank, display_total=n_all, highlight=True),
             module_card("01", "COMPANY HEALTH", m1_s, m1_badge, m1_desc, 70, 45),
             module_card("02", "FAIR VALUE", m2_s, m2_badge, m2_desc, 67, 34),
             module_card("03", "ENTRY TIMING", m3_s, m3_badge, m3_desc, 67, 34),
             module_card("04", "AI PREDICTION", m4_s, m4_badge, m4_desc, 70, 50),
             module_card("05", "RISK ANALYSIS", m5_s, m5_badge, m5_desc, 65, 45),
-            module_card("06", "INDUSTRY BENCHMARK", m6_s, m6_badge, m6_desc, 70, 45,
-                        display_value=overall_rank, display_total=n_all)
         ])
 
         st.markdown("""
