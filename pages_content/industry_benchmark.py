@@ -24,6 +24,20 @@ pages_content/industry_benchmark.py
 - การ์ด RANKING: เพิ่มการไฮไลต์เฉพาะบล็อก "ทั้งตลาด" (whole market) ให้เด่นกว่าบล็อก "ในกลุ่ม"
   ด้วยกรอบ/พื้นหลังสีฟ้าอ่อน ตัวเลขอันดับขยายใหญ่ขึ้น และป้าย Top % เปลี่ยนเป็นพื้นทึบสีฟ้า
   (ไม่กระทบ logic การคำนวณ pct_overall / rank_txt เดิม)
+
+=== PATCH NOTE 2 (layout reshuffle) ===
+- ย้าย STRATEGIC MATRIX จาก r2_c3 (เดิมอยู่แถวกลาง คู่กับ Peer Comparison / Radar)
+  ขึ้นมาไว้ที่ r1_c3 แทน DIMENSION PERCENTILE RANK เดิม และขยายให้ใหญ่ขึ้น
+  (เพิ่มความสูงกราฟและขนาดฟอนต์ของ title/annotation) เพราะเป็นกราฟที่ควรเด่นที่สุด
+  ของหน้านี้ ตาม feedback ทีมออกแบบ
+- ลบการ์ด FINAL RECOMMENDATION (r3_c3 เดิม) ออกทั้งหมด รวมตัวแปรที่ใช้เฉพาะ
+  การ์ดนี้ (rec, rec_bg, conf_lvl, sector_rank_display) เพราะไม่ได้ใช้ที่ไหนอีก
+- ย้าย DIMENSION PERCENTILE RANK ลงมาแทนที่ตำแหน่ง r3_c3 (ที่ Final Recommendation
+  เคยอยู่) ปรับ grid ของมิติจาก 6 คอลัมน์ เป็น 3 คอลัมน์ต่อแถว เนื่องจากคอลัมน์นี้
+  แคบกว่าตำแหน่งเดิม (r1_c3 กว้าง 2.1 ส่วน ส่วน r3_c3 กว้างแค่ 1.4 ส่วน) และ
+  ความสูงการ์ดเปลี่ยนจาก fixed 360px เป็น auto ให้ยืดตามเนื้อหาแทนที่จะถูกตัด
+- แถว 2 (Peer Comparison / Radar) เหลือ 2 คอลัมน์ เพราะ Strategic Matrix
+  ที่เคยอยู่ตำแหน่งที่ 3 ย้ายขึ้นไปแล้ว
 """
 import streamlit as st
 import pandas as pd
@@ -128,72 +142,41 @@ def render(ctx):
     </div>
     </div>""", unsafe_allow_html=True)
 
-    # ---------------- DIMENSION PERCENTILE RANK ----------------
+    # ---------------- STRATEGIC MATRIX (ย้ายมาจาก r2_c3 เดิม + ขยายใหญ่ขึ้น) ----------------
     with r1_c3:
-        def calc_pct(df, col):
-            s = df[col].rank(pct=True)
-            match = df['ticker'] == ctx.selected_ticker
-            if not match.any() or pd.isna(s[match].values[0]):
-                return None
-            return int(round(100 - s[match].values[0] * 100))
+        matrix_df = ctx.scores_df[['ticker', 'health_score', 'overall_score']].dropna().copy()
+        matrix_df.columns = ['Company', 'Business_Quality', 'Investment_Attract']
 
-        dims_cols = [
-            ("Profitability", 'health_score', "#10B981"),
-            ("Growth", 'revenue_growth_yoy', "#3B82F6"),
-            ("Valuation", 'valuation_score', "#F59E0B"),
-            ("Entry Timing", 'timing_score', "#10B981"),
-            ("Risk (safer)", 'risk_score', "#F59E0B"),
-            ("AI Prediction", 'ai_score', "#A855F7"),
-        ]
+        matrix_star_color = {5: "#10B981", 4: "#F59E0B", 3: "#F59E0B", 2: "#EF4444", 1: "#EF4444"}.get(pos_stars, "#64748B")
 
-        def build_dims(df):
-            result = []
-            for label, col, color in dims_cols:
-                if col == 'revenue_growth_yoy' and pd.isna(ctx.stock_info.get('revenue_growth_yoy')):
-                    pct = None
-                else:
-                    pct = calc_pct(df, col)
-                result.append((label, pct, color))
-            return result
+        color_map = {t: (matrix_star_color if t == ctx.selected_ticker else "#CBD5E1") for t in matrix_df['Company']}
 
-        dims_market = build_dims(ctx.scores_df)
+        fig_matrix = px.scatter(
+            matrix_df, x='Business_Quality', y='Investment_Attract',
+            text='Company', color='Company', color_discrete_map=color_map
+        )
 
-        def dim_pct_card(label, pct, color):
-            if pct is None:
-                return f"""<div style="background:#0F172A; padding:6px 2px; border-radius:6px; border:1px solid #1E293B;">
-    <div style="color:#94A3B8; font-size:12px;">{label}</div><div style="color:#64748B; font-size:15px; font-weight:bold; margin:2px 0;">N/A</div>
-    <div style="color:#64748B; font-size:12px;">No data</div></div>"""
-            tier = "Excellent" if pct <= 20 else ("Good" if pct <= 45 else ("Fair" if pct <= 70 else "Weak"))
-            return f"""<div style="background:#F8FAFC; padding:6px 2px; border-radius:6px; border:1px solid #E2E8F0;">
-    <div style="color:#64748B; font-size:13px;">{label}</div><div style="color:{color}; font-size:17px; font-weight:bold; margin:2px 0;">Top {max(pct,1)}%</div>
-    <div style="color:{color}; font-size:13px;">{tier}</div></div>"""
+        fig_matrix.update_traces(textposition='top center', marker=dict(size=16, line=dict(width=1.5, color='#FFFFFF')))
+        fig_matrix.add_hline(y=50, line_width=1, line_dash="dash", line_color="#CBD5E1")
+        fig_matrix.add_vline(x=50, line_width=1, line_dash="dash", line_color="#CBD5E1")
 
-        if single_member_sector:
-            sector_section = f"""<div style="background:rgba(100,116,139,0.06); border:1px dashed #CBD5E1; border-radius:8px; padding:14px; text-align:center; margin-bottom:16px;">
-    <div style="color:#64748B; font-size:15px; line-height:1.4;">กลุ่ม <b>{ctx.stock_info.get('sector','-')}</b> มีเพียง 1 หุ้น จึงไม่สามารถเปรียบเทียบ percentile ภายในกลุ่มได้อย่างมีความหมาย</div>
-    </div>"""
-        else:
-            dims_sector = build_dims(ctx.sector_peers)
-            sector_section = f"""<div style="font-size:15px; color:#475569; margin-bottom:6px;">เปรียบเทียบกับกลุ่มอุตสาหกรรม {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
-    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; text-align:center; margin-bottom:16px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
-    {''.join([dim_pct_card(l, p, c) for l, p, c in dims_sector])}
-    </div>"""
+        fig_matrix.add_annotation(x=25, y=95, text="💎 Hidden Gem", showarrow=False, font=dict(size=16, color="#10B981"))
+        fig_matrix.add_annotation(x=80, y=95, text="🏆 Market Leader", showarrow=False, font=dict(size=16, color="#A855F7"))
+        fig_matrix.add_annotation(x=25, y=10, text="⚠️ Value Trap", showarrow=False, font=dict(size=16, color="#EF4444"))
+        fig_matrix.add_annotation(x=80, y=10, text="⭐ Competitive", showarrow=False, font=dict(size=15, color="#F59E0B"))
 
-        market_section = f"""<div style="font-size:15px; color:#475569; margin-bottom:6px;">เปรียบเทียบกับหุ้นทั้ง {n_all} ตัว</div>
-    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; text-align:center; margin-bottom:16px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
-    {''.join([dim_pct_card(l, p, c) for l, p, c in dims_market])}
-    </div>"""
+        fig_matrix.update_layout(
+            paper_bgcolor="#FFFFFF",
+            plot_bgcolor="#F8FAFC",
+            height=480,
+            margin=dict(l=20, r=20, t=35, b=20),
+            title=dict(text="STRATEGIC MATRIX (All 8 Stocks)", font=dict(size=18, color="#64748B"), x=0.03, y=0.99),
+            xaxis=dict(title=dict(text="Business Quality (Health Score) →", font=dict(size=14, color="#64748B")), range=[0, 100], showgrid=False, showticklabels=False),
+            yaxis=dict(title=dict(text="Investment Attractiveness (Overall) →", font=dict(size=14, color="#64748B")), range=[0, 100], showgrid=False, showticklabels=False),
+            showlegend=False
+        )
 
-        st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
-    <div>
-    <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:10px;">DIMENSION PERCENTILE RANK</div>
-    {market_section}
-    </div>
-    <div style="border-top:1px dashed #CBD5E1; margin-bottom:12px;"></div>
-    <div>
-    {sector_section}
-    </div>
-    </div>""", unsafe_allow_html=True)
+        show_chart(fig_matrix, key="industry_matrix", expand_height=800)
 
     st.markdown("""
     <style>
@@ -322,7 +305,8 @@ def render(ctx):
     </style>
     """, unsafe_allow_html=True)
 
-    r2_c1, r2_c2, r2_c3 = st.columns([2.0, 1.0, 1.1])
+    # แถว 2 เหลือ 2 คอลัมน์ (Strategic Matrix ที่เคยอยู่ตำแหน่งที่ 3 ย้ายขึ้นไป r1_c3 แล้ว)
+    r2_c1, r2_c2 = st.columns([2.0, 1.3])
 
     # ---------------- PEER COMPARISON ----------------
     with r2_c1:
@@ -341,7 +325,7 @@ def render(ctx):
 
             star_n = pos_stars if is_sel else min(5, max(1, round(safe(p['overall_score']) / 20)))
 
-            star_color = (
+            row_star_color = (
                 "#10B981" if star_n == 5
                 else "#F59E0B" if star_n >= 4
                 else "#EF4444"
@@ -387,9 +371,9 @@ def render(ctx):
             )
 
             name_disp = f"⭐ {p['ticker']}" if is_sel else p['ticker']
-            
+
             # ใช้การจัด Style แบบ Light Theme ตามทีม Layout เป็นหลัก
-            name_c = star_color if is_sel else "#0F172A"
+            name_c = row_star_color if is_sel else "#0F172A"
 
             rows_html += f"""<tr style="border-bottom:1px solid #E2E8F0; {row_bg}">
     <td style="text-align:left; padding:6px 0; color:{name_c}; font-weight:bold; min-width:0; overflow-wrap:anywhere; word-break:break-word;">{name_disp}</td>
@@ -398,7 +382,7 @@ def render(ctx):
     <td style="padding:7px 4px;">{timing_b}</td>
     <td style="padding:7px 4px;">{ai_b}</td>
     <td style="padding:7px 4px;"><span style="color:{risk_c};">{risk_b}</span></td>
-    <td style="color:{star_color}; letter-spacing:0.5px; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:clip;">{'★'*star_n}{'☆'*(5-star_n)}</td>
+    <td style="color:{row_star_color}; letter-spacing:0.5px; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:clip;">{'★'*star_n}{'☆'*(5-star_n)}</td>
     </tr>"""
 
         peer_html = f"""
@@ -483,44 +467,8 @@ def render(ctx):
 
         show_chart(fig_radar, key="industry_radar", expand_height=650)
 
-    # ---------------- STRATEGIC MATRIX ----------------
-    with r2_c3:
-        matrix_df = ctx.scores_df[['ticker', 'health_score', 'overall_score']].dropna().copy()
-        matrix_df.columns = ['Company', 'Business_Quality', 'Investment_Attract']
-
-        star_color = {5: "#10B981", 4: "#F59E0B", 3: "#F59E0B", 2: "#EF4444", 1: "#EF4444"}.get(pos_stars, "#64748B")
-
-        color_map = {t: (star_color if t == ctx.selected_ticker else "#CBD5E1") for t in matrix_df['Company']}
-
-        fig_matrix = px.scatter(
-            matrix_df, x='Business_Quality', y='Investment_Attract',
-            text='Company', color='Company', color_discrete_map=color_map
-        )
-
-        fig_matrix.update_traces(textposition='top center', marker=dict(size=13, line=dict(width=1, color='#FFFFFF')))
-        fig_matrix.add_hline(y=50, line_width=1, line_dash="dash", line_color="#CBD5E1")
-        fig_matrix.add_vline(x=50, line_width=1, line_dash="dash", line_color="#CBD5E1")
-
-        fig_matrix.add_annotation(x=25, y=95, text="💎 Hidden Gem", showarrow=False, font=dict(size=13, color="#10B981"))
-        fig_matrix.add_annotation(x=80, y=95, text="🏆 Market Leader", showarrow=False, font=dict(size=13, color="#A855F7"))
-        fig_matrix.add_annotation(x=25, y=10, text="⚠️ Value Trap", showarrow=False, font=dict(size=13, color="#EF4444"))
-        fig_matrix.add_annotation(x=80, y=10, text="⭐ Competitive", showarrow=False, font=dict(size=12, color="#F59E0B"))
-
-        fig_matrix.update_layout(
-            paper_bgcolor="#FFFFFF",
-            plot_bgcolor="#F8FAFC",
-            height=310,
-            margin=dict(l=15, r=15, t=30, b=15),
-            title=dict(text="STRATEGIC MATRIX (All 8 Stocks)", font=dict(size=15, color="#64748B"), x=0.05, y=0.98),
-            xaxis=dict(title=dict(text="Business Quality (Health Score) →", font=dict(size=13, color="#64748B")), range=[0, 100], showgrid=False, showticklabels=False),
-            yaxis=dict(title=dict(text="Investment Attractiveness (Overall) →", font=dict(size=13, color="#64748B")), range=[0, 100], showgrid=False, showticklabels=False),
-            showlegend=False
-        )
-
-        show_chart(fig_matrix, key="industry_matrix", expand_height=650)
-
     st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
-    r3_c1, r3_c2, r3_c3 = st.columns([1.3, 1.3, 1.4])  # ปรับสัดส่วน Column ให้รองรับ FINAL RECOMMENDATION
+    r3_c1, r3_c2, r3_c3 = st.columns([1.3, 1.3, 1.4])
 
     # ---------------- COMPETITIVE ADVANTAGE ----------------
     with r3_c1:
@@ -599,37 +547,72 @@ def render(ctx):
     {metric_rows}
     </div></div>""", unsafe_allow_html=True)
 
-    # ---------------- FINAL RECOMMENDATION ----------------
+    # ---------------- DIMENSION PERCENTILE RANK (ย้ายมาจาก r1_c3 เดิม แทนที่ FINAL RECOMMENDATION) ----------------
     with r3_c3:
-        rec = ctx.stock_info.get('recommendation', 'ACCUMULATE')
-        rec_color2 = "#FFFFFF"
+        def calc_pct(df, col):
+            s = df[col].rank(pct=True)
+            match = df['ticker'] == ctx.selected_ticker
+            if not match.any() or pd.isna(s[match].values[0]):
+                return None
+            return int(round(100 - s[match].values[0] * 100))
 
-        if no_data:
-            rec_bg = "#94A3B8"
-        elif pos_stars == 5:
-            rec_bg = "#5ACFA8"
-        elif pos_stars >= 4:
-            rec_bg = "#F8BB55"
+        dims_cols = [
+            ("Profitability", 'health_score', "#10B981"),
+            ("Growth", 'revenue_growth_yoy', "#3B82F6"),
+            ("Valuation", 'valuation_score', "#F59E0B"),
+            ("Entry Timing", 'timing_score', "#10B981"),
+            ("Risk (safer)", 'risk_score', "#F59E0B"),
+            ("AI Prediction", 'ai_score', "#A855F7"),
+        ]
+
+        def build_dims(df):
+            result = []
+            for label, col, color in dims_cols:
+                if col == 'revenue_growth_yoy' and pd.isna(ctx.stock_info.get('revenue_growth_yoy')):
+                    pct = None
+                else:
+                    pct = calc_pct(df, col)
+                result.append((label, pct, color))
+            return result
+
+        dims_market = build_dims(ctx.scores_df)
+
+        def dim_pct_card(label, pct, color):
+            if pct is None:
+                return f"""<div style="background:#0F172A; padding:6px 2px; border-radius:6px; border:1px solid #1E293B;">
+    <div style="color:#94A3B8; font-size:12px;">{label}</div><div style="color:#64748B; font-size:15px; font-weight:bold; margin:2px 0;">N/A</div>
+    <div style="color:#64748B; font-size:12px;">No data</div></div>"""
+            tier = "Excellent" if pct <= 20 else ("Good" if pct <= 45 else ("Fair" if pct <= 70 else "Weak"))
+            return f"""<div style="background:#F8FAFC; padding:6px 2px; border-radius:6px; border:1px solid #E2E8F0;">
+    <div style="color:#64748B; font-size:13px;">{label}</div><div style="color:{color}; font-size:17px; font-weight:bold; margin:2px 0;">Top {max(pct,1)}%</div>
+    <div style="color:{color}; font-size:13px;">{tier}</div></div>"""
+
+        if single_member_sector:
+            sector_section = f"""<div style="background:rgba(100,116,139,0.06); border:1px dashed #CBD5E1; border-radius:8px; padding:14px; text-align:center; margin-bottom:16px;">
+    <div style="color:#64748B; font-size:15px; line-height:1.4;">กลุ่ม <b>{ctx.stock_info.get('sector','-')}</b> มีเพียง 1 หุ้น จึงไม่สามารถเปรียบเทียบ percentile ภายในกลุ่มได้อย่างมีความหมาย</div>
+    </div>"""
         else:
-            rec_bg = "#F35F5F"
+            dims_sector = build_dims(ctx.sector_peers)
+            sector_section = f"""<div style="font-size:15px; color:#475569; margin-bottom:6px;">เปรียบเทียบกับกลุ่มอุตสาหกรรม {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
+    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; text-align:center; margin-bottom:16px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
+    {''.join([dim_pct_card(l, p, c) for l, p, c in dims_sector])}
+    </div>"""
 
-        conf_lvl = "High" if abs(safe(ctx.stock_info.get('margin_of_safety'))) > 15 else "Medium"
+        market_section = f"""<div style="font-size:15px; color:#475569; margin-bottom:6px;">เปรียบเทียบกับหุ้นทั้ง {n_all} ตัว</div>
+    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; text-align:center; margin-bottom:16px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
+    {''.join([dim_pct_card(l, p, c) for l, p, c in dims_market])}
+    </div>"""
 
-        sector_rank_display = (
-            (str(sector_rank) + ' / ' + str(n_sector))
-            if not single_member_sector and not no_data
-            else ('ไม่มีเทียบกลุ่ม' if single_member_sector else '-')
-        )
-
-        st.markdown(f"""<div style="background-color:{rec_bg}; border:1px solid {rec_bg}; border-radius:8px; padding:14px; height:275px; text-align:center;">
-    <div style="font-size:16px; color:#475569; font-weight:bold; margin-bottom:4px; text-align:left;">FINAL RECOMMENDATION</div>
-    <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin:4px 0;">
-    <div><h1 style="color:{rec_color2}; margin:0; font-size:26px; line-height:1.1;">{rec}</h1></div></div>
-    <div style="text-align:left; font-size:15px; margin-top:8px; border-top:1px dashed rgba(255,255,255,0.6); padding-top:6px;">
-    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#475569;">Confidence Level</span><span style="color:#FFFFFF; font-weight:bold;">{conf_lvl}</span></div>
-    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#475569;">Overall Score</span><span style="color:#FFFFFF; font-weight:bold;">{safe(ctx.stock_info.get('overall_score')):.1f}/100</span></div>
-    <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span style="color:#475569;">Sector Rank</span><span style="color:#FFFFFF; font-weight:bold;">{sector_rank_display}</span></div>
-    </div></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:auto; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
+    <div>
+    <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:10px;">DIMENSION PERCENTILE RANK</div>
+    {market_section}
+    </div>
+    <div style="border-top:1px dashed #CBD5E1; margin-bottom:12px;"></div>
+    <div>
+    {sector_section}
+    </div>
+    </div>""", unsafe_allow_html=True)
 
     import base64
 
