@@ -168,7 +168,7 @@ def render(ctx):
         fig_matrix.update_layout(
             paper_bgcolor="#FFFFFF",
             plot_bgcolor="#F8FAFC",
-            height=360,
+            height=340,
             margin=dict(l=20, r=20, t=35, b=20),
             title=dict(text="STRATEGIC MATRIX (All 8 Stocks)", font=dict(size=17, color="#64748B"), x=0.03, y=0.99),
             xaxis=dict(title=dict(text="Business Quality (Health Score) →", font=dict(size=13, color="#64748B")), range=[0, 100], showgrid=False, showticklabels=False),
