@@ -45,7 +45,7 @@ COMPANY_NAMES = {
 
 # ลำดับหน้า + emoji ประจำแต่ละโมดูล (ห้ามเปลี่ยน emoji ให้ซ้ำกันข้ามโมดูล — ดูตารางสี/emoji ในเอกสารแบ่งงาน)
 PAGES = [
-    " Industry Benchmark", " Overview", " Company Health", " Fair Value",
+    " Industry Benchmark", " Stock Overview", " Company Health", " Fair Value",
     " Entry Timing", " AI Prediction", " Risk Analysis"
 ]
 
@@ -374,7 +374,7 @@ def render_nav_footer(key_prefix, prev_page=None, next_page=None):
                 st.rerun()
     with col_home:
         if st.button("หน้าหลัก", key=f"btn_home_{key_prefix}", use_container_width=True):
-            st.session_state["pending_nav"] = " 🏠 Overview"
+            st.session_state["pending_nav"] = " Stock Overview"
             st.rerun()
     with col_next:
         if next_page:
@@ -619,7 +619,7 @@ def render_sidebar(scores_df):
     )
 
     nav_colors = {
-        " Overview": "#3B82F6",              # Blue
+        " Stock Overview": "#3B82F6",              # Blue
         " Company Health": "#10B981",        # Green
         " Fair Value": "#F59E0B",            # Amber
         " Entry Timing": "#6366F1",           # Indigo
