@@ -306,7 +306,7 @@ def render(ctx):
         target_pe_disp = val_detail.get('target_pe_str') or "-"
 
         st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:220px; display:flex; flex-direction:column; justify-content:space-between;">
+            f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:260px; display:flex; flex-direction:column; justify-content:space-between;">
         <div style="font-size:14px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">DCF ASSUMPTIONS <span style="font-size:12px; color:#64748B; font-weight:normal;">({ctx.stock_info.get('sector', '-')})</span></div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; font-size:14px; color:#475569; margin:auto 0;">
         <div><span style="color:#64748B;">WACC</span><br><b style="color:#0F172A;">{wacc_disp}</b></div>
