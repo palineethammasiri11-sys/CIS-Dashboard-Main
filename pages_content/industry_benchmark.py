@@ -154,7 +154,6 @@ def render(ctx):
     <div style="color:{star_color}; font-size:24px; letter-spacing:4px; margin-top:6px;">{'★'*pos_stars}{'☆'*(5-pos_stars)}</div>
     </div>
     </div>
-    <p style="color:#64748B; font-size:15px; line-height:1.4; margin:0;">{position_caption}</p>
     </div>""", unsafe_allow_html=True)
 
     # ---------------- RANKING ----------------
