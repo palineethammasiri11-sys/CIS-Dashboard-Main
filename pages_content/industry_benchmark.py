@@ -463,19 +463,23 @@ def render(ctx):
             r=sector_avg_vals, theta=cats, line=dict(color='#94A3B8', width=1.5, dash='dash'), name='Sector Avg'
         ))
 
-        # PATCH NOTE 5: ขยาย height จาก 310px เป็น 440px ให้เท่ากับการ์ด
-        # DIMENSION PERCENTILE RANK (r2_c1) ที่อยู่แถวเดียวกัน แทนการบีบฝั่งนั้นลง
+        # PATCH NOTE 7 (bugfix): label รอบขอบ (Health, AI Pred. ฯลฯ) โดนตัด/ตกขอบ
+        # เพราะ polar plot ขยายเต็มพื้นที่กรอบนอกเกินไป ไม่เหลือที่ให้ตัวหนังสือ
+        # แก้โดยหด "เฉพาะตัวกราฟวงกลม" ผ่าน polar.domain (x/y ไม่เต็ม 0-1) เพื่อเว้น
+        # ขอบรอบด้านไว้ให้ label ยืนได้ ส่วนกรอบนอก (height ของการ์ด) ยังคง 470px
+        # เท่ากับที่กำหนด ไม่กระทบ logic การคำนวณ stock_vals / sector_avg_vals เดิม
         fig_radar.update_layout(
             polar=dict(
+                domain=dict(x=[0.16, 0.84], y=[0.08, 0.90]),
                 radialaxis=dict(visible=True, range=[0, 100], showticklabels=False, linecolor="#CBD5E1", gridcolor="#E2E8F0"),
-                angularaxis=dict(linecolor="#CBD5E1", gridcolor="#E2E8F0", tickfont=dict(size=13, color="#64748B"))
+                angularaxis=dict(linecolor="#CBD5E1", gridcolor="#E2E8F0", tickfont=dict(size=12, color="#64748B"))
             ),
             paper_bgcolor="#FFFFFF",
             plot_bgcolor="#FFFFFF",
             height=470,
-            margin=dict(l=30, r=30, t=40, b=20),
-            title=dict(text="RADAR: STOCK vs SECTOR AVG", font=dict(size=15, color="#64748B"), x=0.05, y=0.985),
-            legend=dict(orientation="h", yanchor="bottom", y=1.03, xanchor="right", x=1, font=dict(size=13, color="#475569"))
+            margin=dict(l=55, r=55, t=45, b=35),
+            title=dict(text="RADAR: STOCK vs SECTOR AVG", font=dict(size=15, color="#64748B"), x=0.05, y=0.99),
+            legend=dict(orientation="h", yanchor="bottom", y=1.04, xanchor="right", x=1, font=dict(size=13, color="#475569"))
         )
 
         # ใช้ st.plotly_chart ตรง ๆ แทน show_chart() เพื่อไม่ให้มีปุ่ม "ขยายกราฟ" โผล่ใต้กราฟ
