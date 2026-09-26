@@ -203,20 +203,16 @@ def render(ctx):
     signal_display = f"{signal} ⚠" if reliability_low else signal
 
     # ============================================================
-    # 1) OVERVIEW — แถบ KPI (เพิ่ม SCORE แบบ donut ไว้ช่องแรก + KPI เดิม 4 ช่อง)
+    # 1) OVERVIEW — แถบ KPI: c1 Price, c2 Direction, c3 Probability,
+    # c4 AI Score (donut), c5 Recommendation
+    #
+    # กติกาสีใหม่ตามที่ทีมออกแบบกำหนด:
+    # - มีแค่ DIRECTION เท่านั้นที่ไฮไลต์แบบ "กรอบ + พื้นอ่อน" ตามสีธีม (status_color)
+    # - RECOMMENDATION ไฮไลต์แรงสุด: พื้นทึบสีธีมเต็มใบ ตัวหนังสือเปลี่ยนเป็นสีขาว
+    # - การ์ดที่เหลือ (PRICE, PROBABILITY, AI SCORE) เป็นพื้นขาว ไม่มีกรอบสีไฮไลต์
+    #   เหมือนการ์ด PRICE (ใช้ค่า default ของ _kpi_card ทั้งหมด)
     # ============================================================
 
-    ai_score_val = int(round(safe(ctx.stock_info.get('ai_score'), 50)))
-    if ai_score_val >= 70:
-        score_badge, score_desc = "POSITIVE", "โอกาสปรับตัวขึ้นในระดับที่ดี"
-    elif ai_score_val >= 50:
-        score_badge, score_desc = "NEUTRAL", "แนวโน้มเคลื่อนไหวในกรอบ"
-    else:
-        score_badge, score_desc = "CAUTION", "โอกาสปรับตัวขึ้นในระดับต่ำ"
-
-    score_color = GREEN if ai_score_val >= 70 else (AMBER if ai_score_val >= 50 else RED)
-
-    # ลำดับคอลัมน์: c1 Price, c2 Direction, c3 Probability, c4 AI Score (donut), c5 Recommendation
     k1, k2, k3, k4, k5 = st.columns(5)
 
     with k1:
@@ -248,6 +244,7 @@ def render(ctx):
 
     with k3:
         # จุดสัญญาณเล็กๆ ข้างเลข Probability สะท้อนความน่าเชื่อถือของโมเดล (ไม่โชว์ตัวเลข accuracy ดิบ)
+        # การ์ดนี้ไม่ไฮไลต์กรอบ/พื้นหลังแล้ว (เป็นพื้นขาวเหมือน PRICE) — เหลือแค่สีตัวเลข/จุดสัญญาณ
         prob_value_html = (
             f'<span style="display:flex; align-items:center; gap:8px;">'
             f'<span>{prob_up:.0f}%</span>'
@@ -259,9 +256,7 @@ def render(ctx):
                 "PROBABILITY",
                 prob_value_html,
                 _kpi_sub(f"Down: {down_prob:.0f}%"),
-                value_color=status_color,
-                border=status_color,
-                bg_color=_hex_to_rgba(status_color, 0.08)
+                value_color=status_color
             ),
             unsafe_allow_html=True
         )
@@ -273,15 +268,16 @@ def render(ctx):
         )
 
     with k5:
+        # RECOMMENDATION เน้นสุด: พื้นทึบสีธีมเต็มใบ + ตัวหนังสือ/label เป็นสีขาว
         st.markdown(
             _kpi_card(
                 "RECOMMENDATION",
                 signal_display,
-                value_color=status_color,
+                value_color="#FFFFFF",
                 value_size=21,
                 border=status_color,
-                bg_color=_hex_to_rgba(status_color, 0.08),
-                label_color=MUTED
+                bg_color=status_color,
+                label_color="rgba(255,255,255,0.85)"
             ),
             unsafe_allow_html=True
         )
