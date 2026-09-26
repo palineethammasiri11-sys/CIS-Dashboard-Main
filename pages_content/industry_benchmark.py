@@ -402,7 +402,7 @@ def render(ctx):
 
         # PATCH NOTE 5: กลับไปใช้ FIXED HEIGHT ที่คำนวณให้พอดีเนื้อหาจริง (440px)
         # แทนการบีบ padding/font จนตัดเนื้อหา; RADAR (r2_c2) ขยายมาเท่ากันแทน
-        st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:440px; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-start; box-sizing:border-box;">
+        st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:460px; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-start; box-sizing:border-box;">
     <div>
     <div style="font-size:15px; color:#64748B; font-weight:bold; margin-bottom:8px;">DIMENSION PERCENTILE RANK</div>
     {market_section}
@@ -460,7 +460,7 @@ def render(ctx):
             ),
             paper_bgcolor="#FFFFFF",
             plot_bgcolor="#FFFFFF",
-            height=440,
+            height=460,
             margin=dict(l=30, r=30, t=40, b=20),
             title=dict(text="RADAR: STOCK vs SECTOR AVG", font=dict(size=15, color="#64748B"), x=0.05, y=0.985),
             legend=dict(orientation="h", yanchor="bottom", y=1.03, xanchor="right", x=1, font=dict(size=13, color="#475569"))
