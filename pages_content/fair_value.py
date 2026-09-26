@@ -322,75 +322,21 @@ def render(ctx):
         )
 
     with r4_c2:
-        st.markdown(
-            """<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px 12px 0 0; padding:12px 16px 0 16px;">
-        <div style="font-size:14px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">HISTORICAL FAIR VALUE VS PRICE (Actual, year-end 2023-2025)</div></div>""",
-            unsafe_allow_html=True
-        )
+        st.markdown("""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; box-shadow:0 1px 3px rgba(15,23,42,0.06); border-radius:12px 12px 0 0; padding:12px 16px 0 16px;">
+    <div style="font-size:13.5px; font-weight:bold; color:#475569; letter-spacing:0.5px;">HISTORICAL FAIR VALUE VS PRICE (Actual, year-end 2023-2025)</div></div>""", unsafe_allow_html=True)
 
-        fv_hist = ctx.fair_value_yearly_df[
-            ctx.fair_value_yearly_df['ticker'] == ctx.selected_ticker
-        ].sort_values('year') if not ctx.fair_value_yearly_df.empty else pd.DataFrame()
-
+        fv_hist = ctx.fair_value_yearly_df[ctx.fair_value_yearly_df['ticker'] == ctx.selected_ticker].sort_values('year') if not ctx.fair_value_yearly_df.empty else pd.DataFrame()
         if not fv_hist.empty:
-            hist_years = fv_hist['year'].round().astype(int).astype(str).tolist()
-            hist_x = list(range(len(hist_years)))
-
             fig_hist_val = go.Figure()
-
-            hist_years_int = fv_hist['year'].round().astype(int)
-
-            fig_hist_val.add_trace(
-                go.Scatter(
-                    x=hist_years_int,
-                    y=fv_hist['fair_value'],
-                    mode='lines+markers',
-                    name='Fair Value',
-                    line=dict(color='#A855F7', width=1.8, dash='dash')
-                )
-            )
-
-            fig_hist_val.add_trace(
-                go.Scatter(
-                    x=hist_years_int,
-                    y=fv_hist['price'],
-                    mode='lines+markers',
-                    name='Actual Price',
-                    line=dict(color='#38BDF8', width=2),
-                    marker=dict(size=9, color='#38BDF8')
-                )
-            )
-
+            fig_hist_val.add_trace(go.Scatter(x=fv_hist['year'].astype(str), y=fv_hist['fair_value'], mode='lines+markers', name='Fair Value', line=dict(color='#A855F7', width=1.8, dash='dash')))
+            fig_hist_val.add_trace(go.Scatter(x=fv_hist['year'].astype(str), y=fv_hist['price'], mode='lines+markers', name='Actual Price', line=dict(color='#38BDF8', width=2), marker=dict(size=9, color='#38BDF8')))
             fig_hist_val.update_layout(
-                height=150,
-                margin=dict(l=25, r=15, t=10, b=20),
-                paper_bgcolor="#FFFFFF",
-                plot_bgcolor="#FFFFFF",
-                yaxis=dict(
-                    tickfont=dict(size=12, color="#64748B"),
-                    gridcolor="#E2E8F0",
-                    zeroline=False
-                ),
-                xaxis=dict(
-                    type='linear',
-                    dtick=1,
-                    tickformat='d',
-                    range=[hist_years_int.min() - 0.3, hist_years_int.max() + 0.3],
-                    tickfont=dict(size=11, color="#475569"),
-                    gridcolor="#E2E8F0"
-                ),
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=-0.35,
-                    xanchor="center",
-                    x=0.5,
-                    font=dict(size=12, color="#64748B")
-                )
+                height=190, margin=dict(l=25, r=15, t=10, b=55), paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF",
+                yaxis=dict(tickfont=dict(size=11.5, color="#94A3B8"), gridcolor="#E2E8F0", zeroline=False),
+                xaxis=dict(type='category', tickmode='array', tickvals=list(fv_hist['year'].astype(str)), ticktext=list(fv_hist['year'].astype(str)), tickfont=dict(size=11, color="#475569"), gridcolor="#E2E8F0"),
+                legend=dict(orientation="h", yanchor="top", y=-0.28, xanchor="center", x=0.5, font=dict(size=11.5, color="#475569"))
             )
-
             show_chart(fig_hist_val, key="fair_value_hist", expand_height=650)
-
         else:
             st.info("ไม่มีข้อมูลย้อนหลังเพียงพอ")
 
