@@ -805,4 +805,4 @@ def render(ctx):
     # FOOTER NAVIGATION
     # ============================================================
 
-    render_nav_footer("m1", prev_page=" Overview", next_page=" Fair Value")
+    render_nav_footer("m1", prev_page=" Stock Overview", next_page=" Fair Value")
