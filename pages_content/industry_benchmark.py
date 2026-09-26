@@ -174,7 +174,7 @@ def render(ctx):
         sector_block = (
             f"""<span style="display:inline-block; margin-top:6px; background-color:rgba(100,116,139,0.10); color:#64748B; font-size:15px; font-weight:bold; padding:3px 14px; border-radius:8px;">กลุ่มมีเพียง 1 หุ้น</span>"""
             if single_member_sector else
-            f"""<span style="display:inline-block; margin-top:6px; background-color:rgba(245,158,11,0.15); color:#F59E0B; font-size:15px; font-weight:bold; padding:3px 14px; border-radius:8px;">Top {pct_in_sector}%</span>"""
+            ""
         )
 
         st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; text-align:center; display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box;">
@@ -183,7 +183,6 @@ def render(ctx):
     <div style="font-size:14px; color:#0F172A; font-weight:bold;">ทั้งตลาด</div>
     <div style="font-size:13px; color:#64748B; margin-bottom:2px;">{n_all} หุ้นที่ติดตาม</div>
     <div><span style="font-size:32px; color:#0F172A; font-weight:800;">{rank_txt(overall_rank)}</span> <span style="font-size:14px; color:#64748B;">/ {n_all} หุ้น</span></div>
-    <span style="display:inline-block; margin-top:6px; background-color:{star_color}; color:#FFFFFF; font-size:14px; font-weight:bold; padding:3px 14px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.12);">Top {pct_overall}%</span>
     </div>
     <div style="border-top:1px solid #E2E8F0; padding-top:10px;">
     <div style="font-size:14px; color:#64748B;">ในกลุ่ม</div>
