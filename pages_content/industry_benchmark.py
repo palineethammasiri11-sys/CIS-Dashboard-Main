@@ -379,7 +379,7 @@ def render(ctx):
     {''.join([dim_pct_card(l, p, c) for l, p, c in dims_market])}
     </div>"""
 
-        st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:auto; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
+        st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:430px; overflow-y:auto; display:flex; flex-direction:column; justify-content:flex-start; box-sizing:border-box;">
     <div>
     <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:10px;">DIMENSION PERCENTILE RANK</div>
     {market_section}
@@ -521,7 +521,7 @@ def render(ctx):
     <td style="padding:7px 4px;">{timing_b}</td>
     <td style="padding:7px 4px;">{ai_b}</td>
     <td style="padding:7px 4px;"><span style="color:{risk_c};">{risk_b}</span></td>
-    <td style="color:{row_star_color}; letter-spacing:0.5px; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:clip;">{'★'*star_n}{'☆'*(5-star_n)}</td>
+    <td style="color:{row_star_color}; letter-spacing:0.5px; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:clip;">{'★'*star_n}{'☆'*(5-star_n)}</td>
     </tr>"""
 
     peer_html = f"""
@@ -530,8 +530,8 @@ def render(ctx):
         PEER COMPARISON — {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)
     </div>
 
-    <table class="peer-comparison-table" style="width:100%; max-width:100%; min-width:0; text-align:center; font-size:12px; color:#475569; border-collapse:collapse; box-sizing:border-box;">
-        <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:12px;">
+    <table class="peer-comparison-table" style="width:100%; max-width:100%; min-width:0; text-align:center; font-size:15px; color:#475569; border-collapse:collapse; box-sizing:border-box;">
+        <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:14px;">
             <th style="text-align:left; padding:5px 0;">Company</th>
             <th>Health</th>
             <th>Fair Value</th>
