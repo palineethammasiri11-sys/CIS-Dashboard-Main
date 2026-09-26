@@ -70,6 +70,9 @@ def _section_title(text):
 <div><span style="font-size:13px; font-weight:bold; color:{MUTED}; letter-spacing:0.5px;">{text}</span></div></div>"""
 
 
+KPI_CARD_HEIGHT = 148  # ความสูงร่วมของการ์ด KPI ทั้งแถว (รวมการ์ด AI SCORE donut) — แก้ค่าเดียวจุดนี้ ทุกการ์ดจะสูงเท่ากันหมด
+
+
 def _kpi_card(
     label,
     value_html,
@@ -78,11 +81,12 @@ def _kpi_card(
     value_size=28,
     border="#D9E2EC",
     bg_color="#FFFFFF",
-    label_color=MUTED
+    label_color=MUTED,
+    height=KPI_CARD_HEIGHT
 ):
     """การ์ด KPI ใบเดียว"""
     return (
-        f'<div style="background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:14px 16px; text-align:left; height:120px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center;">'
+        f'<div style="background-color:{bg_color}; border:1px solid {border}; border-radius:12px; padding:14px 16px; text-align:left; height:{height}px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center;">'
         f'<div style="font-size:11px; font-weight:bold; color:{label_color}; letter-spacing:1px;">{label}</div>'
         f'<div style="font-size:{value_size}px; font-weight:bold; color:{value_color}; line-height:1.2; margin-top:4px;">{value_html}</div>'
         f'{sub_html}'
@@ -103,25 +107,27 @@ def _metric_cell(label, value):
     )
 
 
-def _score_donut_card(label, score, badge, desc, color):
+def _score_donut_card(label, score, badge, desc, color, height=None):
     """การ์ด SCORE แบบวงแหวน (donut) — สไตล์เดียวกับการ์ด module ในหน้า Overview
-    ใช้ conic-gradient เดียวกัน (สัดส่วนคะแนน 0-100) วางเป็นการ์ดสูง 120px ให้เท่ากับ
-    _kpi_card ตัวอื่นในแถวเดียวกัน"""
-    return f"""<div style="background-color:#FFFFFF; border:1px solid {color}; border-radius:12px; padding:14px 12px; text-align:center; height:120px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-<div style="font-size:11px; font-weight:bold; color:{MUTED}; letter-spacing:1px; margin-bottom:6px;">{label}</div>
-<div style="display:flex; align-items:center; gap:10px;">
-<div style="width:56px; height:56px; border-radius:50%;
+    ใช้ conic-gradient เดียวกัน (สัดส่วนคะแนน 0-100) ความสูงผูกกับ KPI_CARD_HEIGHT
+    เดียวกับ _kpi_card ตัวอื่นในแถว เพื่อให้ทุกการ์ดสูงเท่ากันเสมอ ไม่ว่าจะปรับ
+    ขนาด donut ใหญ่ขึ้นแค่ไหนก็ตาม"""
+    h = height or KPI_CARD_HEIGHT
+    return f"""<div style="background-color:#FFFFFF; border:1px solid {color}; border-radius:12px; padding:14px 12px; text-align:center; height:{h}px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+<div style="font-size:11px; font-weight:bold; color:{MUTED}; letter-spacing:1px; margin-bottom:8px;">{label}</div>
+<div style="display:flex; align-items:center; gap:12px;">
+<div style="width:78px; height:78px; border-radius:50%;
             background:conic-gradient({color} 0% {score}%, #E2E8F0 {score}% 100%);
             display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-    <div style="width:44px; height:44px; border-radius:50%; background-color:#FFFFFF;
+    <div style="width:60px; height:60px; border-radius:50%; background-color:#FFFFFF;
                 display:flex; flex-direction:column; align-items:center; justify-content:center;">
-        <span style="font-size:14px; font-weight:bold; color:#0F172A; line-height:1;">{score}</span>
-        <span style="font-size:9px; color:{MUTED};">/100</span>
+        <span style="font-size:19px; font-weight:bold; color:#0F172A; line-height:1;">{score}</span>
+        <span style="font-size:10.5px; color:{MUTED};">/100</span>
     </div>
 </div>
 <div style="text-align:left;">
-<div style="color:{color}; font-size:14px; font-weight:bold; line-height:1.2;">{badge}</div>
-<div style="font-size:10.5px; color:#475569; line-height:1.3; margin-top:2px;">{desc}</div>
+<div style="color:{color}; font-size:15px; font-weight:bold; line-height:1.2;">{badge}</div>
+<div style="font-size:11px; color:#475569; line-height:1.3; margin-top:2px;">{desc}</div>
 </div>
 </div>
 </div>"""
@@ -191,13 +197,8 @@ def render(ctx):
 
     score_color = GREEN if ai_score_val >= 70 else (AMBER if ai_score_val >= 50 else RED)
 
-    k0, k1, k2, k3, k4 = st.columns(5)
-
-    with k0:
-        st.markdown(
-            _score_donut_card("AI SCORE", ai_score_val, score_badge, score_desc, score_color),
-            unsafe_allow_html=True
-        )
+    # ลำดับคอลัมน์: c1 Price, c2 Direction, c3 Probability, c4 AI Score (donut), c5 Recommendation
+    k1, k2, k3, k4, k5 = st.columns(5)
 
     with k1:
         st.markdown(
@@ -247,6 +248,12 @@ def render(ctx):
         )
 
     with k4:
+        st.markdown(
+            _score_donut_card("AI SCORE", ai_score_val, score_badge, score_desc, score_color),
+            unsafe_allow_html=True
+        )
+
+    with k5:
         st.markdown(
             _kpi_card(
                 "RECOMMENDATION",
