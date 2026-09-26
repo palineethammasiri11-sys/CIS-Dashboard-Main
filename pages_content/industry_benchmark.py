@@ -472,7 +472,7 @@ def render(ctx):
             ),
             paper_bgcolor="#FFFFFF",
             plot_bgcolor="#FFFFFF",
-            height=440,
+            height=470,
             margin=dict(l=30, r=30, t=40, b=20),
             title=dict(text="RADAR: STOCK vs SECTOR AVG", font=dict(size=15, color="#64748B"), x=0.05, y=0.985),
             legend=dict(orientation="h", yanchor="bottom", y=1.03, xanchor="right", x=1, font=dict(size=13, color="#475569"))
