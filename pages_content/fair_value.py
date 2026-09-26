@@ -338,9 +338,11 @@ def render(ctx):
 
             fig_hist_val = go.Figure()
 
+            hist_years_int = fv_hist['year'].round().astype(int)
+
             fig_hist_val.add_trace(
                 go.Scatter(
-                    x=fv_hist['year'].astype(str),
+                    x=hist_years_int,
                     y=fv_hist['fair_value'],
                     mode='lines+markers',
                     name='Fair Value',
@@ -350,7 +352,7 @@ def render(ctx):
 
             fig_hist_val.add_trace(
                 go.Scatter(
-                    x=fv_hist['year'].astype(str),
+                    x=hist_years_int,
                     y=fv_hist['price'],
                     mode='lines+markers',
                     name='Actual Price',
@@ -369,7 +371,14 @@ def render(ctx):
                     gridcolor="#E2E8F0",
                     zeroline=False
                 ),
-                xaxis=dict(type='category', tickmode='array', tickvals=list(fv_hist['year'].astype(str)), ticktext=list(fv_hist['year'].astype(str)), tickfont=dict(size=11, color="#475569"), gridcolor="#E2E8F0"),
+                xaxis=dict(
+                    type='linear',
+                    dtick=1,
+                    tickformat='d',
+                    range=[hist_years_int.min() - 0.3, hist_years_int.max() + 0.3],
+                    tickfont=dict(size=11, color="#475569"),
+                    gridcolor="#E2E8F0"
+                ),
                 legend=dict(
                     orientation="h",
                     yanchor="bottom",
