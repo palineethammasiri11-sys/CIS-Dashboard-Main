@@ -25,6 +25,11 @@ pages_content/company_health.py
 - ตาราง "COMPETITOR COMPARISON" เปลี่ยนจาก st.dataframe (พื้นเทาแบบ default ของ glide-data-grid
   ที่ไม่รับ CSS override ตรงๆ) เป็น st.html แบบตาราง HTML ธรรมดา เพื่อให้พื้นหลังเป็นสีขาว
   และสไตล์ตรงกับการ์ด "KEY FINANCIAL HIGHLIGHTS" ด้านซ้าย
+
+=== PATCH NOTE 2 ===
+- ทำความสูงกรอบการ์ดทั้ง 3 ใบใน ROW 3 (KEY FINANCIAL HIGHLIGHTS / STRENGTHS / COMPETITOR COMPARISON)
+  ให้เท่ากันโดยกำหนด min-height/height:360px + box-sizing:border-box ให้ตรงกันทั้งหมด
+  (เดิมการ์ด COMPETITOR COMPARISON ไม่ได้ล็อกความสูง ทำให้ขนาดไม่เท่ากับอีก 2 การ์ด)
 """
 
 import datetime
@@ -578,11 +583,14 @@ def render(ctx):
 
     # ============================================================
     # KEY FINANCIAL HIGHLIGHTS / STRENGTHS / COMPETITOR
+    # ทำความสูงกรอบทั้ง 3 การ์ดให้เท่ากัน (การ์ดเดิม COMPETITOR ไม่ได้ล็อกความสูง)
     # ============================================================
 
     st.html("""<div style="margin-top:22px;"></div>""")
 
     r3_c1, r3_c2, r3_c3 = st.columns([1.5, 1.25, 1.25])
+
+    ROW3_CARD_HEIGHT = "360px"
 
     # ============================================================
     # KEY FINANCIAL HIGHLIGHTS
@@ -591,7 +599,7 @@ def render(ctx):
     with r3_c1:
 
         st.html(f"""
-        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; min-height:360px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; height:{ROW3_CARD_HEIGHT}; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between; overflow-y:auto;">
             <div>
                 <div style="font-size:14.5px; font-weight:bold; color:#64748B; letter-spacing:0.5px; margin-bottom:8px;">
                     KEY FINANCIAL HIGHLIGHTS ({ctx.selected_ticker})
@@ -679,7 +687,7 @@ def render(ctx):
             watch.append("ยังไม่พบสัญญาณความเสี่ยงเชิงโครงสร้างที่ชัดเจนในงบล่าสุด")
 
         st.html(f"""
-        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; height:360px; overflow-y:auto;">
+        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; height:{ROW3_CARD_HEIGHT}; box-sizing:border-box; overflow-y:auto;">
             <div style="font-size:14px; font-weight:bold; color:#10B981; margin-bottom:6px;">
                 STRENGTHS ({ctx.selected_ticker})
             </div>
@@ -769,6 +777,8 @@ def render(ctx):
         # PATCH: เปลี่ยนจาก st.dataframe -> ตาราง HTML พื้นสีขาว
         # (st.dataframe ใช้ glide-data-grid วาดบน canvas
         #  ทำให้ override สีพื้นหลังด้วย CSS ไม่ได้ผล)
+        # PATCH 2: ล็อกความสูงกรอบให้เท่ากับอีก 2 การ์ดในแถวเดียวกัน
+        # (เดิมความสูงยืดตามเนื้อหา ทำให้กรอบไม่เท่ากัน)
         # --------------------------------------------------------
 
         cmp_rows_html = "".join([
@@ -784,7 +794,7 @@ def render(ctx):
         ])
 
         st.html(f"""
-        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px;">
+        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; height:{ROW3_CARD_HEIGHT}; box-sizing:border-box; display:flex; flex-direction:column; overflow-y:auto;">
             <div style="font-size:13px; color:#64748B; margin-bottom:10px;">
                 {sub_label}
             </div>
