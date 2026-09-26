@@ -269,10 +269,10 @@ def render(ctx):
     with col_title:
         st.html("""
         <div style="margin-bottom:10px;">
-            <h2 style="margin:0; font-size:23px; font-weight:bold; color:#0F172A; letter-spacing:0.5px;">
+            <div style="font-size:26px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
                 COMPANY HEALTH
             </h2>
-            <div style="font-size:15px; color:#64748B; margin-top:2px;">
+            <div style="font-size:16px; color:#64748B; margin-top:4px;">
                 ประเมินสุขภาพทางการเงินของบริษัทจากมิติสำคัญตามงบการเงินจริง
             </div>
         </div>
