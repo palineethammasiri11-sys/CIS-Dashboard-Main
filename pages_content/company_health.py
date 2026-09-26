@@ -671,7 +671,7 @@ def render(ctx):
             watch.append("ยังไม่พบสัญญาณความเสี่ยงเชิงโครงสร้างที่ชัดเจนในงบล่าสุด")
 
         st.html(f"""
-        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; height:450px; box-sizing:border-box; overflow-y:auto;">
+        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; height:448px; box-sizing:border-box; overflow-y:auto;">
             <div style="font-size:14px; font-weight:bold; color:#10B981; margin-bottom:6px;">
                 STRENGTHS ({ctx.selected_ticker})
             </div>
