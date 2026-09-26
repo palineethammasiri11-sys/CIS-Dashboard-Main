@@ -53,6 +53,14 @@ pages_content/industry_benchmark.py
 - เพื่อให้เนื้อหา 2 ชุด (เทียบทั้งตลาด + เทียบในกลุ่ม) ยังพอดีในกรอบที่เตี้ยลง
   ได้บีบ padding การ์ดนอก/การ์ดมิติย่อย และลดฟอนต์ label/ตัวเลข/tier ลงเล็กน้อย
   (ไม่กระทบ logic การคำนวณ percentile เดิม)
+
+=== PATCH NOTE 5 (bugfix) ===
+- DIMENSION PERCENTILE RANK: overflow:hidden เดิมทำให้เนื้อหาส่วนล่าง (เทียบกลุ่ม)
+  โดนตัดหายเมื่อเนื้อหารวมสูงเกิน 310px จริง เปลี่ยนเป็น overflow-y:auto (เลื่อนได้
+  แทนที่จะตัดหาย) พร้อมบีบ margin ของ grid ลงอีกเล็กน้อยเพื่อลดโอกาสต้องเลื่อน
+- PEER COMPARISON: แก้สี badge "Neutral" ของ AI Prediction จากเทา (#64748B)
+  เป็นเหลือง (#F59E0B) ให้ตรงกับความหมายกลาง ๆ เหมือนคอลัมน์อื่น (ไม่กระทบ logic
+  การคำนวณ threshold เดิม)
 """
 import streamlit as st
 import pandas as pd
@@ -372,29 +380,30 @@ def render(ctx):
     <div style="color:{color}; font-size:11px;">{tier}</div></div>"""
 
         if single_member_sector:
-            sector_section = f"""<div style="background:rgba(100,116,139,0.06); border:1px dashed #CBD5E1; border-radius:8px; padding:8px; text-align:center; margin-bottom:6px;">
+            sector_section = f"""<div style="background:rgba(100,116,139,0.06); border:1px dashed #CBD5E1; border-radius:8px; padding:8px; text-align:center; margin-bottom:4px;">
     <div style="color:#64748B; font-size:12px; line-height:1.3;">กลุ่ม <b>{ctx.stock_info.get('sector','-')}</b> มีเพียง 1 หุ้น จึงไม่สามารถเปรียบเทียบ percentile ภายในกลุ่มได้อย่างมีความหมาย</div>
     </div>"""
         else:
             dims_sector = build_dims(ctx.sector_peers)
-            sector_section = f"""<div style="font-size:12px; color:#475569; margin-bottom:4px;">เปรียบเทียบกับกลุ่มอุตสาหกรรม {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
-    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; text-align:center; margin-bottom:6px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
+            sector_section = f"""<div style="font-size:12px; color:#475569; margin-bottom:3px;">เปรียบเทียบกับกลุ่มอุตสาหกรรม {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
+    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; text-align:center; margin-bottom:4px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
     {''.join([dim_pct_card(l, p, c) for l, p, c in dims_sector])}
     </div>"""
 
-        market_section = f"""<div style="font-size:12px; color:#475569; margin-bottom:4px;">เปรียบเทียบกับหุ้นทั้ง {n_all} ตัว</div>
-    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; text-align:center; margin-bottom:6px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
+        market_section = f"""<div style="font-size:12px; color:#475569; margin-bottom:3px;">เปรียบเทียบกับหุ้นทั้ง {n_all} ตัว</div>
+    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; text-align:center; margin-bottom:4px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
     {''.join([dim_pct_card(l, p, c) for l, p, c in dims_market])}
     </div>"""
 
-        # PATCH NOTE 4: height 430px + overflow-y:auto (เลื่อนได้) -> height 310px + overflow:hidden (ฟิก)
-        # ให้เท่ากับกรอบกราฟ RADAR ที่อยู่แถวเดียวกัน (r2_c2)
-        st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:10px; height:310px; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-start; box-sizing:border-box;">
+        # PATCH NOTE 5: overflow:hidden เดิมทำเนื้อหาส่วนล่างโดนตัดหาย เมื่อเนื้อหารวม
+        # สูงเกิน 310px จริง เปลี่ยนเป็น overflow-y:auto (เลื่อนดูได้แทนที่จะหายไปเฉย ๆ)
+        # ความสูงกรอบยังคง 310px เท่ากับ RADAR ที่อยู่แถวเดียวกันตามเดิม
+        st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:8px; height:310px; overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column; justify-content:flex-start; box-sizing:border-box;">
     <div>
-    <div style="font-size:15px; color:#64748B; font-weight:bold; margin-bottom:6px;">DIMENSION PERCENTILE RANK</div>
+    <div style="font-size:15px; color:#64748B; font-weight:bold; margin-bottom:4px;">DIMENSION PERCENTILE RANK</div>
     {market_section}
     </div>
-    <div style="border-top:1px dashed #CBD5E1; margin-bottom:6px;"></div>
+    <div style="border-top:1px dashed #CBD5E1; margin-bottom:4px;"></div>
     <div>
     {sector_section}
     </div>
@@ -507,9 +516,10 @@ def render(ctx):
             ["Good Entry", "Neutral", "Bad Entry"], ["#10B981", "#F59E0B", "#EF4444"]
         )
 
+        # FIX: Neutral เดิมเป็นสีเทา (#64748B) เปลี่ยนเป็นเหลือง (#F59E0B) ให้เห็นชัดว่าอยู่โซนกลาง
         ai_b = badge(
             p['ai_score'], [65, 45, 0],
-            ["Bullish", "Neutral", "Bearish"], ["#10B981", "#64748B", "#EF4444"]
+            ["Bullish", "Neutral", "Bearish"], ["#10B981", "#F59E0B", "#EF4444"]
         )
 
         risk_b = "Low" if p['risk_score'] >= 65 else ("Medium" if p['risk_score'] >= 40 else "High")
