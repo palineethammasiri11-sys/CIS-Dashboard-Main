@@ -463,21 +463,20 @@ def render(ctx):
             r=sector_avg_vals, theta=cats, line=dict(color='#94A3B8', width=1.5, dash='dash'), name='Sector Avg'
         ))
 
-        # PATCH NOTE 7 (bugfix): label รอบขอบ (Health, AI Pred. ฯลฯ) โดนตัด/ตกขอบ
-        # เพราะ polar plot ขยายเต็มพื้นที่กรอบนอกเกินไป ไม่เหลือที่ให้ตัวหนังสือ
-        # แก้โดยหด "เฉพาะตัวกราฟวงกลม" ผ่าน polar.domain (x/y ไม่เต็ม 0-1) เพื่อเว้น
-        # ขอบรอบด้านไว้ให้ label ยืนได้ ส่วนกรอบนอก (height ของการ์ด) ยังคง 470px
-        # เท่ากับที่กำหนด ไม่กระทบ logic การคำนวณ stock_vals / sector_avg_vals เดิม
+        # PATCH NOTE 8 (bugfix): PATCH NOTE 7 หด polar.domain มากไป ทำให้ตัวกราฟ
+        # วงกลมดูเล็กเกินไป เหลือพื้นที่ว่างเยอะรอบขอบ (โดยเฉพาะช่วงบนใต้ title)
+        # แก้โดยขยาย domain ให้กราฟใหญ่ขึ้นอีกครั้ง แต่ยังเว้นระยะพอให้ label ไม่ชน
+        # ขอบกรอบเหมือนที่แก้ใน PATCH NOTE 7 (กรอบนอก 470px เท่าเดิม)
         fig_radar.update_layout(
             polar=dict(
-                domain=dict(x=[0.16, 0.84], y=[0.08, 0.90]),
+                domain=dict(x=[0.08, 0.92], y=[0.04, 0.96]),
                 radialaxis=dict(visible=True, range=[0, 100], showticklabels=False, linecolor="#CBD5E1", gridcolor="#E2E8F0"),
                 angularaxis=dict(linecolor="#CBD5E1", gridcolor="#E2E8F0", tickfont=dict(size=12, color="#64748B"))
             ),
             paper_bgcolor="#FFFFFF",
             plot_bgcolor="#FFFFFF",
             height=470,
-            margin=dict(l=55, r=55, t=45, b=35),
+            margin=dict(l=45, r=45, t=40, b=25),
             title=dict(text="RADAR: STOCK vs SECTOR AVG", font=dict(size=15, color="#64748B"), x=0.05, y=0.99),
             legend=dict(orientation="h", yanchor="bottom", y=1.04, xanchor="right", x=1, font=dict(size=13, color="#475569"))
         )
@@ -690,4 +689,4 @@ def render(ctx):
     <a href="{download_link}" download="{ctx.selected_ticker}_CIS_Analysis.csv" style="background:#3B82F6; color:white; border:none; padding:6px 14px; border-radius:6px; font-size:14px; text-decoration:none; display:inline-block; font-weight:bold; cursor:pointer;">📥 Export Data (CSV)</a>
     </div>""", unsafe_allow_html=True)
 
-    render_nav_footer("m7", prev_page=None, next_page=" Overview", show_home=False)
+    render_nav_footer("m7", prev_page=None, next_page=" Overview")
