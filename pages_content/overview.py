@@ -848,7 +848,7 @@ def render(ctx):
         unsafe_allow_html=True
     )
 
-    col_space1, col_space2, col_next, col_disc = st.columns(
+    col_space1, col_space2, col_prev, col_disc = st.columns(
         [1.3, 1.3, 1.3, 3.3]
     )
 
