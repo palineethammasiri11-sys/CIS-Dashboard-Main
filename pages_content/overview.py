@@ -472,13 +472,6 @@ def render(ctx):
                 ">
 
                     <div>
-                        ได้คะแนนภาพรวม
-                        <b style="color:#0F172A;">
-                            {overall:.1f}/100
-                        </b>
-                    </div>
-
-                    <div>
                         จัดอยู่ในกลุ่ม
                         <b style="color:{rec_color};">
                             "{rec_th}" ({rec})
