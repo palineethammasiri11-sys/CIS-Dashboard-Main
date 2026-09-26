@@ -583,7 +583,7 @@ def render(ctx):
     with r3_c1:
 
         st.html(f"""
-        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; height:400px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between; overflow-y:auto;">
+        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; height:447px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between; overflow-y:auto;">
             <div>
                 <div style="font-size:14.5px; font-weight:bold; color:#64748B; letter-spacing:0.5px; margin-bottom:8px;">
                     KEY FINANCIAL HIGHLIGHTS ({ctx.selected_ticker})
@@ -671,7 +671,7 @@ def render(ctx):
             watch.append("ยังไม่พบสัญญาณความเสี่ยงเชิงโครงสร้างที่ชัดเจนในงบล่าสุด")
 
         st.html(f"""
-        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; height:448px; box-sizing:border-box; overflow-y:auto;">
+        <div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px; height:447px; box-sizing:border-box; overflow-y:auto;">
             <div style="font-size:14px; font-weight:bold; color:#10B981; margin-bottom:6px;">
                 STRENGTHS ({ctx.selected_ticker})
             </div>
