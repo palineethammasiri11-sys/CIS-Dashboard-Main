@@ -179,12 +179,12 @@ def render(ctx):
 
         st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; text-align:center; display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box;">
     <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:8px;">RANKING</div>
-    <div style="background-color:{cup_bg}; border:1.5px solid {star_color}; border-radius:12px; padding:8px 8px 10px 8px; margin-bottom:10px;">
+    <div style="background-color:{cup_bg}; border:1.5px solid {star_color}; border-radius:12px; padding:8px 8px 10px 8px; margin-bottom:10px; flex:1; display:flex; flex-direction:column; justify-content:center;">
     <div style="font-size:14px; color:#0F172A; font-weight:bold;">ทั้งตลาด</div>
     <div style="font-size:13px; color:#64748B; margin-bottom:2px;">{n_all} หุ้นที่ติดตาม</div>
     <div><span style="font-size:32px; color:#0F172A; font-weight:800;">{rank_txt(overall_rank)}</span> <span style="font-size:14px; color:#64748B;">/ {n_all} หุ้น</span></div>
     </div>
-    <div style="border-top:1px solid #E2E8F0; padding-top:10px;">
+    <div style="border-top:1px solid #E2E8F0; padding-top:10px; flex:1; display:flex; flex-direction:column; justify-content:center;">
     <div style="font-size:14px; color:#64748B;">ในกลุ่ม</div>
     <div style="font-size:13px; color:#64748B; margin-bottom:2px;">{ctx.stock_info.get('sector','-')}</div>
     <div><span style="font-size:32px; color:#0F172A; font-weight:800;">{rank_txt(sector_rank)}</span> <span style="font-size:14px; color:#64748B;">/ {n_sector} หุ้น</span></div>{sector_block}
