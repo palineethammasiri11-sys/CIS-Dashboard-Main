@@ -282,7 +282,7 @@ def render(ctx):
             <div style="font-size:26px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
                 COMPANY HEALTH
             </h2>
-            <div style="font-size:16px; color:#64748B; margin-top:4px;">
+            <div style="font-size:16px; font-weight:400; color:#64748B; margin-top:4px;">
                 ประเมินสุขภาพทางการเงินของบริษัทจากมิติสำคัญตามงบการเงินจริง
             </div>
         </div>
