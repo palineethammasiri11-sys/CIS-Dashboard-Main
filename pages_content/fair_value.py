@@ -333,11 +333,13 @@ def render(ctx):
         ].sort_values('year') if not ctx.fair_value_yearly_df.empty else pd.DataFrame()
 
         if not fv_hist.empty:
+            hist_years = fv_hist['year'].round().astype(int).astype(str).tolist()
+
             fig_hist_val = go.Figure()
 
             fig_hist_val.add_trace(
                 go.Scatter(
-                    x=fv_hist['year'].round().astype(int).astype(str),
+                    x=hist_years,
                     y=fv_hist['fair_value'],
                     mode='lines+markers',
                     name='Fair Value',
@@ -347,7 +349,7 @@ def render(ctx):
 
             fig_hist_val.add_trace(
                 go.Scatter(
-                    x=fv_hist['year'].round().astype(int).astype(str),
+                    x=hist_years,
                     y=fv_hist['price'],
                     mode='lines+markers',
                     name='Actual Price',
@@ -368,9 +370,11 @@ def render(ctx):
                 ),
                 xaxis=dict(
                     type="category",
+                    categoryorder="array",
+                    categoryarray=hist_years,
                     tickmode="array",
-                    tickvals=fv_hist['year'].round().astype(int).astype(str).tolist(),
-                    ticktext=fv_hist['year'].round().astype(int).astype(str).tolist(),
+                    tickvals=hist_years,
+                    ticktext=hist_years,
                     tickfont=dict(size=12, color="#64748B"),
                     gridcolor="#E2E8F0"
                 ),
