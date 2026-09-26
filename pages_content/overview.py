@@ -22,7 +22,7 @@ def render(ctx):
     st.html("""
     <div style="margin-bottom:20px;">
         <div style="font-size:26px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
-            OVERVIEW DASHBOARD
+            STOCK OVERVIEW
         </div>
         <div style="font-size:16px; color:#64748B; margin-top:4px;">
             ภาพรวมข้อมูลและการวิเคราะห์เพื่อสนับสนุนการตัดสินใจลงทุน
@@ -848,7 +848,7 @@ def render(ctx):
         unsafe_allow_html=True
     )
 
-    col_prev, col_space, col_next, col_disc = st.columns(
+    col_prev, col_home, col_next, col_disc = st.columns(
         [1.3, 1.3, 1.3, 3.3]
     )
 
