@@ -53,7 +53,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 
-from common import fmt_mb, fmt_ratio, safe, show_chart, render_nav_footer, COMPANY_NAMES, SECTOR_MAP
+from common import fmt_mb, fmt_ratio, safe, render_nav_footer, COMPANY_NAMES, SECTOR_MAP
 
 
 def render(ctx):
@@ -185,7 +185,13 @@ def render(ctx):
 
         # ความสูงเท่ากับการ์ด STRATEGIC INVESTMENT POSITION / RANKING (360px)
         # ที่อยู่แถวเดียวกัน ป้องกันไม่ให้การ์ดนี้สูงเกินเพื่อนบ้านสองใบซ้ายมือ
-        show_chart(fig_matrix, key="industry_matrix", expand_height=700)
+        # ใช้ st.plotly_chart ตรง ๆ แทน show_chart() เพื่อไม่ให้มีปุ่ม "ขยายกราฟ"
+        # โผล่ใต้กราฟ (show_chart ของ common.py แถมปุ่มนี้มาโดยอัตโนมัติ)
+        st.plotly_chart(
+            fig_matrix,
+            use_container_width=True,
+            config={"displayModeBar": True, "displaylogo": False},
+        )
 
     st.markdown("""
     <style>
@@ -474,7 +480,12 @@ def render(ctx):
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=13, color="#475569"))
         )
 
-        show_chart(fig_radar, key="industry_radar")
+        # ใช้ st.plotly_chart ตรง ๆ แทน show_chart() เพื่อไม่ให้มีปุ่ม "ขยายกราฟ" โผล่ใต้กราฟ
+        st.plotly_chart(
+            fig_radar,
+            use_container_width=True,
+            config={"displayModeBar": True, "displaylogo": False},
+        )
 
     # ---------------- DIMENSION PERCENTILE RANK (เต็มความกว้าง แทนที่พื้นที่ว่างใต้ Peer Comparison / Radar) ----------------
     def calc_pct(df, col):
