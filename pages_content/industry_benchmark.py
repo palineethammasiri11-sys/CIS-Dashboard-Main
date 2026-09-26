@@ -71,4 +71,591 @@ def render(ctx):
         return None if pd.isna(v) else int(v)
 
     sector_rank_raw = _rank(ctx.stock_info.get('sector_rank', 1))
-    overall_rank_raw
+    overall_rank_raw = _rank(ctx.stock_info.get('overall_rank', 1))
+    no_data = sector_rank_raw is None or overall_rank_raw is None
+    sector_rank = sector_rank_raw or 0
+    overall_rank = overall_rank_raw or 0
+    n_all = len(ctx.scores_df)
+    pct_in_sector = round((sector_rank / max(n_sector, 1)) * 100)
+    rank_txt = lambda v: '-' if not v else v
+
+    st.markdown("""
+    <div style="margin-bottom:20px;">
+        <div style="font-size:26px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
+            INDUSTRY BENCHMARK
+        </div>
+        <div style="font-size:16px; color:#64748B; margin-top:4px;">
+            เปรียบเทียบศักยภาพของหุ้นกับบริษัทในกลุ่มอุตสาหกรรมและหุ้นที่ติดตาม
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    r1_c1, r1_c2, r1_c3 = st.columns([1.1, 0.8, 2.1])
+
+    single_member_sector = n_sector < 2
+
+    if no_data:
+        position_label, pos_stars = "INSUFFICIENT DATA", 0
+    elif single_member_sector:
+        position_label = "INDUSTRY LEADER" if overall_rank == 1 else ("STRONG COMPETITOR" if overall_rank <= max(2, n_all // 2) else "LAGGING PEER")
+        pos_stars = 5 if overall_rank == 1 else (4 if overall_rank <= max(2, n_all // 2) else 2)
+    else:
+        position_label = "INDUSTRY LEADER" if sector_rank == 1 else ("STRONG COMPETITOR" if sector_rank <= max(2, n_sector // 2) else "LAGGING PEER")
+        pos_stars = 5 if sector_rank == 1 else (4 if sector_rank <= max(2, n_sector // 2) else 2)
+
+    # ---------------- STRATEGIC INVESTMENT POSITION ----------------
+    with r1_c1:
+        if no_data:
+            position_caption = "ข้อมูลคะแนนของหุ้นตัวนี้ไม่เพียงพอสำหรับการจัดอันดับ"
+        elif single_member_sector:
+            position_caption = (f"กลุ่ม {ctx.stock_info.get('sector','-')} มีเพียง 1 หุ้น จึงจัดอันดับเทียบทั้ง {n_all} หุ้น: "
+                                f"อันดับที่ {overall_rank} จาก Overall Score = {safe(ctx.stock_info.get('overall_score')):.1f}/100")
+        else:
+            position_caption = (f"อันดับที่ {sector_rank} จาก {n_sector} บริษัทในกลุ่ม {ctx.stock_info.get('sector','-')} "
+                                f"จาก Overall Score = {safe(ctx.stock_info.get('overall_score')):.1f}/100")
+
+        star_color = "#64748B" if no_data else ("#10B981" if pos_stars == 5 else ("#F59E0B" if pos_stars >= 4 else "#EF4444"))
+        cup_bg = "rgba(100,116,139,0.12)" if no_data else ("rgba(16,185,129,0.12)" if pos_stars == 5 else ("rgba(245,158,11,0.12)" if pos_stars >= 4 else "rgba(239,68,68,0.12)"))
+
+        st.markdown(f"""<div style="background:#FFFFFF; border:2px solid {star_color}; border-radius:10px; padding:14px; height:360px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between;">
+    <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:8px;">STRATEGIC INVESTMENT POSITION</div>
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; flex-grow:1;">
+    <div style="background:{cup_bg}; border:2px solid {star_color}; border-radius:50%; width:100px; height:100px; display:flex; align-items:center; justify-content:center; font-size:46px;">🏆</div>
+    <div style="text-align:center;">
+    <div style="color:{star_color}; font-size:28px; font-weight:bold;">{position_label}</div>
+    <div style="color:{star_color}; font-size:24px; letter-spacing:4px; margin-top:6px;">{'★'*pos_stars}{'☆'*(5-pos_stars)}</div>
+    </div>
+    </div>
+    <p style="color:#64748B; font-size:15px; line-height:1.4; margin:0;">{position_caption}</p>
+    </div>""", unsafe_allow_html=True)
+
+    # ---------------- RANKING ----------------
+    with r1_c2:
+        pct_overall = round((overall_rank / max(n_all, 1)) * 100)
+        if no_data:
+            pct_overall = 0
+
+        sector_block = (
+            f"""<span style="display:inline-block; margin-top:6px; background-color:rgba(100,116,139,0.10); color:#64748B; font-size:15px; font-weight:bold; padding:3px 14px; border-radius:8px;">กลุ่มมีเพียง 1 หุ้น</span>"""
+            if single_member_sector else
+            f"""<span style="display:inline-block; margin-top:6px; background-color:rgba(245,158,11,0.15); color:#F59E0B; font-size:15px; font-weight:bold; padding:3px 14px; border-radius:8px;">Top {pct_in_sector}%</span>"""
+        )
+
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; text-align:center; display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box;">
+    <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:8px;">RANKING</div>
+    <div style="background-color:{cup_bg}; border:1.5px solid {star_color}; border-radius:12px; padding:8px 8px 10px 8px; margin-bottom:10px;">
+    <div style="font-size:14px; color:#0F172A; font-weight:bold;">ทั้งตลาด</div>
+    <div style="font-size:13px; color:#64748B; margin-bottom:2px;">{n_all} หุ้นที่ติดตาม</div>
+    <div><span style="font-size:32px; color:#0F172A; font-weight:800;">{rank_txt(overall_rank)}</span> <span style="font-size:14px; color:#64748B;">/ {n_all} หุ้น</span></div>
+    <span style="display:inline-block; margin-top:6px; background-color:{star_color}; color:#FFFFFF; font-size:14px; font-weight:bold; padding:3px 14px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.12);">Top {pct_overall}%</span>
+    </div>
+    <div style="border-top:1px solid #E2E8F0; padding-top:10px;">
+    <div style="font-size:14px; color:#64748B;">ในกลุ่ม</div>
+    <div style="font-size:13px; color:#64748B; margin-bottom:2px;">{ctx.stock_info.get('sector','-')}</div>
+    <div><span style="font-size:28px; color:#0F172A; font-weight:bold;">{rank_txt(sector_rank)}</span> <span style="font-size:14px; color:#64748B;">/ {n_sector} หุ้น</span></div>
+    {sector_block}
+    </div>
+    </div>""", unsafe_allow_html=True)
+
+    # ---------------- STRATEGIC MATRIX (ย้ายมาจาก r2_c3 เดิม + ขยายใหญ่ขึ้น) ----------------
+    with r1_c3:
+        matrix_df = ctx.scores_df[['ticker', 'health_score', 'overall_score']].dropna().copy()
+        matrix_df.columns = ['Company', 'Business_Quality', 'Investment_Attract']
+
+        matrix_star_color = {5: "#10B981", 4: "#F59E0B", 3: "#F59E0B", 2: "#EF4444", 1: "#EF4444"}.get(pos_stars, "#64748B")
+
+        color_map = {t: (matrix_star_color if t == ctx.selected_ticker else "#CBD5E1") for t in matrix_df['Company']}
+
+        fig_matrix = px.scatter(
+            matrix_df, x='Business_Quality', y='Investment_Attract',
+            text='Company', color='Company', color_discrete_map=color_map
+        )
+
+        fig_matrix.update_traces(textposition='top center', marker=dict(size=16, line=dict(width=1.5, color='#FFFFFF')))
+        fig_matrix.add_hline(y=50, line_width=1, line_dash="dash", line_color="#CBD5E1")
+        fig_matrix.add_vline(x=50, line_width=1, line_dash="dash", line_color="#CBD5E1")
+
+        fig_matrix.add_annotation(x=25, y=95, text="💎 Hidden Gem", showarrow=False, font=dict(size=16, color="#10B981"))
+        fig_matrix.add_annotation(x=80, y=95, text="🏆 Market Leader", showarrow=False, font=dict(size=16, color="#A855F7"))
+        fig_matrix.add_annotation(x=25, y=10, text="⚠️ Value Trap", showarrow=False, font=dict(size=16, color="#EF4444"))
+        fig_matrix.add_annotation(x=80, y=10, text="⭐ Competitive", showarrow=False, font=dict(size=15, color="#F59E0B"))
+
+        fig_matrix.update_layout(
+            paper_bgcolor="#FFFFFF",
+            plot_bgcolor="#F8FAFC",
+            height=360,
+            margin=dict(l=20, r=20, t=35, b=20),
+            title=dict(text="STRATEGIC MATRIX (All 8 Stocks)", font=dict(size=17, color="#64748B"), x=0.03, y=0.99),
+            xaxis=dict(title=dict(text="Business Quality (Health Score) →", font=dict(size=13, color="#64748B")), range=[0, 100], showgrid=False, showticklabels=False),
+            yaxis=dict(title=dict(text="Investment Attractiveness (Overall) →", font=dict(size=13, color="#64748B")), range=[0, 100], showgrid=False, showticklabels=False),
+            showlegend=False
+        )
+
+        # ความสูงเท่ากับการ์ด STRATEGIC INVESTMENT POSITION / RANKING (360px)
+        # ที่อยู่แถวเดียวกัน ป้องกันไม่ให้การ์ดนี้สูงเกินเพื่อนบ้านสองใบซ้ายมือ
+        # ใช้ st.plotly_chart ตรง ๆ แทน show_chart() เพื่อไม่ให้มีปุ่ม "ขยายกราฟ"
+        # โผล่ใต้กราฟ (show_chart ของ common.py แถมปุ่มนี้มาโดยอัตโนมัติ)
+        st.plotly_chart(
+            fig_matrix,
+            use_container_width=True,
+            config={"displayModeBar": True, "displaylogo": False},
+        )
+
+    st.markdown("""
+    <style>
+
+    /* Peer Comparison - Desktop */
+    .peer-comparison-table {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        table-layout: auto !important;
+        border-collapse: collapse !important;
+        box-sizing: border-box !important;
+    }
+
+    .peer-comparison-table th,
+    .peer-comparison-table td {
+        vertical-align: middle !important;
+        box-sizing: border-box !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+    }
+
+    .peer-comparison-table th {
+        padding: 6px 4px !important;
+        line-height: 1.2 !important;
+    }
+
+    .peer-comparison-table td {
+        padding: 7px 4px !important;
+        line-height: 1.25 !important;
+    }
+
+    .peer-comparison-table td span {
+        display: inline-block !important;
+        max-width: 100% !important;
+        line-height: 1.2 !important;
+        white-space: normal !important;
+    }
+
+
+    /* Mobile */
+    @media (max-width: 768px) {
+
+        /* Peer Comparison */
+        .peer-comparison-card {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+
+        .peer-comparison-table {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            table-layout: fixed !important;
+            font-size: 10px !important;
+            box-sizing: border-box !important;
+        }
+
+        .peer-comparison-table th,
+        .peer-comparison-table td {
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            white-space: normal !important;
+            word-break: normal !important;
+            overflow-wrap: break-word !important;
+        }
+
+        .peer-comparison-table th {
+            font-size: 9.5px !important;
+            line-height: 1.15 !important;
+            padding: 5px 2px !important;
+        }
+
+        .peer-comparison-table td {
+            font-size: 10px !important;
+            line-height: 1.2 !important;
+            padding: 6px 2px !important;
+        }
+
+        .peer-comparison-table td span {
+            display: inline-block !important;
+            max-width: 100% !important;
+            white-space: normal !important;
+            word-break: normal !important;
+            overflow-wrap: break-word !important;
+            line-height: 1.2 !important;
+        }
+
+
+        /* Dimension Percentile */
+        .dimension-percentile-card {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            height: auto !important;
+            min-height: 310px !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+
+        .industry-dimension-grid {
+            grid-template-columns: 1fr !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+            gap: 8px !important;
+        }
+
+        .industry-dimension-grid > div {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+    }
+
+    </style>
+    """, unsafe_allow_html=True)
+
+    # แถว 2 เหลือ 2 คอลัมน์ (Strategic Matrix ที่เคยอยู่ตำแหน่งที่ 3 ย้ายขึ้นไป r1_c3 แล้ว)
+    r2_c1, r2_c2 = st.columns([2.0, 1.3])
+
+    # ---------------- DIMENSION PERCENTILE RANK ----------------
+    with r2_c1:
+        def calc_pct(df, col):
+            s = df[col].rank(pct=True)
+            match = df['ticker'] == ctx.selected_ticker
+            if not match.any() or pd.isna(s[match].values[0]):
+                return None
+            return int(round(100 - s[match].values[0] * 100))
+
+        dims_cols = [
+            ("Profitability", 'health_score', "#10B981"),
+            ("Growth", 'revenue_growth_yoy', "#3B82F6"),
+            ("Valuation", 'valuation_score', "#F59E0B"),
+            ("Entry Timing", 'timing_score', "#10B981"),
+            ("Risk (safer)", 'risk_score', "#F59E0B"),
+            ("AI Prediction", 'ai_score', "#A855F7"),
+        ]
+
+        def build_dims(df):
+            result = []
+            for label, col, color in dims_cols:
+                if col == 'revenue_growth_yoy' and pd.isna(ctx.stock_info.get('revenue_growth_yoy')):
+                    pct = None
+                else:
+                    pct = calc_pct(df, col)
+                result.append((label, pct, color))
+            return result
+
+        dims_market = build_dims(ctx.scores_df)
+
+        def dim_pct_card(label, pct, color):
+            if pct is None:
+                return f"""<div style="background:#0F172A; padding:4px 2px; border-radius:6px; border:1px solid #1E293B;">
+    <div style="color:#94A3B8; font-size:11px;">{label}</div><div style="color:#64748B; font-size:14px; font-weight:bold; margin:1px 0;">N/A</div>
+    <div style="color:#64748B; font-size:11px;">No data</div></div>"""
+            tier = "Excellent" if pct <= 20 else ("Good" if pct <= 45 else ("Fair" if pct <= 70 else "Weak"))
+            return f"""<div style="background:#F8FAFC; padding:4px 2px; border-radius:6px; border:1px solid #E2E8F0;">
+    <div style="color:#64748B; font-size:11px;">{label}</div><div style="color:{color}; font-size:15px; font-weight:bold; margin:1px 0;">Top {max(pct,1)}%</div>
+    <div style="color:{color}; font-size:11px;">{tier}</div></div>"""
+
+        if single_member_sector:
+            sector_section = f"""<div style="background:rgba(100,116,139,0.06); border:1px dashed #CBD5E1; border-radius:8px; padding:8px; text-align:center; margin-bottom:6px;">
+    <div style="color:#64748B; font-size:12px; line-height:1.3;">กลุ่ม <b>{ctx.stock_info.get('sector','-')}</b> มีเพียง 1 หุ้น จึงไม่สามารถเปรียบเทียบ percentile ภายในกลุ่มได้อย่างมีความหมาย</div>
+    </div>"""
+        else:
+            dims_sector = build_dims(ctx.sector_peers)
+            sector_section = f"""<div style="font-size:12px; color:#475569; margin-bottom:4px;">เปรียบเทียบกับกลุ่มอุตสาหกรรม {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
+    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; text-align:center; margin-bottom:6px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
+    {''.join([dim_pct_card(l, p, c) for l, p, c in dims_sector])}
+    </div>"""
+
+        market_section = f"""<div style="font-size:12px; color:#475569; margin-bottom:4px;">เปรียบเทียบกับหุ้นทั้ง {n_all} ตัว</div>
+    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; text-align:center; margin-bottom:6px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
+    {''.join([dim_pct_card(l, p, c) for l, p, c in dims_market])}
+    </div>"""
+
+        # PATCH NOTE 4: height 430px + overflow-y:auto (เลื่อนได้) -> height 310px + overflow:hidden (ฟิก)
+        # ให้เท่ากับกรอบกราฟ RADAR ที่อยู่แถวเดียวกัน (r2_c2)
+        st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:10px; height:310px; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-start; box-sizing:border-box;">
+    <div>
+    <div style="font-size:15px; color:#64748B; font-weight:bold; margin-bottom:6px;">DIMENSION PERCENTILE RANK</div>
+    {market_section}
+    </div>
+    <div style="border-top:1px dashed #CBD5E1; margin-bottom:6px;"></div>
+    <div>
+    {sector_section}
+    </div>
+    </div>""", unsafe_allow_html=True)
+
+    # ---------------- RADAR: STOCK vs SECTOR AVG ----------------
+    with r2_c2:
+        cats = ['Health', 'Valuation', 'Timing', 'AI Pred.', 'Risk', 'Industry']
+
+        stock_vals = [
+            safe(ctx.stock_info.get('health_score')),
+            safe(ctx.stock_info.get('valuation_score')),
+            safe(ctx.stock_info.get('timing_score')),
+            safe(ctx.stock_info.get('ai_score')),
+            safe(ctx.stock_info.get('risk_score')),
+            safe(ctx.stock_info.get('industry_score'))
+        ]
+
+        sector_avg_vals = [
+            ctx.sector_peers['health_score'].mean(),
+            ctx.sector_peers['valuation_score'].mean(),
+            ctx.sector_peers['timing_score'].mean(),
+            ctx.sector_peers['ai_score'].mean(),
+            ctx.sector_peers['risk_score'].mean(),
+            ctx.sector_peers['industry_score'].mean()
+        ]
+
+        radar_color = {5: "#10B981", 4: "#F59E0B", 3: "#F59E0B", 2: "#EF4444", 1: "#EF4444"}.get(pos_stars, "#64748B")
+        fill_color = {
+            5: "rgba(16,185,129,0.25)", 4: "rgba(245,158,11,0.25)", 3: "rgba(245,158,11,0.25)",
+            2: "rgba(239,68,68,0.25)", 1: "rgba(239,68,68,0.25)"
+        }.get(pos_stars, "rgba(100,116,139,0.20)")
+
+        fig_radar = go.Figure()
+
+        fig_radar.add_trace(go.Scatterpolar(
+            r=stock_vals, theta=cats, fill='toself',
+            fillcolor=fill_color, line=dict(color=radar_color, width=2), name=ctx.selected_ticker
+        ))
+        fig_radar.add_trace(go.Scatterpolar(
+            r=sector_avg_vals, theta=cats, line=dict(color='#94A3B8', width=1.5, dash='dash'), name='Sector Avg'
+        ))
+
+        fig_radar.update_layout(
+            polar=dict(
+                radialaxis=dict(visible=True, range=[0, 100], showticklabels=False, linecolor="#CBD5E1", gridcolor="#E2E8F0"),
+                angularaxis=dict(linecolor="#CBD5E1", gridcolor="#E2E8F0", tickfont=dict(size=13, color="#64748B"))
+            ),
+            paper_bgcolor="#FFFFFF",
+            plot_bgcolor="#FFFFFF",
+            height=310,
+            margin=dict(l=25, r=25, t=30, b=15),
+            title=dict(text="RADAR: STOCK vs SECTOR AVG", font=dict(size=15, color="#64748B"), x=0.05, y=0.98),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=13, color="#475569"))
+        )
+
+        # ใช้ st.plotly_chart ตรง ๆ แทน show_chart() เพื่อไม่ให้มีปุ่ม "ขยายกราฟ" โผล่ใต้กราฟ
+        st.plotly_chart(
+            fig_radar,
+            use_container_width=True,
+            config={"displayModeBar": True, "displaylogo": False},
+        )
+
+    # ---------------- PEER COMPARISON (เต็มความกว้าง แทนที่ตำแหน่ง Dimension Percentile Rank เดิม) ----------------
+    peers_sorted = ctx.sector_peers.sort_values('overall_score', ascending=False)
+
+    def badge(val, thresholds, labels, colors):
+        for th, lab, col in zip(thresholds, labels, colors):
+            if val >= th:
+                return f'<span style="color:{col}; font-weight:bold;">{lab}</span>'
+        return f'<span style="color:{colors[-1]};">{labels[-1]}</span>'
+
+    rows_html = ""
+
+    for _, p in peers_sorted.iterrows():
+        is_sel = p['ticker'] == ctx.selected_ticker
+
+        star_n = pos_stars if is_sel else min(5, max(1, round(safe(p['overall_score']) / 20)))
+
+        row_star_color = (
+            "#10B981" if star_n == 5
+            else "#F59E0B" if star_n >= 4
+            else "#EF4444"
+        )
+
+        row_bg = (
+            "background:rgba(16,185,129,0.10);" if is_sel and star_n == 5
+            else "background:rgba(245,158,11,0.10);" if is_sel and star_n >= 4
+            else "background:rgba(239,68,68,0.10);" if is_sel
+            else ""
+        )
+
+        health_b = badge(
+            p['health_score'], [70, 45, 0],
+            ["Excellent", "Good", "Weak"], ["#10B981", "#3B82F6", "#EF4444"]
+        )
+
+        val_b = "N/A" if pd.isna(p['margin_of_safety']) else (
+            "Undervalued" if p['margin_of_safety'] > 10 else
+            ("Overvalued" if p['margin_of_safety'] < -10 else "Fair Value")
+        )
+        val_c = (
+            "#10B981" if not pd.isna(p['margin_of_safety']) and p['margin_of_safety'] > 10
+            else "#EF4444" if not pd.isna(p['margin_of_safety']) and p['margin_of_safety'] < -10
+            else "#64748B"
+        )
+
+        timing_b = badge(
+            p['timing_score'], [65, 45, 0],
+            ["Good Entry", "Neutral", "Bad Entry"], ["#10B981", "#F59E0B", "#EF4444"]
+        )
+
+        ai_b = badge(
+            p['ai_score'], [65, 45, 0],
+            ["Bullish", "Neutral", "Bearish"], ["#10B981", "#64748B", "#EF4444"]
+        )
+
+        risk_b = "Low" if p['risk_score'] >= 65 else ("Medium" if p['risk_score'] >= 40 else "High")
+        risk_c = (
+            "#10B981" if p['risk_score'] >= 65
+            else "#F59E0B" if p['risk_score'] >= 40
+            else "#EF4444"
+        )
+
+        name_disp = f"⭐ {p['ticker']}" if is_sel else p['ticker']
+
+        # ใช้การจัด Style แบบ Light Theme ตามทีม Layout เป็นหลัก
+        name_c = row_star_color if is_sel else "#0F172A"
+
+        rows_html += f"""<tr style="border-bottom:1px solid #E2E8F0; {row_bg}">
+    <td style="text-align:left; padding:6px 0; color:{name_c}; font-weight:bold; min-width:0; overflow-wrap:anywhere; word-break:break-word;">{name_disp}</td>
+    <td style="padding:7px 4px;">{health_b}</td>
+    <td style="padding:7px 4px;"><span style="color:{val_c};">{val_b}</span></td>
+    <td style="padding:7px 4px;">{timing_b}</td>
+    <td style="padding:7px 4px;">{ai_b}</td>
+    <td style="padding:7px 4px;"><span style="color:{risk_c};">{risk_b}</span></td>
+    <td style="color:{row_star_color}; letter-spacing:0.5px; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:clip;">{'★'*star_n}{'☆'*(5-star_n)}</td>
+    </tr>"""
+
+    peer_html = f"""
+<div class="peer-comparison-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:auto; width:100%; max-width:100%; min-width:0; box-sizing:border-box;">
+    <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:6px;">
+        PEER COMPARISON — {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)
+    </div>
+
+    <table class="peer-comparison-table" style="width:100%; max-width:100%; min-width:0; text-align:center; font-size:15px; color:#475569; border-collapse:collapse; box-sizing:border-box;">
+        <tr style="border-bottom:1px solid #E2E8F0; color:#64748B; font-size:14px;">
+            <th style="text-align:left; padding:5px 0;">Company</th>
+            <th>Health</th>
+            <th>Fair Value</th>
+            <th>Entry Timing</th>
+            <th>AI Prediction</th>
+            <th>Risk</th>
+            <th>Overall</th>
+        </tr>
+
+        {rows_html}
+
+    </table>
+
+    <div style="font-size:12px; color:#64748B; margin-top:8px; line-height:1.3;">
+        *จัดอันดับจาก Overall Score ที่คำนวณจริงจากข้อมูลใน cis_summary_scores
+    </div>
+</div>
+"""
+
+    st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
+    st.html(peer_html)
+
+    st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
+    r3_c1, r3_c2 = st.columns([1.3, 1.3])
+
+    # ---------------- COMPETITIVE ADVANTAGE ----------------
+    with r3_c1:
+        compare_df = ctx.scores_df if single_member_sector else ctx.sector_peers
+        strengths_ib, weaknesses_ib = [], []
+
+        if ctx.stock_info['health_score'] > compare_df['health_score'].mean():
+            strengths_ib.append("Health Score สูงกว่าค่าเฉลี่ย")
+
+        if ctx.stock_info['ai_score'] > compare_df['ai_score'].mean():
+            strengths_ib.append("AI Prediction Score สูงกว่าค่าเฉลี่ย")
+
+        if safe(ctx.stock_info.get('revenue_growth_yoy')) > 0:
+            strengths_ib.append(f"รายได้เติบโต {safe(ctx.stock_info.get('revenue_growth_yoy')):.1f}% YoY")
+
+        if not strengths_ib:
+            strengths_ib.append("ผลประกอบการยังอยู่ระหว่างพัฒนาเทียบกลุ่ม")
+
+        if ctx.stock_info['valuation_score'] < compare_df['valuation_score'].mean():
+            weaknesses_ib.append("Valuation แพงกว่าค่าเฉลี่ย")
+
+        if ctx.stock_info['risk_score'] < compare_df['risk_score'].mean():
+            weaknesses_ib.append("ความเสี่ยงสูงกว่าค่าเฉลี่ย")
+
+        if ctx.stock_info['health_score'] < compare_df['health_score'].mean():
+            weaknesses_ib.append("Health Score ต่ำกว่าค่าเฉลี่ย")
+
+        if ctx.stock_info['ai_score'] < compare_df['ai_score'].mean():
+            weaknesses_ib.append("AI Prediction Score ต่ำกว่าค่าเฉลี่ย")
+
+        if not weaknesses_ib:
+            weaknesses_ib.append("ไม่พบจุดอ่อนเชิงเปรียบเทียบที่ชัดเจน")
+
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:275px;">
+    <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:6px;">COMPETITIVE ADVANTAGE</div>
+    <div style="font-size:15px; color:#10B981; font-weight:bold; margin-bottom:2px;">STRENGTHS</div>
+    <ul style="color:#475569; font-size:15px; line-height:1.4; padding-left:14px; margin:0 0 6px 0;">{''.join([f'<li>{s}</li>' for s in strengths_ib])}</ul>
+    <div style="font-size:15px; color:#EF4444; font-weight:bold; margin-bottom:2px;">WEAKNESSES / RISKS</div>
+    <ul style="color:#475569; font-size:15px; line-height:1.4; padding-left:14px; margin:0;">{''.join([f'<li>{w}</li>' for w in weaknesses_ib])}</ul>
+    </div>""", unsafe_allow_html=True)
+
+    # ---------------- EXPLAINABLE AI SUMMARY ----------------
+    with r3_c2:
+        compare_desc = (
+            f"เทียบกับทั้ง {n_all} หุ้นที่ติดตาม (กลุ่มมีตัวเดียว)"
+            if single_member_sector
+            else "เทียบกับบริษัทในกลุ่มเดียวกัน"
+        )
+        avg_label = "Overall avg" if single_member_sector else "Sector avg"
+
+        def _metric_row(label, col):
+            v = ctx.stock_info.get(col)
+            avg = compare_df[col].mean()
+            if pd.isna(v):
+                return f'<div><span style="color:#64748B;">–</span> {label}: N/A</div>'
+            ok = v >= avg
+            icon = '<span style="color:#10B981;">✔</span>' if ok else '<span style="color:#EF4444;">✘</span>'
+            return f'<div>{icon} {label}: {v:.1f} ({avg_label} {avg:.1f})</div>'
+
+        metric_rows = "".join(_metric_row(l, c) for l, c in [
+            ("Health Score", 'health_score'), ("Valuation Score", 'valuation_score'),
+            ("AI Prediction Score", 'ai_score'), ("Risk Score", 'risk_score')])
+
+        if no_data:
+            rank_sentence = "มีข้อมูลไม่เพียงพอสำหรับการจัดอันดับ"
+        elif single_member_sector:
+            rank_sentence = f"อยู่อันดับที่ <b>{overall_rank}</b> จาก {n_all} หุ้นที่ติดตาม (กลุ่ม {ctx.stock_info.get('sector','-')} มีหุ้นตัวเดียว)"
+        else:
+            rank_sentence = f"อยู่อันดับที่ <b>{sector_rank}</b> จาก {n_sector} บริษัทในกลุ่ม {ctx.stock_info.get('sector','-')}"
+
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:275px;">
+    <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:6px;">EXPLAINABLE AI SUMMARY</div>
+    <p style="color:#475569; font-size:15px; line-height:1.4; margin:0 0 8px 0;">
+    <b>{ctx.selected_ticker}</b> {rank_sentence} (Overall Score {safe(ctx.stock_info.get('overall_score')):.1f}/100) {compare_desc}:</p>
+    <div style="color:#475569; font-size:15px; line-height:1.5;">
+    {metric_rows}
+    </div></div>""", unsafe_allow_html=True)
+
+    import base64
+
+    csv_text = ctx.scores_df[
+        ctx.scores_df['ticker'] == ctx.selected_ticker
+    ].to_csv(index=False)
+
+    b64_csv = base64.b64encode(csv_text.encode('utf-8-sig')).decode()
+    download_link = f'data:file/csv;base64,{b64_csv}'
+
+    st.markdown(f"""<div style="display:flex; justify-content:space-between; align-items:center; background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:10px 14px; margin-top:12px;">
+    <div style="font-size:15px; color:#475569;"><b>EXPORT & INDUSTRY DATA</b><br><span style="color:#64748B; font-size:14px;">ดาวน์โหลดคะแนนวิเคราะห์ทั้งหมดของ {ctx.selected_ticker} (ข้อมูลจริงจาก cis_summary_scores)</span></div>
+    <a href="{download_link}" download="{ctx.selected_ticker}_CIS_Analysis.csv" style="background:#3B82F6; color:white; border:none; padding:6px 14px; border-radius:6px; font-size:14px; text-decoration:none; display:inline-block; font-weight:bold; cursor:pointer;">📥 Export Data (CSV)</a>
+    </div>""", unsafe_allow_html=True)
+
+    render_nav_footer("m7", prev_page=None, next_page=" Overview")
