@@ -122,14 +122,23 @@ def render(ctx):
 
     single_member_sector = n_sector < 2
 
+    # ดาว/label อ้างอิงตาม percentile ของอันดับ "ทั้งตลาด" (overall_rank เทียบ n_all)
+    # เพื่อให้จำนวนดาวสอดคล้องกับ Top % ที่แสดงในการ์ด RANKING เสมอ
+    # (ไม่ใช้ sector_rank ตัดสินดาวอีกต่อไป เพราะกลุ่มเล็กทำให้ตัวเลขบิดเบือนได้)
     if no_data:
         position_label, pos_stars = "INSUFFICIENT DATA", 0
-    elif single_member_sector:
-        position_label = "INDUSTRY LEADER" if overall_rank == 1 else ("STRONG COMPETITOR" if overall_rank <= max(2, n_all // 2) else "LAGGING PEER")
-        pos_stars = 5 if overall_rank == 1 else (4 if overall_rank <= max(2, n_all // 2) else 2)
     else:
-        position_label = "INDUSTRY LEADER" if sector_rank == 1 else ("STRONG COMPETITOR" if sector_rank <= max(2, n_sector // 2) else "LAGGING PEER")
-        pos_stars = 5 if sector_rank == 1 else (4 if sector_rank <= max(2, n_sector // 2) else 2)
+        market_score = 100 - (overall_rank - 1) / max(n_all - 1, 1) * 100
+        if overall_rank == 1:
+            position_label, pos_stars = "INDUSTRY LEADER", 5
+        elif market_score >= 60:
+            position_label, pos_stars = "STRONG COMPETITOR", 4
+        elif market_score >= 40:
+            position_label, pos_stars = "AVERAGE PERFORMER", 3
+        elif market_score >= 20:
+            position_label, pos_stars = "BELOW AVERAGE", 2
+        else:
+            position_label, pos_stars = "LAGGING PEER", 1
 
     # ---------------- STRATEGIC INVESTMENT POSITION ----------------
     with r1_c1:
