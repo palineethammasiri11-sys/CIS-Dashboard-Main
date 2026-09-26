@@ -27,14 +27,14 @@ pages_content/ai_prediction.py
 - ส่วน FORECAST และ MODEL EXPLANATION ด้านล่างไม่ถูกแก้ไข (ไม่มีอยู่ในภาพ mockup ที่ได้รับ) — โครง/ตรรกะ
   เดิมทั้งหมดยังเหมือน v6 ทุกประการ
 
-⚠️ หมายเหตุถึงทีม (ไม่ได้แก้เอง รอ confirm ก่อน):
-ในภาพ mockup ป้ายกำกับการ์ดที่ 3 เขียนว่า "โอกาสที่ราคาจะปรับลดลง" แต่ค่าที่โชว์อยู่คือ prob_up
-(ความน่าจะเป็นที่ราคาจะขึ้น) ตามตัวแปรเดิมของ v6 ทั้งในการ์ดนี้และในประโยคอธิบายกล่อง AI SIGNAL
-ทำให้ป้าย/ตัวเลขดูสลับทิศทางกันเวลาโมเดลทำนายขาลง (เช่น โชว์ 29% แต่โอกาสขาลงจริงคือ 71%)
-เวอร์ชันนี้ "ไม่ได้แก้ค่าตัวเลข" ให้เอง — เปลี่ยนแค่ป้ายกำกับให้คงที่ตรงกับค่าที่โชว์จริง
-("โอกาสที่ราคาจะปรับขึ้น" เสมอ) เพื่อไม่ให้ label โกหกตัวเลข ถ้าทีมต้องการให้ป้ายสลับตามทิศทาง
-(down/up) แทน ต้องตัดสินใจว่าจะเปลี่ยนค่าที่โชว์เป็น down_prob เวลาทำนายขาลงด้วยหรือไม่ (แจ้งมาได้
-จะแก้ให้ตรงตามที่ทีมต้องการ)
+=== CHANGELOG (v8 — ยืนยันตาม mockup ที่ทีมส่งมา (ก่อน/หลัง) — เปลี่ยน label กลับเป็นสลับตามทิศทาง ===
+- v7 เคยเปลี่ยน label การ์ดโอกาส + label ใต้ gauge วงกลม ให้ "คงที่" (โอกาสที่ราคาจะปรับขึ้นเสมอ)
+  เพราะสังเกตว่า label สลับทิศทางจะดูขัดกับตัวเลข prob_up เวลาโมเดลทำนายขาลง
+- ทีมยืนยันด้วยภาพ before/after ว่าต้องการ label แบบ "สลับตามทิศทางที่ทำนาย" ตรงตาม mockup เป๊ะๆ
+  (การ์ด 3: "โอกาสที่ราคาจะปรับขึ้น" / "โอกาสที่ราคาจะปรับลดลง" ตาม prob_up, และ label ใต้ gauge
+  วงกลมใน AI SIGNAL: "โอกาส" + direction_th) จึงเปลี่ยนกลับเป็นแบบสลับใน v8 นี้
+- ค่าตัวเลขที่โชว์ (prob_up) และตัวแปรอื่นทั้งหมดยังไม่ถูกแก้ไข เหมือน v6/v7 ทุกประการ — เปลี่ยนแค่
+  ข้อความ label ให้ตรงกับ mockup เท่านั้น
 
 === MERGE NOTE (รวม Branch main x Copy-ทีมออกแบบ) ===
 - ธีม/เลย์เอาต์ทั้งหมดยึดตามทีมออกแบบ (การ์ดพื้นขาว) ปรับตาม mockup ใหม่ใน v7 ด้านบน
@@ -246,11 +246,12 @@ def render(ctx):
         )
 
     with k3:
+        prob_card_label = "โอกาสที่ราคาจะปรับขึ้น" if prob_up >= 50 else "โอกาสที่ราคาจะปรับลดลง"
         st.markdown(
             _stat_card(
                 icon_html=_icon_pie(BLUE),
                 icon_bg=_hex_to_rgba(BLUE, 0.14),
-                label="โอกาสที่ราคาจะปรับขึ้น",
+                label=prob_card_label,
                 value_html=f"{prob_up:.0f}%",
                 sub_html=(
                     f'<div style="font-size:11.5px; color:{MUTED}; margin-bottom:3px;">Down: {down_prob:.0f}%</div>'
@@ -319,7 +320,7 @@ def render(ctx):
 <div style="width:110px; height:110px; border-radius:50%; background:#F8FAFC; display:flex; flex-direction:column;
             align-items:center; justify-content:center;">
 <span style="font-size:26px; font-weight:800; color:#0F172A;">{prob_up:.0f}%</span>
-<span style="font-size:11px; color:{MUTED}; margin-top:2px; text-align:center;">โอกาสราคาขึ้น</span>
+<span style="font-size:11px; color:{MUTED}; margin-top:2px; text-align:center;">โอกาส{direction_th}</span>
 </div>
 </div>
 </div>
