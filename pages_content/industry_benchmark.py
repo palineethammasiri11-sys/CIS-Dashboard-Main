@@ -54,10 +54,15 @@ pages_content/industry_benchmark.py
   ได้บีบ padding การ์ดนอก/การ์ดมิติย่อย และลดฟอนต์ label/ตัวเลข/tier ลงเล็กน้อย
   (ไม่กระทบ logic การคำนวณ percentile เดิม)
 
-=== PATCH NOTE 5 (bugfix) ===
-- DIMENSION PERCENTILE RANK: overflow:hidden เดิมทำให้เนื้อหาส่วนล่าง (เทียบกลุ่ม)
-  โดนตัดหายเมื่อเนื้อหารวมสูงเกิน 310px จริง เปลี่ยนเป็น overflow-y:auto (เลื่อนได้
-  แทนที่จะตัดหาย) พร้อมบีบ margin ของ grid ลงอีกเล็กน้อยเพื่อลดโอกาสต้องเลื่อน
+=== PATCH NOTE 5 (แก้กลับด้าน: ขยาย RADAR ให้เท่า Dimension แทน) ===
+- พบว่า 310px ยังไม่พอกับเนื้อหาจริงของ DIMENSION PERCENTILE RANK (6 การ์ดมิติ
+  เทียบตลาด + 3-6 การ์ดมิติเทียบกลุ่ม + header/divider) ทำให้ content ส่วนล่าง
+  โดนตัดหายเวลาใช้ overflow:hidden
+- แก้ทิศทางใหม่: กลับไปใช้ FIXED HEIGHT ที่คำนวณให้พอดีเนื้อหาจริงของ Dimension
+  Card (440px, overflow:hidden ไม่ scroll แต่ไม่ตัดเพราะพอดีพื้นที่แล้ว) แล้วขยาย
+  ความสูงกราฟ RADAR (r2_c2) ขึ้นมาให้เท่ากับ 440px แทน เพื่อให้สองการ์ดในแถว
+  เดียวกันสูงเท่ากันเหมือนเดิม แต่ทั้งคู่แสดงเนื้อหา/กราฟเต็มขนาดจริง ไม่มีอะไรถูก
+  บีบซ่อน (ไม่กระทบ logic การคำนวณ percentile / ai_score เดิม)
 - PEER COMPARISON: แก้สี badge "Neutral" ของ AI Prediction จากเทา (#64748B)
   เป็นเหลือง (#F59E0B) ให้ตรงกับความหมายกลาง ๆ เหมือนคอลัมน์อื่น (ไม่กระทบ logic
   การคำนวณ threshold เดิม)
@@ -310,7 +315,7 @@ def render(ctx):
             max-width: 100% !important;
             min-width: 0 !important;
             height: auto !important;
-            min-height: 310px !important;
+            min-height: 440px !important;
             box-sizing: border-box !important;
             overflow: visible !important;
         }
@@ -371,39 +376,38 @@ def render(ctx):
 
         def dim_pct_card(label, pct, color):
             if pct is None:
-                return f"""<div style="background:#0F172A; padding:4px 2px; border-radius:6px; border:1px solid #1E293B;">
-    <div style="color:#94A3B8; font-size:11px;">{label}</div><div style="color:#64748B; font-size:14px; font-weight:bold; margin:1px 0;">N/A</div>
-    <div style="color:#64748B; font-size:11px;">No data</div></div>"""
+                return f"""<div style="background:#0F172A; padding:6px 4px; border-radius:6px; border:1px solid #1E293B;">
+    <div style="color:#94A3B8; font-size:12px;">{label}</div><div style="color:#64748B; font-size:15px; font-weight:bold; margin:2px 0;">N/A</div>
+    <div style="color:#64748B; font-size:12px;">No data</div></div>"""
             tier = "Excellent" if pct <= 20 else ("Good" if pct <= 45 else ("Fair" if pct <= 70 else "Weak"))
-            return f"""<div style="background:#F8FAFC; padding:4px 2px; border-radius:6px; border:1px solid #E2E8F0;">
-    <div style="color:#64748B; font-size:11px;">{label}</div><div style="color:{color}; font-size:15px; font-weight:bold; margin:1px 0;">Top {max(pct,1)}%</div>
-    <div style="color:{color}; font-size:11px;">{tier}</div></div>"""
+            return f"""<div style="background:#F8FAFC; padding:6px 4px; border-radius:6px; border:1px solid #E2E8F0;">
+    <div style="color:#64748B; font-size:12px;">{label}</div><div style="color:{color}; font-size:16px; font-weight:bold; margin:2px 0;">Top {max(pct,1)}%</div>
+    <div style="color:{color}; font-size:12px;">{tier}</div></div>"""
 
         if single_member_sector:
-            sector_section = f"""<div style="background:rgba(100,116,139,0.06); border:1px dashed #CBD5E1; border-radius:8px; padding:8px; text-align:center; margin-bottom:4px;">
+            sector_section = f"""<div style="background:rgba(100,116,139,0.06); border:1px dashed #CBD5E1; border-radius:8px; padding:10px; text-align:center; margin-bottom:6px;">
     <div style="color:#64748B; font-size:12px; line-height:1.3;">กลุ่ม <b>{ctx.stock_info.get('sector','-')}</b> มีเพียง 1 หุ้น จึงไม่สามารถเปรียบเทียบ percentile ภายในกลุ่มได้อย่างมีความหมาย</div>
     </div>"""
         else:
             dims_sector = build_dims(ctx.sector_peers)
-            sector_section = f"""<div style="font-size:12px; color:#475569; margin-bottom:3px;">เปรียบเทียบกับกลุ่มอุตสาหกรรม {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
-    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; text-align:center; margin-bottom:4px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
+            sector_section = f"""<div style="font-size:12px; color:#475569; margin-bottom:6px;">เปรียบเทียบกับกลุ่มอุตสาหกรรม {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
+    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; text-align:center; margin-bottom:6px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
     {''.join([dim_pct_card(l, p, c) for l, p, c in dims_sector])}
     </div>"""
 
-        market_section = f"""<div style="font-size:12px; color:#475569; margin-bottom:3px;">เปรียบเทียบกับหุ้นทั้ง {n_all} ตัว</div>
-    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; text-align:center; margin-bottom:4px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
+        market_section = f"""<div style="font-size:12px; color:#475569; margin-bottom:6px;">เปรียบเทียบกับหุ้นทั้ง {n_all} ตัว</div>
+    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; text-align:center; margin-bottom:6px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
     {''.join([dim_pct_card(l, p, c) for l, p, c in dims_market])}
     </div>"""
 
-        # PATCH NOTE 5: overflow:hidden เดิมทำเนื้อหาส่วนล่างโดนตัดหาย เมื่อเนื้อหารวม
-        # สูงเกิน 310px จริง เปลี่ยนเป็น overflow-y:auto (เลื่อนดูได้แทนที่จะหายไปเฉย ๆ)
-        # ความสูงกรอบยังคง 310px เท่ากับ RADAR ที่อยู่แถวเดียวกันตามเดิม
-        st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:8px; height:310px; overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column; justify-content:flex-start; box-sizing:border-box;">
+        # PATCH NOTE 5: กลับไปใช้ FIXED HEIGHT ที่คำนวณให้พอดีเนื้อหาจริง (440px)
+        # แทนการบีบ padding/font จนตัดเนื้อหา; RADAR (r2_c2) ขยายมาเท่ากันแทน
+        st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:440px; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-start; box-sizing:border-box;">
     <div>
-    <div style="font-size:15px; color:#64748B; font-weight:bold; margin-bottom:4px;">DIMENSION PERCENTILE RANK</div>
+    <div style="font-size:15px; color:#64748B; font-weight:bold; margin-bottom:8px;">DIMENSION PERCENTILE RANK</div>
     {market_section}
     </div>
-    <div style="border-top:1px dashed #CBD5E1; margin-bottom:4px;"></div>
+    <div style="border-top:1px dashed #CBD5E1; margin-bottom:8px;"></div>
     <div>
     {sector_section}
     </div>
@@ -447,6 +451,8 @@ def render(ctx):
             r=sector_avg_vals, theta=cats, line=dict(color='#94A3B8', width=1.5, dash='dash'), name='Sector Avg'
         ))
 
+        # PATCH NOTE 5: ขยาย height จาก 310px เป็น 440px ให้เท่ากับการ์ด
+        # DIMENSION PERCENTILE RANK (r2_c1) ที่อยู่แถวเดียวกัน แทนการบีบฝั่งนั้นลง
         fig_radar.update_layout(
             polar=dict(
                 radialaxis=dict(visible=True, range=[0, 100], showticklabels=False, linecolor="#CBD5E1", gridcolor="#E2E8F0"),
@@ -454,10 +460,10 @@ def render(ctx):
             ),
             paper_bgcolor="#FFFFFF",
             plot_bgcolor="#FFFFFF",
-            height=310,
-            margin=dict(l=25, r=25, t=30, b=15),
-            title=dict(text="RADAR: STOCK vs SECTOR AVG", font=dict(size=15, color="#64748B"), x=0.05, y=0.98),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=13, color="#475569"))
+            height=440,
+            margin=dict(l=30, r=30, t=40, b=20),
+            title=dict(text="RADAR: STOCK vs SECTOR AVG", font=dict(size=15, color="#64748B"), x=0.05, y=0.985),
+            legend=dict(orientation="h", yanchor="bottom", y=1.03, xanchor="right", x=1, font=dict(size=13, color="#475569"))
         )
 
         # ใช้ st.plotly_chart ตรง ๆ แทน show_chart() เพื่อไม่ให้มีปุ่ม "ขยายกราฟ" โผล่ใต้กราฟ
