@@ -523,7 +523,7 @@ def render(ctx):
                 margin=dict(l=10, r=50, t=15, b=15),
                 paper_bgcolor="#FFFFFF",
                 plot_bgcolor="#FFFFFF",
-                xaxis=dict(gridcolor="#D9E2EC", tickfont=dict(size=11, color=MUTED), zeroline=False),
+                xaxis=dict(text="คะแนน", font=dict(size=11.5, color=MUTED),gridcolor="#D9E2EC", tickfont=dict(size=11, color=MUTED), zeroline=False),
                 yaxis=dict(tickfont=dict(size=11.5, color="#334155"), gridcolor="#D9E2EC", zeroline=False),
                 showlegend=False
             )
