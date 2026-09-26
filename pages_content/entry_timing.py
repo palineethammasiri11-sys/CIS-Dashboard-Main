@@ -444,8 +444,14 @@ def render(ctx):
 
     _render_html(kpi_html)
 
+    # เว้นพื้นที่ระหว่าง KPI ด้านบนกับเนื้อหาหลัก
+    st.markdown(
+        "<div style='height:18px;'></div>",
+        unsafe_allow_html=True
+    )
+
     # ปรับสัดส่วนคอลัมน์ให้สมมาตรและพอดีกับจอภาพแบบ Institutional Grade
-    left, center, right = st.columns([1.0, 2.3, 1.15], gap="medium")
+    left, center, right = st.columns([1.0, 2.15, 1.30], gap="medium")
 
     # ==================================================================
     # LEFT COLUMN
@@ -578,12 +584,18 @@ def render(ctx):
     # ==================================================================
     with center:
 
-        c_head1, c_head2 = st.columns([1, 1.5])
+        c_head1, c_head2 = st.columns([1.2, 1.8], gap="small")
 
         with c_head1:
             _render_html(
                 f"""
-                <div style="font-size:16px;font-weight:800;color:{TEXT_WHITE};padding-top:4px;">
+                <div style="
+                    font-size:16px;
+                    font-weight:800;
+                    color:{TEXT_WHITE};
+                    padding-top:6px;
+                    white-space:nowrap;
+                ">
                     PRICE ACTION &amp; VOLUME
                 </div>
                 """
@@ -591,8 +603,12 @@ def render(ctx):
 
         with c_head2:
             tf_selected = st.radio(
-                "TF", ["1M", "3M", "6M", "1Y", "2Y", "ALL"],
-                index=2, horizontal=True, label_visibility="collapsed", key="timing_tf_sel",
+                "TF",
+                ["1M", "3M", "6M", "1Y", "2Y", "ALL"],
+                index=2,
+                horizontal=True,
+                label_visibility="collapsed",
+                key="timing_tf_sel",
             )
 
         tf_bars = {"1M": 22, "3M": 66, "6M": 132, "1Y": 252, "2Y": 504, "ALL": len(ctx.stock_daily)}
@@ -661,17 +677,39 @@ def render(ctx):
             for val, dash_type, col_hex, w in lines_to_plot:
                 fig_main.add_hline(y=val, line_dash=dash_type, line_color=col_hex, line_width=w)
 
-            # ขยายความสูงของกราฟให้เติมเต็มพื้นที่ฝั่งขวาพอดี (height=525)
+            # ลดความสูงและจัดระยะด้านบนของกราฟให้ไม่ชนกับส่วนหัว
             fig_main.update_layout(
-                height=525,
-                margin=dict(l=8, r=40, t=25, b=5),
+                height=500,
+                margin=dict(l=8, r=40, t=35, b=8),
                 paper_bgcolor=BG_CARD,
                 plot_bgcolor=BG_CARD,
-                xaxis=dict(gridcolor=BORDER_SOFT, showticklabels=False, linecolor=BORDER),
-                xaxis2=dict(gridcolor=BORDER_SOFT, tickfont=dict(size=13, color=TEXT_MUTED), linecolor=BORDER),
-                yaxis=dict(gridcolor=BORDER_SOFT, side="right", tickfont=dict(size=13, color=TEXT_MUTED), linecolor=BORDER),
-                yaxis2=dict(showticklabels=False, gridcolor=BORDER_SOFT),
-                legend=dict(orientation="h", y=1.12, x=0.01, font=dict(size=13, color=TEXT_WHITE), bgcolor="rgba(255,255,255,0)"),
+                xaxis=dict(
+                    gridcolor=BORDER_SOFT,
+                    showticklabels=False,
+                    linecolor=BORDER
+                ),
+                xaxis2=dict(
+                    gridcolor=BORDER_SOFT,
+                    tickfont=dict(size=13, color=TEXT_MUTED),
+                    linecolor=BORDER
+                ),
+                yaxis=dict(
+                    gridcolor=BORDER_SOFT,
+                    side="right",
+                    tickfont=dict(size=13, color=TEXT_MUTED),
+                    linecolor=BORDER
+                ),
+                yaxis2=dict(
+                    showticklabels=False,
+                    gridcolor=BORDER_SOFT
+                ),
+                legend=dict(
+                    orientation="h",
+                    y=1.08,
+                    x=0.01,
+                    font=dict(size=13, color=TEXT_WHITE),
+                    bgcolor="rgba(255,255,255,0)"
+                ),
                 xaxis_rangeslider_visible=False,
                 hovermode="x unified",
             )
@@ -693,23 +731,23 @@ def render(ctx):
                                  padding:2px 6px;border-radius:4px;">Current {_f(c_p)}</span>
                 </div>
                 <div style="margin-top:8px;">
-                    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:14px;">
-                        <span style="color:{TEXT_MUTED};">Current Price</span><b style="color:{TEXT_WHITE};">{_f(c_p)} THB</b>
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:14px;">
+                        <span style="color:{TEXT_MUTED};">Current Price</span><b style="color:{TEXT_WHITE};white-space:nowrap;">{_f(c_p)} THB</b>
                     </div>
-                    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:14px;">
-                        <span style="color:{GREEN};">Preferred Entry</span><b style="color:{GREEN};">{_f(s1)} -- {_f(pp)}</b>
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:14px;">
+                        <span style="color:{GREEN};">Preferred Entry</span><b style="color:{GREEN};white-space:nowrap;">{_f(s1)} -- {_f(pp)}</b>
                     </div>
-                    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:14px;">
-                        <span style="color:{AMBER};">Watch Zone</span><b style="color:{AMBER};">{watch_zone_display}</b>
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:14px;">
+                        <span style="color:{AMBER};">Watch Zone</span><b style="color:{AMBER};white-space:nowrap;">{watch_zone_display}</b>
                     </div>
-                    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:14px;">
-                        <span style="color:{RED};">Stop Loss (30D Low)</span><b style="color:{RED};">{sl_display}</b>
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:14px;">
+                        <span style="color:{RED};">Stop Loss (30D Low)</span><b style="color:{RED};white-space:nowrap;">{sl_display}</b>
                     </div>
-                    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:14px;">
-                        <span style="color:{TEXT_WHITE};">Target 1 (RR 1:2)</span><b style="color:{TEXT_WHITE};">{target1_display}</b>
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid {BORDER_SOFT};font-size:14px;">
+                        <span style="color:{TEXT_WHITE};">Target 1 (RR 1:2)</span><b style="color:{TEXT_WHITE};white-space:nowrap;">{target1_display}</b>
                     </div>
-                    <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px;">
-                        <span style="color:{TEXT_WHITE};">Target 2 (RR 1:3)</span><b style="color:{TEXT_WHITE};">{target2_display}</b>
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;font-size:14px;">
+                        <span style="color:{TEXT_WHITE};">Target 2 (RR 1:3)</span><b style="color:{TEXT_WHITE};white-space:nowrap;">{target2_display}</b>
                     </div>
                 </div>
                 {setup_warning_html}
@@ -721,16 +759,16 @@ def render(ctx):
             f"""
             <div style="{_card_style()}">
                 <div style="
-                    font-size:16px;
+                    font-size:15px;
                     font-weight:800;
                     color:{TEXT_WHITE};
-                    margin-bottom:6px;
+                    margin-bottom:8px;
                     border-bottom:2px solid {ACCENT};
-                    padding-bottom:4px;
+                    padding-bottom:6px;
                 ">
                     ⓘ SYSTEM SCORING METHODOLOGY
                 </div>
-                <div style="font-size:14px;color:{TEXT_MUTED};line-height:1.45;">
+                <div style="font-size:13px;color:{TEXT_MUTED};line-height:1.55;">
                     <b style="color:{TEXT_WHITE};">Trend --- 40 pts</b><br>
                     ราคาเทียบ EMA20, EMA50 และ MA200 (หาร {trend_criteria_count} เกณฑ์คงที่)
                     <br><br>
