@@ -848,7 +848,7 @@ def render(ctx):
         unsafe_allow_html=True
     )
 
-    col_space1, col_space2, col_prev, col_disc = st.columns(
+    col_prev, col_space, col_next, col_disc = st.columns(
         [1.3, 1.3, 1.3, 3.3]
     )
 
@@ -858,7 +858,7 @@ def render(ctx):
             key="overview_prev_industry_benchmark",
             use_container_width=True
         ):
-            st.session_state["pending_nav"] = " Industry Benchmark"
+            st.session_state["pending_nav"] = "Industry Benchmark"
             st.rerun()
 
     with col_next:
@@ -867,7 +867,7 @@ def render(ctx):
             key="overview_next_company_health",
             use_container_width=True
         ):
-            st.session_state["pending_nav"] = " Company Health"
+            st.session_state["pending_nav"] = "Company Health"
             st.rerun()
 
     with col_disc:
