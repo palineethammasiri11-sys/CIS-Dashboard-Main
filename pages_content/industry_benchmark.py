@@ -112,18 +112,18 @@ def render(ctx):
             f"""<span style="display:inline-block; margin-top:6px; background-color:rgba(245,158,11,0.15); color:#F59E0B; font-size:15px; font-weight:bold; padding:3px 14px; border-radius:8px;">Top {pct_in_sector}%</span>"""
         )
 
-        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; text-align:center; display:flex; flex-direction:column; justify-content:space-between;">
-    <div style="font-size:16px; color:#64748B; font-weight:bold;">RANKING</div>
-    <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center; align-items:center; background-color:rgba(56,189,248,0.10); border:1.5px solid rgba(56,189,248,0.45); border-radius:12px; padding:10px 8px;">
-    <div style="font-size:15px; color:#0F172A; font-weight:bold;">ทั้งตลาด</div>
-    <div style="font-size:14px; color:#64748B; margin-bottom:4px;">{n_all} หุ้นที่ติดตาม</div>
-    <div><span style="font-size:40px; color:#0F172A; font-weight:800;">{rank_txt(overall_rank)}</span> <span style="font-size:15px; color:#64748B;">/ {n_all} หุ้น</span></div>
-    <span style="display:inline-block; margin-top:8px; background-color:#38BDF8; color:#FFFFFF; font-size:15px; font-weight:bold; padding:4px 16px; border-radius:8px; box-shadow:0 2px 6px rgba(56,189,248,0.35);">Top {pct_overall}%</span>
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; text-align:center; display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box;">
+    <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:8px;">RANKING</div>
+    <div style="background-color:rgba(56,189,248,0.10); border:1.5px solid rgba(56,189,248,0.45); border-radius:12px; padding:8px 8px 10px 8px; margin-bottom:10px;">
+    <div style="font-size:14px; color:#0F172A; font-weight:bold;">ทั้งตลาด</div>
+    <div style="font-size:13px; color:#64748B; margin-bottom:2px;">{n_all} หุ้นที่ติดตาม</div>
+    <div><span style="font-size:32px; color:#0F172A; font-weight:800;">{rank_txt(overall_rank)}</span> <span style="font-size:14px; color:#64748B;">/ {n_all} หุ้น</span></div>
+    <span style="display:inline-block; margin-top:6px; background-color:#38BDF8; color:#FFFFFF; font-size:14px; font-weight:bold; padding:3px 14px; border-radius:8px; box-shadow:0 2px 6px rgba(56,189,248,0.35);">Top {pct_overall}%</span>
     </div>
-    <div style="border-top:1px solid #E2E8F0; padding-top:10px; margin-top:10px; flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
-    <div style="font-size:15px; color:#64748B;">ในกลุ่ม</div>
-    <div style="font-size:14px; color:#64748B; margin-bottom:4px;">{ctx.stock_info.get('sector','-')}</div>
-    <div><span style="font-size:34px; color:#0F172A; font-weight:bold;">{rank_txt(sector_rank)}</span> <span style="font-size:15px; color:#64748B;">/ {n_sector} หุ้น</span></div>
+    <div style="border-top:1px solid #E2E8F0; padding-top:10px;">
+    <div style="font-size:14px; color:#64748B;">ในกลุ่ม</div>
+    <div style="font-size:13px; color:#64748B; margin-bottom:2px;">{ctx.stock_info.get('sector','-')}</div>
+    <div><span style="font-size:28px; color:#0F172A; font-weight:bold;">{rank_txt(sector_rank)}</span> <span style="font-size:14px; color:#64748B;">/ {n_sector} หุ้น</span></div>
     {sector_block}
     </div>
     </div>""", unsafe_allow_html=True)
