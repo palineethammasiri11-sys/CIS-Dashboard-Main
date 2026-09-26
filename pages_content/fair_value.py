@@ -367,6 +367,10 @@ def render(ctx):
                     zeroline=False
                 ),
                 xaxis=dict(
+                    type="category",
+                    tickmode="array",
+                    tickvals=fv_hist['year'].round().astype(int).astype(str).tolist(),
+                    ticktext=fv_hist['year'].round().astype(int).astype(str).tolist(),
                     tickfont=dict(size=12, color="#64748B"),
                     gridcolor="#E2E8F0"
                 ),
