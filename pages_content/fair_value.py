@@ -337,7 +337,7 @@ def render(ctx):
 
             fig_hist_val.add_trace(
                 go.Scatter(
-                    x=fv_hist['year'].astype(str),
+                    x=fv_hist['year'].round().astype(int).astype(str),
                     y=fv_hist['fair_value'],
                     mode='lines+markers',
                     name='Fair Value',
@@ -347,7 +347,7 @@ def render(ctx):
 
             fig_hist_val.add_trace(
                 go.Scatter(
-                    x=fv_hist['year'].astype(str),
+                    x=fv_hist['year'].round().astype(int).astype(str),
                     y=fv_hist['price'],
                     mode='lines+markers',
                     name='Actual Price',
