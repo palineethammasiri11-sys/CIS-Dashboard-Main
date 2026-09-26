@@ -77,6 +77,10 @@ pages_content/industry_benchmark.py
 - RADAR (r2_c2) คงความสูงไว้ที่ 440px ตามเดิม เป็นค่าความสูงอ้างอิงกลาง ๆ ที่ดู
   สมส่วนกับความสูงเฉลี่ยของการ์ด Dimension ในเคสส่วนใหญ่ (ไม่กระทบ logic การ
   คำนวณ percentile / ai_score เดิม)
+
+=== PATCH NOTE 7 (ลบ EXPORT & INDUSTRY DATA ออก) ===
+- ลบบล็อกดาวน์โหลด CSV ("EXPORT & INDUSTRY DATA") ที่อยู่ท้ายหน้าออกทั้งหมด
+  ตามคำขอ ไม่กระทบ logic หรือการ์ดอื่นใดในหน้านี้
 """
 import streamlit as st
 import pandas as pd
@@ -674,19 +678,5 @@ def render(ctx):
     <div style="color:#475569; font-size:15px; line-height:1.5;">
     {metric_rows}
     </div></div>""", unsafe_allow_html=True)
-
-    import base64
-
-    csv_text = ctx.scores_df[
-        ctx.scores_df['ticker'] == ctx.selected_ticker
-    ].to_csv(index=False)
-
-    b64_csv = base64.b64encode(csv_text.encode('utf-8-sig')).decode()
-    download_link = f'data:file/csv;base64,{b64_csv}'
-
-    st.markdown(f"""<div style="display:flex; justify-content:space-between; align-items:center; background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:10px 14px; margin-top:12px;">
-    <div style="font-size:15px; color:#475569;"><b>EXPORT & INDUSTRY DATA</b><br><span style="color:#64748B; font-size:14px;">ดาวน์โหลดคะแนนวิเคราะห์ทั้งหมดของ {ctx.selected_ticker} (ข้อมูลจริงจาก cis_summary_scores)</span></div>
-    <a href="{download_link}" download="{ctx.selected_ticker}_CIS_Analysis.csv" style="background:#3B82F6; color:white; border:none; padding:6px 14px; border-radius:6px; font-size:14px; text-decoration:none; display:inline-block; font-weight:bold; cursor:pointer;">📥 Export Data (CSV)</a>
-    </div>""", unsafe_allow_html=True)
 
     render_nav_footer("m7", prev_page=None, next_page=" Stock Overview", show_home=False)
