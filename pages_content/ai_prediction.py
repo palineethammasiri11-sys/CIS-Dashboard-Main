@@ -142,7 +142,6 @@ def _score_donut_card(label, score, badge, desc, color, height=None):
 
 def render(ctx):
     st.markdown(f"""<div style="margin-bottom:20px;">
-<div style="font-size:12px; color:{MUTED}; margin-bottom:4px;">Home / Module 4 / AI Prediction</div>
 <div style="font-size:19px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">AI PREDICTION</div>
 <div style="font-size:12px; color:#64748B; margin-top:4px;">ประเมินทิศทางราคาหุ้นในอีก 10 วันทำการด้วยโมเดล Random Forest</div>
 </div>""", unsafe_allow_html=True)
