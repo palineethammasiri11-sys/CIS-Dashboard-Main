@@ -361,7 +361,7 @@ def show_chart(fig, key, expand_height=680):
         _open_chart_dialog(fig, expand_height)
 
 
-def render_nav_footer(key_prefix, prev_page=None, next_page=None):
+def render_nav_footer(key_prefix, prev_page=None, next_page=None, show_home=True):
     """แถบปุ่มนำทาง (หน้าก่อนหน้า / หน้าหลัก / หน้าถัดไป) แสดงท้ายทุกหน้าโมดูล (ยกเว้น Overview)
     key_prefix ต้องไม่ซ้ำกันข้ามหน้า (แนะนำ: m1=Health, m2=FairValue, m3=Timing, m4=AI, m5=Risk, m6=Industry)"""
     st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
@@ -373,9 +373,10 @@ def render_nav_footer(key_prefix, prev_page=None, next_page=None):
                 st.session_state["pending_nav"] = prev_page
                 st.rerun()
     with col_home:
-        if st.button("หน้าหลัก", key=f"btn_home_{key_prefix}", use_container_width=True):
-            st.session_state["pending_nav"] = " Industry Benchmark"
-            st.rerun()
+        if show_home:
+          if st.button("หน้าหลัก", key=f"btn_home_{key_prefix}", use_container_width=True):
+              st.session_state["pending_nav"] = " Industry Benchmark"
+              st.rerun()
     with col_next:
         if next_page:
             if st.button("หน้าถัดไป ➡", key=f"btn_next_{key_prefix}", use_container_width=True):
