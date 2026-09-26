@@ -309,7 +309,7 @@ def render(ctx):
     <div style="font-size:14px; color:#64748B; border-top:1px solid #D9E2EC; padding-top:7px;">VaR = ระดับขาดทุนรายวันที่ไม่ควรแย่ไปกว่านี้ใน 95% ของวัน — CVaR ยังคำนวณไม่ได้เนื่องจากข้อมูลราคาย้อนหลังไม่พอ</div>"""
 
         st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px; padding:14px; min-height:235px; display:flex; flex-direction:column; justify-content:space-between;">
+            f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px; padding:14px; min-height:240px; display:flex; flex-direction:column; justify-content:space-between;">
     <div style="font-size:16px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">DOWNSIDE RISK (Daily)</div>
     {downside_metrics_html}
     </div>""",
