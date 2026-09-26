@@ -31,6 +31,15 @@ pages_content/ai_prediction.py
   จุดสัญญาณข้าง Probability, เครื่องหมาย ⚠ ต่อท้ายคำแนะนำ) ยึดตาม main ทั้งหมด
 - ตัดส่วน "MODEL PERFORMANCE" และ expander "Model & Data Detail" ออกตามมติ main (ไม่โชว์ตัวเลขดิบ)
 - ปุ่มเปลี่ยนหน้าด้านล่างใช้ label แบบไม่มี emoji ตามทีมออกแบบ
+
+=== PATCH NOTE (เพิ่มการ์ด AI SCORE แบบ donut ใน R1 ตามสไตล์หน้า Overview) ===
+- เพิ่มฟังก์ชัน _score_donut_card() วาดวงแหวนคะแนน (conic-gradient) พร้อม badge/คำอธิบาย
+  สไตล์เดียวกับการ์ด module ในหน้า Overview
+- แถว KPI แรกของหน้า (เดิม 4 คอลัมน์: Price, Direction, Probability, Recommendation)
+  ขยายเป็น 5 คอลัมน์ โดยเพิ่ม "AI SCORE" (ใช้ ctx.stock_info['ai_score'] ตัวเดียวกับที่หน้า
+  Overview ใช้) ไว้เป็นคอลัมน์แรกสุด ใช้ threshold เดียวกับหน้า Overview (>=70 เขียว,
+  >=50 เหลือง, ต่ำกว่านั้นแดง) เพื่อให้ความหมายสีตรงกันทั้งสองหน้า
+- ไม่กระทบ logic การคำนวณ prob_up / signal / reliability_low หรือส่วนอื่นของหน้าเลย
 """
 
 import streamlit as st
@@ -94,6 +103,30 @@ def _metric_cell(label, value):
     )
 
 
+def _score_donut_card(label, score, badge, desc, color):
+    """การ์ด SCORE แบบวงแหวน (donut) — สไตล์เดียวกับการ์ด module ในหน้า Overview
+    ใช้ conic-gradient เดียวกัน (สัดส่วนคะแนน 0-100) วางเป็นการ์ดสูง 120px ให้เท่ากับ
+    _kpi_card ตัวอื่นในแถวเดียวกัน"""
+    return f"""<div style="background-color:#FFFFFF; border:1px solid {color}; border-radius:12px; padding:14px 12px; text-align:center; height:120px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+<div style="font-size:11px; font-weight:bold; color:{MUTED}; letter-spacing:1px; margin-bottom:6px;">{label}</div>
+<div style="display:flex; align-items:center; gap:10px;">
+<div style="width:56px; height:56px; border-radius:50%;
+            background:conic-gradient({color} 0% {score}%, #E2E8F0 {score}% 100%);
+            display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+    <div style="width:44px; height:44px; border-radius:50%; background-color:#FFFFFF;
+                display:flex; flex-direction:column; align-items:center; justify-content:center;">
+        <span style="font-size:14px; font-weight:bold; color:#0F172A; line-height:1;">{score}</span>
+        <span style="font-size:9px; color:{MUTED};">/100</span>
+    </div>
+</div>
+<div style="text-align:left;">
+<div style="color:{color}; font-size:14px; font-weight:bold; line-height:1.2;">{badge}</div>
+<div style="font-size:10.5px; color:#475569; line-height:1.3; margin-top:2px;">{desc}</div>
+</div>
+</div>
+</div>"""
+
+
 def render(ctx):
     st.markdown(f"""<div style="margin-bottom:20px;">
 <div style="font-size:12px; color:{MUTED}; margin-bottom:4px;">Home / Module 4 / AI Prediction</div>
@@ -145,10 +178,26 @@ def render(ctx):
     signal_display = f"{signal} ⚠" if reliability_low else signal
 
     # ============================================================
-    # 1) OVERVIEW — แถบ KPI (เหลือ 4 ช่อง ตัด SCORE ออก)
+    # 1) OVERVIEW — แถบ KPI (เพิ่ม SCORE แบบ donut ไว้ช่องแรก + KPI เดิม 4 ช่อง)
     # ============================================================
 
-    k1, k2, k3, k4 = st.columns(4)
+    ai_score_val = int(round(safe(ctx.stock_info.get('ai_score'), 50)))
+    if ai_score_val >= 70:
+        score_badge, score_desc = "POSITIVE", "โอกาสปรับตัวขึ้นในระดับที่ดี"
+    elif ai_score_val >= 50:
+        score_badge, score_desc = "NEUTRAL", "แนวโน้มเคลื่อนไหวในกรอบ"
+    else:
+        score_badge, score_desc = "CAUTION", "โอกาสปรับตัวขึ้นในระดับต่ำ"
+
+    score_color = GREEN if ai_score_val >= 70 else (AMBER if ai_score_val >= 50 else RED)
+
+    k0, k1, k2, k3, k4 = st.columns(5)
+
+    with k0:
+        st.markdown(
+            _score_donut_card("AI SCORE", ai_score_val, score_badge, score_desc, score_color),
+            unsafe_allow_html=True
+        )
 
     with k1:
         st.markdown(
