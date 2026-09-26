@@ -59,13 +59,24 @@ pages_content/industry_benchmark.py
   เทียบตลาด + 3-6 การ์ดมิติเทียบกลุ่ม + header/divider) ทำให้ content ส่วนล่าง
   โดนตัดหายเวลาใช้ overflow:hidden
 - แก้ทิศทางใหม่: กลับไปใช้ FIXED HEIGHT ที่คำนวณให้พอดีเนื้อหาจริงของ Dimension
-  Card (440px, overflow:hidden ไม่ scroll แต่ไม่ตัดเพราะพอดีพื้นที่แล้ว) แล้วขยาย
-  ความสูงกราฟ RADAR (r2_c2) ขึ้นมาให้เท่ากับ 440px แทน เพื่อให้สองการ์ดในแถว
-  เดียวกันสูงเท่ากันเหมือนเดิม แต่ทั้งคู่แสดงเนื้อหา/กราฟเต็มขนาดจริง ไม่มีอะไรถูก
-  บีบซ่อน (ไม่กระทบ logic การคำนวณ percentile / ai_score เดิม)
+  Card (440px, overflow:hidden) แล้วขยายความสูงกราฟ RADAR (r2_c2) ขึ้นมาให้เท่ากับ
+  440px แทน เพื่อให้สองการ์ดในแถวเดียวกันสูงเท่ากันเหมือนเดิม
 - PEER COMPARISON: แก้สี badge "Neutral" ของ AI Prediction จากเทา (#64748B)
   เป็นเหลือง (#F59E0B) ให้ตรงกับความหมายกลาง ๆ เหมือนคอลัมน์อื่น (ไม่กระทบ logic
   การคำนวณ threshold เดิม)
+
+=== PATCH NOTE 6 (bugfix: 440px ยังไม่พอ -> เลิก fix height, ใช้ auto) ===
+- 440px ยังไม่พอกับเนื้อหาจริงในบางเคส (ฟอนต์/line-height จริงกินพื้นที่มากกว่า
+  ที่คำนวณ) ทำให้เนื้อหาแถวสุดท้ายโดน overflow:hidden ตัดอีกครั้ง
+- แก้แบบถาวร: การ์ด DIMENSION PERCENTILE RANK เปลี่ยนเป็น height:auto +
+  overflow:visible เท่ากับให้การ์ดสูงเท่าที่เนื้อหาต้องการจริง ไม่มีการตัดอีก
+  ไม่ว่าจำนวนดาว/กลุ่มจะสั้นหรือยาวแค่ไหน
+- ผลข้างเคียงที่ยอมรับ: การ์ดนี้กับ RADAR (r2_c2) จะไม่สูงเท่ากันเป๊ะ 100% ในทุก
+  กรณีอีกต่อไป (เช่น กรณีกลุ่มมีหุ้นเดียว เนื้อหาสั้นกว่า การ์ดจะเตี้ยกว่า Radar
+  เล็กน้อย) แต่แลกกับการไม่มีเนื้อหาถูกตัด/ตกขอบอีกเลย ซึ่งสำคัญกว่า
+- RADAR (r2_c2) คงความสูงไว้ที่ 440px ตามเดิม เป็นค่าความสูงอ้างอิงกลาง ๆ ที่ดู
+  สมส่วนกับความสูงเฉลี่ยของการ์ด Dimension ในเคสส่วนใหญ่ (ไม่กระทบ logic การ
+  คำนวณ percentile / ai_score เดิม)
 """
 import streamlit as st
 import pandas as pd
@@ -315,7 +326,7 @@ def render(ctx):
             max-width: 100% !important;
             min-width: 0 !important;
             height: auto !important;
-            min-height: 440px !important;
+            min-height: 0 !important;
             box-sizing: border-box !important;
             overflow: visible !important;
         }
@@ -400,9 +411,10 @@ def render(ctx):
     {''.join([dim_pct_card(l, p, c) for l, p, c in dims_market])}
     </div>"""
 
-        # PATCH NOTE 5: กลับไปใช้ FIXED HEIGHT ที่คำนวณให้พอดีเนื้อหาจริง (440px)
-        # แทนการบีบ padding/font จนตัดเนื้อหา; RADAR (r2_c2) ขยายมาเท่ากันแทน
-        st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:460px; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-start; box-sizing:border-box;">
+        # PATCH NOTE 6: เลิก fix height ที่การ์ดนี้ (440px ยังไม่พอในบางเคส ตัดเนื้อหา
+        # อีกครั้ง) เปลี่ยนเป็น height:auto + overflow:visible ให้การ์ดสูงตามเนื้อหา
+        # จริงเสมอ ไม่มีการตัดอีกต่อไป ไม่ว่าจำนวนดาว/ความยาว sector_section จะเป็นเท่าไหร่
+        st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:auto; overflow:visible; display:flex; flex-direction:column; justify-content:flex-start; box-sizing:border-box;">
     <div>
     <div style="font-size:15px; color:#64748B; font-weight:bold; margin-bottom:8px;">DIMENSION PERCENTILE RANK</div>
     {market_section}
@@ -460,7 +472,7 @@ def render(ctx):
             ),
             paper_bgcolor="#FFFFFF",
             plot_bgcolor="#FFFFFF",
-            height=460,
+            height=440,
             margin=dict(l=30, r=30, t=40, b=20),
             title=dict(text="RADAR: STOCK vs SECTOR AVG", font=dict(size=15, color="#64748B"), x=0.05, y=0.985),
             legend=dict(orientation="h", yanchor="bottom", y=1.03, xanchor="right", x=1, font=dict(size=13, color="#475569"))
