@@ -168,15 +168,17 @@ def render(ctx):
         fig_matrix.update_layout(
             paper_bgcolor="#FFFFFF",
             plot_bgcolor="#F8FAFC",
-            height=480,
+            height=360,
             margin=dict(l=20, r=20, t=35, b=20),
-            title=dict(text="STRATEGIC MATRIX (All 8 Stocks)", font=dict(size=18, color="#64748B"), x=0.03, y=0.99),
-            xaxis=dict(title=dict(text="Business Quality (Health Score) →", font=dict(size=14, color="#64748B")), range=[0, 100], showgrid=False, showticklabels=False),
-            yaxis=dict(title=dict(text="Investment Attractiveness (Overall) →", font=dict(size=14, color="#64748B")), range=[0, 100], showgrid=False, showticklabels=False),
+            title=dict(text="STRATEGIC MATRIX (All 8 Stocks)", font=dict(size=17, color="#64748B"), x=0.03, y=0.99),
+            xaxis=dict(title=dict(text="Business Quality (Health Score) →", font=dict(size=13, color="#64748B")), range=[0, 100], showgrid=False, showticklabels=False),
+            yaxis=dict(title=dict(text="Investment Attractiveness (Overall) →", font=dict(size=13, color="#64748B")), range=[0, 100], showgrid=False, showticklabels=False),
             showlegend=False
         )
 
-        show_chart(fig_matrix, key="industry_matrix", expand_height=800)
+        # ความสูงเท่ากับการ์ด STRATEGIC INVESTMENT POSITION / RANKING (360px)
+        # ที่อยู่แถวเดียวกัน ป้องกันไม่ให้การ์ดนี้สูงเกินเพื่อนบ้านสองใบซ้ายมือ
+        show_chart(fig_matrix, key="industry_matrix", expand_height=700)
 
     st.markdown("""
     <style>
