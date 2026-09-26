@@ -852,6 +852,15 @@ def render(ctx):
         [1.3, 1.3, 1.3, 3.3]
     )
 
+    with col_prev:
+        if st.button(
+            "⬅ หน้าก่อนหน้า",
+            key="overview_prev_industry_benchmark",
+            use_container_width=True
+        ):
+            st.session_state["pending_nav"] = " Industry Benchmark"
+            st.rerun()
+
     with col_next:
         if st.button(
             "หน้าถัดไป ➡",
