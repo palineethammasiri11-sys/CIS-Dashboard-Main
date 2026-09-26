@@ -20,14 +20,14 @@ app.py — CIS Dashboard (Entry Point)
 
 import common
 from pages_content import (
-     Industry Benchmark,
-     Overview,
-     Company Health,
-     Fair Value,
-     Entry Timing,
-     AI Prediction,
-     Risk Analysis
-]
+    overview,
+    company_health,
+    fair_value,
+    entry_timing,
+    ai_prediction,
+    risk_analysis,
+    industry_benchmark,
+)
 
 
 
