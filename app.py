@@ -70,7 +70,7 @@ common.render_header_bar(ctx)
 
 # 7. Routing → เรียกหน้าที่เลือกอยู่
 PAGE_RENDERERS = {
-    " Overview": overview.render,
+    " Stock Overview": overview.render,
     " Company Health": company_health.render,
     " Fair Value": fair_value.render,
     " Entry Timing": entry_timing.render,
