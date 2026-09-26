@@ -290,48 +290,81 @@ def render(ctx):
 
     st.markdown(_section_title("📈 PREDICTION"), unsafe_allow_html=True)
 
-    _t = min(1, max(0, prob_up / 100))
-    _gx = 50 - 40 * np.cos(np.pi * _t)
-    _gy = 50 - 40 * np.sin(np.pi * _t)
-
     warn_line = ""
     if reliability_low:
         warn_line = (
             f'<div style="font-size:12px; color:{RED}; background:rgba(239,68,68,0.1); border:1px solid {RED}; '
-            f'border-radius:8px; padding:10px 14px; margin-top:14px; line-height:1.55;">'
+            f'border-radius:8px; padding:10px 14px; margin-top:12px; line-height:1.55;">'
             f'⚠ ความแม่นยำของโมเดลสำหรับหุ้นตัวนี้อยู่ในเกณฑ์ที่ควรใช้ด้วยความระมัดระวังเป็นพิเศษ</div>'
         )
 
+    # ป้าย badge สีตามธีม (score_badge/status_color เดียวกับการ์ด AI SCORE) พร้อมจุดวงกลม
+    # เล็กๆ สีขาวบนพื้นสีธีม แทนไอคอนเตือนหน้าคำว่า POSITIVE/NEUTRAL/CAUTION
+    badge_dot = (
+        f'<span style="display:inline-flex; align-items:center; justify-content:center; '
+        f'width:14px; height:14px; border-radius:50%; background:{status_color}; color:#FFFFFF; '
+        f'font-size:10px; font-weight:bold; margin-right:5px; flex-shrink:0;">!</span>'
+    )
+
     st.markdown(
-        f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-top:none; border-radius:0 0 12px 12px; padding:16px;">
-<div style="display:flex; gap:16px; flex-wrap:wrap; align-items:stretch;">
+        f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-top:none; border-radius:0 0 12px 12px; padding:22px 24px;">
+<div style="display:flex; gap:0; flex-wrap:wrap; align-items:stretch;">
 
-<div style="flex:0 0 320px; max-width:100%; background-color:#F8FAFC; border:1px solid #D9E2EC; border-radius:12px; padding:22px 14px; display:flex; align-items:center; justify-content:center;">
-<svg viewBox="0 0 100 56" style="width:100%; max-width:180px; height:auto;">
-<path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#D9E2EC" stroke-width="6" stroke-linecap="round" />
-<path d="M 10 50 A 40 40 0 0 1 {_gx:.1f} {_gy:.1f}" fill="none" stroke="{status_color}" stroke-width="6" stroke-linecap="round" />
-<text x="50" y="47" text-anchor="middle" font-size="17" font-weight="bold" fill="#0F172A">{prob_up:.0f}%</text>
-</svg>
+<div style="flex:0 0 260px; max-width:100%; border-right:1px solid #E2E8F0; padding-right:24px; margin-right:24px; display:flex; flex-direction:column; justify-content:center;">
+
+<div style="font-size:18px; font-weight:800; color:#0F172A;">AI SIGNAL</div>
+<div style="font-size:12px; color:{MUTED}; margin-top:2px; margin-bottom:20px;">สัญญาณจากโมเดล AI</div>
+
+<div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold; margin-bottom:6px;">
+<span style="color:{status_color};">ขาลง</span>
+<span style="color:{MUTED};">ขาขึ้น</span>
 </div>
 
-<div style="flex:1; min-width:300px; background-color:#F3F7FB; border:1px solid #C7D5E3; border-left:4px solid {status_color}; border-radius:12px; padding:22px 26px; display:flex; flex-direction:column; justify-content:center;">
-
-<div style="font-size:12px; font-weight:bold; color:{MUTED}; letter-spacing:1px; margin-bottom:10px;">
-PROBABILITY OF UP
+<div style="width:100%; height:8px; background:#E2E8F0; border-radius:6px; overflow:hidden;">
+<div style="width:{prob_up:.0f}%; height:100%; background:{status_color}; border-radius:6px;"></div>
 </div>
 
-<div style="font-size:15px; color:#334155; line-height:1.7;">
+<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:8px;">
+<span style="font-size:26px; font-weight:800; color:{status_color}; line-height:1;">{prob_up:.0f}%</span>
+<span style="font-size:12px; color:{MUTED};">100%</span>
+</div>
+
+</div>
+
+<div style="flex:1; min-width:300px; display:flex; flex-direction:column; justify-content:center;">
+
+<div style="display:flex; align-items:flex-start; gap:14px;">
+
+<div style="width:38px; height:38px; border-radius:50%; background:rgba(56,189,248,0.12);
+            display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">💡</div>
+
+<div style="flex:1; min-width:0;">
+
+<div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+<div style="font-size:16px; font-weight:700; color:#0F172A; line-height:1.5;">
 โมเดล Random Forest ประเมินว่า <b>{ctx.selected_ticker}</b> มีโอกาส
-<b style="color:{status_color};">{direction_th}</b>
-<b>{prob_up:.0f}%</b> ในอีก 10 วันทำการ &nbsp;→&nbsp; คำแนะนำ:
-<b style="color:{status_color};">{signal}</b>
+<b style="color:{status_color};">{direction_th}</b> <b>{prob_up:.0f}%</b> ในอีก 10 วันทำการ
 </div>
 
-<div style="font-size:12px; color:{MUTED}; line-height:1.6; margin-top:12px;">
-โปรดใช้ประกอบการตัดสินใจลงทุน ควรพิจารณาร่วมกับ Fair Value และ Company Health ก่อนตัดสินใจ ไม่ใช่คำแนะนำโดยตรง
+<div style="background:{_hex_to_rgba(status_color, 0.12)}; color:{status_color}; border-radius:14px;
+            padding:4px 12px; font-size:12px; font-weight:700; white-space:nowrap;
+            display:flex; align-items:center; flex-shrink:0;">
+{badge_dot}{score_badge}
+</div>
+</div>
+
+<div style="font-size:13.5px; color:{MUTED}; line-height:1.6; margin-top:8px;">
+โดยมีปัจจัยหลักจากความผันผวนของราคาและตัวชี้วัดทางเทคนิคบางตัว ที่ส่งผลต่อทิศทางราคาในระยะสั้น
 </div>
 
 {warn_line}
+
+</div>
+</div>
+
+<div style="display:flex; align-items:center; gap:8px; margin-top:18px; font-size:13px; color:#334155;">
+<span style="font-size:15px;">📅</span> Horizon: <b>10 Trading Days</b>
+</div>
 
 </div>
 </div>
