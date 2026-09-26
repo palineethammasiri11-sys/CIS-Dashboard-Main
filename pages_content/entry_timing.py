@@ -468,8 +468,14 @@ def render(ctx):
 
     kpi_html = f"""
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1.6fr;gap:10px;margin-bottom:12px;">
+        {_metric_card(
+            "ENTRY READINESS",
+            readiness,
+            "รอการยืนยันสัญญาณเพิ่มเติม" if readiness != "READY" else "สัญญาณครบตามเกณฑ์",
+            "#FFFFFF",
+            card_bg=readiness_color
+        )}
         {_metric_card("MARKET TREND", status_label, action_th, status_color)}
-        {_metric_card("ENTRY READINESS", readiness, "รอการยืนยันสัญญาณเพิ่มเติม" if readiness != "READY" else "สัญญาณครบตามเกณฑ์", readiness_color)}
         <div style="{_card_style()}">
             <div style="font-size:14px;font-weight:800;color:{TEXT_MUTED};letter-spacing:.5px;">CONFIDENCE</div>
             <div style="font-size:20px;font-weight:900;color:{TEXT_WHITE};margin-top:4px;">{bullish_count} / {total_checks}</div>
