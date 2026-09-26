@@ -610,9 +610,11 @@ def render(ctx):
 
     with col_center:
 
-        def module_card(num, label, score, badge, desc, green_at, yellow_at):
+        def module_card(num, label, score, badge, desc, green_at, yellow_at, display_value=None, display_total=None):
             color = score_color(score, green_at, yellow_at)
             badge_bg = score_bg(score, green_at, yellow_at)
+            top_val = score if display_value is None else display_value
+            bottom_val = 100 if display_total is None else display_total
             return f"""
             <div class="overview-module-card"
                  style="background-color:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;
@@ -631,9 +633,9 @@ def render(ctx):
                     <div style="width:72px;height:72px;border-radius:50%;background-color:#FFFFFF;
                                 display:flex;flex-direction:column;align-items:center;justify-content:center;">
                         <span style="font-size:20px;font-weight:bold;color:#0F172A;line-height:1;">
-                            {score}
+                            {top_val}
                         </span>
-                        <span style="font-size:13.5px;color:#64748B;">100</span>
+                        <span style="font-size:13.5px;color:#64748B;">{bottom_val}</span>
                     </div>
                 </div>
                 <div style="color:{color};font-size:15.5px;font-weight:bold;margin-bottom:5px;">
@@ -649,7 +651,8 @@ def render(ctx):
             module_card("03", "ENTRY TIMING", m3_s, m3_badge, m3_desc, 67, 34),
             module_card("04", "AI PREDICTION", m4_s, m4_badge, m4_desc, 70, 50),
             module_card("05", "RISK ANALYSIS", m5_s, m5_badge, m5_desc, 65, 45),
-            module_card("06", "INDUSTRY BENCHMARK", m6_s, m6_badge, m6_desc, 70, 45)
+            module_card("06", "INDUSTRY BENCHMARK", m6_s, m6_badge, m6_desc, 70, 45,
+                        display_value=overall_rank, display_total=n_all)
         ])
 
         st.markdown("""
