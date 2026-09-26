@@ -198,8 +198,8 @@ def render(ctx):
     # ---------------- MARKET RISK (BETA) ----------------
     with r2_c1:
         st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px 12px 0 0; padding:12px 14px 0 14px;">
-    <div style="font-size:16px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">MARKET RISK (BETA) — vs Peers</div>
+            f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px 12px 0 0; padding:12px 14px 0 14px; min-height:92px; box-sizing:border-box;">
+    <div style="font-size:16px; font-weight:bold; color:#64748B; letter-spacing:0.5px; min-height:40px;">MARKET RISK (BETA) — vs Peers</div>
     <div style="font-size:22px; font-weight:bold; color:#0F172A; margin-top:2px;">{beta_val:.2f}</div></div>""",
             unsafe_allow_html=True
         )
@@ -225,8 +225,8 @@ def render(ctx):
     # ---------------- PRICE RISK (VOLATILITY) ----------------
     with r2_c2:
         st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px 12px 0 0; padding:12px 14px 0 14px;">
-    <div style="font-size:16px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">PRICE RISK — Rolling 30D Volatility (actual)</div>
+            f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px 12px 0 0; padding:12px 14px 0 14px; min-height:92px; box-sizing:border-box;">
+    <div style="font-size:16px; font-weight:bold; color:#64748B; letter-spacing:0.5px; min-height:40px;">PRICE RISK — Rolling 30D Volatility (actual)</div>
     <div style="font-size:22px; font-weight:bold; color:#0F172A; margin-top:2px;">{vol_val:.1f}%</div></div>""",
             unsafe_allow_html=True
         )
@@ -257,8 +257,8 @@ def render(ctx):
         )
 
         st.markdown(
-            f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px 12px 0 0; padding:12px 14px 0 14px;">
-    <div style="font-size:16px; font-weight:bold; color:#64748B; letter-spacing:0.5px;">DRAWDOWN — Actual (2023-2025)</div>
+            f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-radius:12px 12px 0 0; padding:12px 14px 0 14px; min-height:92px; box-sizing:border-box;">
+    <div style="font-size:16px; font-weight:bold; color:#64748B; letter-spacing:0.5px; min-height:40px;">DRAWDOWN — Actual (2023-2025)</div>
     <div style="font-size:22px; font-weight:bold; color:#EF4444; margin-top:2px;">-{dd_val:.1f}%</div>
     <div style="font-size:13px; color:#64748B; margin-top:2px;">Recovery: {recovery_txt}</div></div>""",
             unsafe_allow_html=True
