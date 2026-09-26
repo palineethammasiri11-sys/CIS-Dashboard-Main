@@ -630,7 +630,7 @@ def render(ctx):
         if not weaknesses_ib:
             weaknesses_ib.append("ไม่พบจุดอ่อนเชิงเปรียบเทียบที่ชัดเจน")
 
-        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:275px;">
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:220px;">
     <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:6px;">COMPETITIVE ADVANTAGE</div>
     <div style="font-size:15px; color:#10B981; font-weight:bold; margin-bottom:2px;">STRENGTHS</div>
     <ul style="color:#475569; font-size:15px; line-height:1.4; padding-left:14px; margin:0 0 6px 0;">{''.join([f'<li>{s}</li>' for s in strengths_ib])}</ul>
@@ -667,7 +667,7 @@ def render(ctx):
         else:
             rank_sentence = f"อยู่อันดับที่ <b>{sector_rank}</b> จาก {n_sector} บริษัทในกลุ่ม {ctx.stock_info.get('sector','-')}"
 
-        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:275px;">
+        st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:220px;">
     <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:6px;">EXPLAINABLE AI SUMMARY</div>
     <p style="color:#475569; font-size:15px; line-height:1.4; margin:0 0 8px 0;">
     <b>{ctx.selected_ticker}</b> {rank_sentence} (Overall Score {safe(ctx.stock_info.get('overall_score')):.1f}/100) {compare_desc}:</p>
