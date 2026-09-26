@@ -184,6 +184,46 @@ def _missing_list(raw):
         return []
 
 
+def _render_header_bar(ticker_safe, sector_label, c_p, price_chg_pct, pe_ratio, roe_pct, data_as_of):
+    chg_color = GREEN if (price_chg_pct or 0.0) >= 0 else RED
+    chg_arrow = "▲" if (price_chg_pct or 0.0) >= 0 else "▼"
+    price_html = (
+        f'<b style="color:{TEXT_WHITE};font-size:14px;">{c_p:.2f} THB</b>'
+        if c_p is not None else f'<b style="color:{TEXT_MUTED};font-size:14px;">N/A</b>'
+    )
+    chg_html = (
+        f'<span style="color:{chg_color};font-weight:700;">({price_chg_pct:+.2f}%) {chg_arrow}</span>'
+        if price_chg_pct is not None else ""
+    )
+    pe_html = (
+        f'<div><span style="color:{TEXT_MUTED};">P/E:</span> <b style="color:{TEXT_WHITE};">{pe_ratio}x</b></div>'
+        if pe_ratio not in (None, "") else ""
+    )
+    roe_html = (
+        f'<div><span style="color:{TEXT_MUTED};">ROE:</span> <b style="color:{TEXT_WHITE};">{roe_pct}%</b></div>'
+        if roe_pct not in (None, "") else ""
+    )
+    _render_html(
+        f"""
+        <div style="{_card_style('display:flex;justify-content:space-between;align-items:center;padding:12px 20px;margin-bottom:12px;')}">
+            <div style="font-size:18px;font-weight:900;color:{TEXT_WHITE};letter-spacing:.5px;">
+                {ticker_safe} <span style="font-size:13px;font-weight:500;color:{TEXT_MUTED};">{sector_label}</span>
+            </div>
+            <div style="display:flex;gap:20px;font-size:13px;align-items:center;">
+                <div>
+                    <span style="color:{TEXT_MUTED};">Price:</span>
+                    {price_html} {chg_html}
+                </div>
+                {pe_html} {roe_html}
+                <div>
+                    <span style="color:{TEXT_MUTED};">Data as of:</span>
+                    <b style="color:{ACCENT};">{data_as_of}</b>
+                </div>
+            </div>
+        </div>
+        """
+    )
+
 
 def _render_insufficient(sig, reason, missing_fields):
     """ISSUE 01: หน้าจอสถานะ "ยังไม่ได้ประเมิน"
@@ -265,6 +305,7 @@ def render(ctx):
 
     # ---- ISSUE 01: ข้อมูลไม่พอ -> ออกจาก render() ตั้งแต่ต้น ----
     if total_score is None or data_status == "INSUFFICIENT_DATA":
+        _render_header_bar(ticker_safe, sector_label, c_p, price_chg_pct, pe_ratio, roe_pct, data_as_of)
         reason = str(info.get("data_status_reason") or info.get("summary_text") or sig["summary_text"])
         _render_insufficient(sig, reason, _missing_list(info.get("missing_fields")))
         render_nav_footer("m3", prev_page=" Fair Value", next_page=" AI Prediction")
@@ -415,6 +456,7 @@ def render(ctx):
         summary_text = f"ผ่าน {bullish_count}/{total_checks} เกณฑ์ --- <b>สัญญาณยังไม่ครบถ้วน ควรงดเข้าซื้อ</b>"
 
     # --- TOP HEADER BAR ---
+    _render_header_bar(ticker_safe, sector_label, c_p, price_chg_pct, pe_ratio, roe_pct, data_as_of)
     readiness_color = GREEN if readiness == "READY" else AMBER
 
     confidence_dots = "".join([
