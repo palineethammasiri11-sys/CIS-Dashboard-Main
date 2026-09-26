@@ -185,7 +185,7 @@ def render(ctx):
     <div><span style="font-size:32px; color:#0F172A; font-weight:800;">{rank_txt(overall_rank)}</span> <span style="font-size:14px; color:#64748B;">/ {n_all} หุ้น</span></div>
     </div>
     <div style="border-top:1px solid #E2E8F0; padding-top:10px; flex:1; display:flex; flex-direction:column; justify-content:center;">
-    <span style="display:inline-block; margin:0 auto 6px auto; background-color:rgba(16,185,129,0.08); color:{star_color}; border:1.5px solid {star_color}; font-size:13px; font-weight:bold; padding:2px 16px; border-radius:14px;">ในกลุ่ม</span>
+    <span style="display:inline-block; margin:0 auto 6px auto; background-color:{cup_bg}; color:{star_color}; border:1.5px solid {star_color}; font-size:13px; font-weight:bold; padding:2px 16px; border-radius:14px;">ในกลุ่ม</span>
     <div style="font-size:13px; color:#64748B; margin-bottom:2px;">{ctx.stock_info.get('sector','-')}</div>
     <div><span style="font-size:32px; color:#0F172A; font-weight:800;">{rank_txt(sector_rank)}</span> <span style="font-size:14px; color:#64748B;">/ {n_sector} หุ้น</span></div>{sector_block}
     </div>
