@@ -495,12 +495,6 @@ def render(ctx):
 
     show_chart(fig_forecast, key="ai_forecast", expand_height=700)
 
-    st.markdown(
-        f"""<div style="font-size:11px; color:{MUTED}; padding:8px 16px 12px 16px; background:#FFFFFF; border:1px solid #D9E2EC; border-top:none; border-radius:0 0 12px 12px;">
-* เส้นทึบฟ้า = ราคาจริงที่เกิดขึ้นแล้ว | เส้นประสี = ค่ากลางที่โมเดลคาดการณ์ | แถบทึบแสง = ช่วงคาดการณ์ (~80%) จาก Volatility จริง ({safe(ctx.stock_info.get('volatility')):.1f}%) — ไม่ใช่การรับประกันผลตอบแทน</div>""",
-        unsafe_allow_html=True
-    )
-
     st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
 
     # ============================================================
