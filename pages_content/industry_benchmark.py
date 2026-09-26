@@ -32,12 +32,19 @@ pages_content/industry_benchmark.py
   ของหน้านี้ ตาม feedback ทีมออกแบบ
 - ลบการ์ด FINAL RECOMMENDATION (r3_c3 เดิม) ออกทั้งหมด รวมตัวแปรที่ใช้เฉพาะ
   การ์ดนี้ (rec, rec_bg, conf_lvl, sector_rank_display) เพราะไม่ได้ใช้ที่ไหนอีก
-- ย้าย DIMENSION PERCENTILE RANK ลงมาแทนที่ตำแหน่ง r3_c3 (ที่ Final Recommendation
-  เคยอยู่) ปรับ grid ของมิติจาก 6 คอลัมน์ เป็น 3 คอลัมน์ต่อแถว เนื่องจากคอลัมน์นี้
-  แคบกว่าตำแหน่งเดิม (r1_c3 กว้าง 2.1 ส่วน ส่วน r3_c3 กว้างแค่ 1.4 ส่วน) และ
-  ความสูงการ์ดเปลี่ยนจาก fixed 360px เป็น auto ให้ยืดตามเนื้อหาแทนที่จะถูกตัด
 - แถว 2 (Peer Comparison / Radar) เหลือ 2 คอลัมน์ เพราะ Strategic Matrix
   ที่เคยอยู่ตำแหน่งที่ 3 ย้ายขึ้นไปแล้ว
+- STRATEGIC MATRIX ปรับความสูงกราฟกลับลงมาที่ 360px (จาก 480px) ให้เท่ากับ
+  การ์ด STRATEGIC INVESTMENT POSITION / RANKING ที่อยู่แถวเดียวกัน ไม่ให้สูง
+  เกินเพื่อนบ้านสองใบซ้ายมือ
+
+=== PATCH NOTE 3 (Dimension Percentile Rank เต็มความกว้าง) ===
+- DIMENSION PERCENTILE RANK ย้ายออกจาก r3_c3 มาวางเต็มความกว้างของหน้า
+  (เป็นบล็อกของตัวเอง ไม่อยู่ใน st.columns) ตรงพื้นที่ว่างใต้แถว Peer Comparison /
+  Radar พอดี เพราะพื้นที่ตรงนั้นกว้างกว่าคอลัมน์แคบ ๆ ของ r3_c3 เดิม จึงคง grid
+  มิติไว้ที่ 6 คอลัมน์/แถวตามดีไซน์ดั้งเดิม (ไม่ต้องบีบเหลือ 3 คอลัมน์แล้ว)
+- แถว 3 (Competitive Advantage / Explainable AI Summary) กลับมาเหลือ 2
+  คอลัมน์ เพราะ Dimension Percentile Rank ย้ายออกไปเป็นบล็อกเต็มความกว้างแล้ว
 """
 import streamlit as st
 import pandas as pd
@@ -168,7 +175,7 @@ def render(ctx):
         fig_matrix.update_layout(
             paper_bgcolor="#FFFFFF",
             plot_bgcolor="#F8FAFC",
-            height=300,
+            height=360,
             margin=dict(l=20, r=20, t=35, b=20),
             title=dict(text="STRATEGIC MATRIX (All 8 Stocks)", font=dict(size=17, color="#64748B"), x=0.03, y=0.99),
             xaxis=dict(title=dict(text="Business Quality (Health Score) →", font=dict(size=13, color="#64748B")), range=[0, 100], showgrid=False, showticklabels=False),
@@ -469,8 +476,75 @@ def render(ctx):
 
         show_chart(fig_radar, key="industry_radar", expand_height=650)
 
+    # ---------------- DIMENSION PERCENTILE RANK (เต็มความกว้าง แทนที่พื้นที่ว่างใต้ Peer Comparison / Radar) ----------------
+    def calc_pct(df, col):
+        s = df[col].rank(pct=True)
+        match = df['ticker'] == ctx.selected_ticker
+        if not match.any() or pd.isna(s[match].values[0]):
+            return None
+        return int(round(100 - s[match].values[0] * 100))
+
+    dims_cols = [
+        ("Profitability", 'health_score', "#10B981"),
+        ("Growth", 'revenue_growth_yoy', "#3B82F6"),
+        ("Valuation", 'valuation_score', "#F59E0B"),
+        ("Entry Timing", 'timing_score', "#10B981"),
+        ("Risk (safer)", 'risk_score', "#F59E0B"),
+        ("AI Prediction", 'ai_score', "#A855F7"),
+    ]
+
+    def build_dims(df):
+        result = []
+        for label, col, color in dims_cols:
+            if col == 'revenue_growth_yoy' and pd.isna(ctx.stock_info.get('revenue_growth_yoy')):
+                pct = None
+            else:
+                pct = calc_pct(df, col)
+            result.append((label, pct, color))
+        return result
+
+    dims_market = build_dims(ctx.scores_df)
+
+    def dim_pct_card(label, pct, color):
+        if pct is None:
+            return f"""<div style="background:#0F172A; padding:6px 2px; border-radius:6px; border:1px solid #1E293B;">
+<div style="color:#94A3B8; font-size:12px;">{label}</div><div style="color:#64748B; font-size:15px; font-weight:bold; margin:2px 0;">N/A</div>
+<div style="color:#64748B; font-size:12px;">No data</div></div>"""
+        tier = "Excellent" if pct <= 20 else ("Good" if pct <= 45 else ("Fair" if pct <= 70 else "Weak"))
+        return f"""<div style="background:#F8FAFC; padding:6px 2px; border-radius:6px; border:1px solid #E2E8F0;">
+<div style="color:#64748B; font-size:13px;">{label}</div><div style="color:{color}; font-size:17px; font-weight:bold; margin:2px 0;">Top {max(pct,1)}%</div>
+<div style="color:{color}; font-size:13px;">{tier}</div></div>"""
+
+    if single_member_sector:
+        sector_section = f"""<div style="background:rgba(100,116,139,0.06); border:1px dashed #CBD5E1; border-radius:8px; padding:14px; text-align:center; margin-bottom:16px;">
+<div style="color:#64748B; font-size:15px; line-height:1.4;">กลุ่ม <b>{ctx.stock_info.get('sector','-')}</b> มีเพียง 1 หุ้น จึงไม่สามารถเปรียบเทียบ percentile ภายในกลุ่มได้อย่างมีความหมาย</div>
+</div>"""
+    else:
+        dims_sector = build_dims(ctx.sector_peers)
+        sector_section = f"""<div style="font-size:15px; color:#475569; margin-bottom:6px;">เปรียบเทียบกับกลุ่มอุตสาหกรรม {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
+<div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; text-align:center; margin-bottom:16px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
+{''.join([dim_pct_card(l, p, c) for l, p, c in dims_sector])}
+</div>"""
+
+    market_section = f"""<div style="font-size:15px; color:#475569; margin-bottom:6px;">เปรียบเทียบกับหุ้นทั้ง {n_all} ตัว</div>
+<div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; text-align:center; margin-bottom:16px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
+{''.join([dim_pct_card(l, p, c) for l, p, c in dims_market])}
+</div>"""
+
     st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
-    r3_c1, r3_c2, r3_c3 = st.columns([1.3, 1.3, 1.4])
+    st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:auto; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
+<div>
+<div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:10px;">DIMENSION PERCENTILE RANK</div>
+{market_section}
+</div>
+<div style="border-top:1px dashed #CBD5E1; margin-bottom:12px;"></div>
+<div>
+{sector_section}
+</div>
+</div>""", unsafe_allow_html=True)
+
+    st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
+    r3_c1, r3_c2 = st.columns([1.3, 1.3])
 
     # ---------------- COMPETITIVE ADVANTAGE ----------------
     with r3_c1:
@@ -548,73 +622,6 @@ def render(ctx):
     <div style="color:#475569; font-size:15px; line-height:1.5;">
     {metric_rows}
     </div></div>""", unsafe_allow_html=True)
-
-    # ---------------- DIMENSION PERCENTILE RANK (ย้ายมาจาก r1_c3 เดิม แทนที่ FINAL RECOMMENDATION) ----------------
-    with r3_c3:
-        def calc_pct(df, col):
-            s = df[col].rank(pct=True)
-            match = df['ticker'] == ctx.selected_ticker
-            if not match.any() or pd.isna(s[match].values[0]):
-                return None
-            return int(round(100 - s[match].values[0] * 100))
-
-        dims_cols = [
-            ("Profitability", 'health_score', "#10B981"),
-            ("Growth", 'revenue_growth_yoy', "#3B82F6"),
-            ("Valuation", 'valuation_score', "#F59E0B"),
-            ("Entry Timing", 'timing_score', "#10B981"),
-            ("Risk (safer)", 'risk_score', "#F59E0B"),
-            ("AI Prediction", 'ai_score', "#A855F7"),
-        ]
-
-        def build_dims(df):
-            result = []
-            for label, col, color in dims_cols:
-                if col == 'revenue_growth_yoy' and pd.isna(ctx.stock_info.get('revenue_growth_yoy')):
-                    pct = None
-                else:
-                    pct = calc_pct(df, col)
-                result.append((label, pct, color))
-            return result
-
-        dims_market = build_dims(ctx.scores_df)
-
-        def dim_pct_card(label, pct, color):
-            if pct is None:
-                return f"""<div style="background:#0F172A; padding:6px 2px; border-radius:6px; border:1px solid #1E293B;">
-    <div style="color:#94A3B8; font-size:12px;">{label}</div><div style="color:#64748B; font-size:15px; font-weight:bold; margin:2px 0;">N/A</div>
-    <div style="color:#64748B; font-size:12px;">No data</div></div>"""
-            tier = "Excellent" if pct <= 20 else ("Good" if pct <= 45 else ("Fair" if pct <= 70 else "Weak"))
-            return f"""<div style="background:#F8FAFC; padding:6px 2px; border-radius:6px; border:1px solid #E2E8F0;">
-    <div style="color:#64748B; font-size:13px;">{label}</div><div style="color:{color}; font-size:17px; font-weight:bold; margin:2px 0;">Top {max(pct,1)}%</div>
-    <div style="color:{color}; font-size:13px;">{tier}</div></div>"""
-
-        if single_member_sector:
-            sector_section = f"""<div style="background:rgba(100,116,139,0.06); border:1px dashed #CBD5E1; border-radius:8px; padding:14px; text-align:center; margin-bottom:16px;">
-    <div style="color:#64748B; font-size:15px; line-height:1.4;">กลุ่ม <b>{ctx.stock_info.get('sector','-')}</b> มีเพียง 1 หุ้น จึงไม่สามารถเปรียบเทียบ percentile ภายในกลุ่มได้อย่างมีความหมาย</div>
-    </div>"""
-        else:
-            dims_sector = build_dims(ctx.sector_peers)
-            sector_section = f"""<div style="font-size:15px; color:#475569; margin-bottom:6px;">เปรียบเทียบกับกลุ่มอุตสาหกรรม {ctx.stock_info.get('sector','-')} ({n_sector} หุ้น)</div>
-    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; text-align:center; margin-bottom:16px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
-    {''.join([dim_pct_card(l, p, c) for l, p, c in dims_sector])}
-    </div>"""
-
-        market_section = f"""<div style="font-size:15px; color:#475569; margin-bottom:6px;">เปรียบเทียบกับหุ้นทั้ง {n_all} ตัว</div>
-    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; text-align:center; margin-bottom:16px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
-    {''.join([dim_pct_card(l, p, c) for l, p, c in dims_market])}
-    </div>"""
-
-        st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:auto; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
-    <div>
-    <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:10px;">DIMENSION PERCENTILE RANK</div>
-    {market_section}
-    </div>
-    <div style="border-top:1px dashed #CBD5E1; margin-bottom:12px;"></div>
-    <div>
-    {sector_section}
-    </div>
-    </div>""", unsafe_allow_html=True)
 
     import base64
 
