@@ -306,6 +306,12 @@ def render(ctx):
         f'font-size:10px; font-weight:bold; margin-right:5px; flex-shrink:0;">!</span>'
     )
 
+    # สีของป้าย "ขาลง"/"ขาขึ้น" ต้องล้อตามทิศทางที่โมเดลทำนายจริง (direction_th)
+    # เหมือนกับการ์ด DIRECTION (10D) — ฝั่งที่ตรงกับทิศทางจริงจะได้สีธีม (status_color)
+    # ส่วนอีกฝั่งเป็นสีเทาเสมอ ไม่ใช่ไล่สีตายตัวที่ฝั่งซ้าย/ขวาแบบเดิม
+    down_label_color = status_color if direction_th == "ขาลง" else MUTED
+    up_label_color = status_color if direction_th == "ขาขึ้น" else MUTED
+
     st.markdown(
         f"""<div style="background-color:#FFFFFF; border:1px solid #D9E2EC; border-top:none; border-radius:0 0 12px 12px; padding:22px 24px;">
 <div style="display:flex; gap:0; flex-wrap:wrap; align-items:stretch;">
@@ -316,8 +322,8 @@ def render(ctx):
 <div style="font-size:12px; color:{MUTED}; margin-top:2px; margin-bottom:20px;">สัญญาณจากโมเดล AI</div>
 
 <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold; margin-bottom:6px;">
-<span style="color:{status_color};">ขาลง</span>
-<span style="color:{MUTED};">ขาขึ้น</span>
+<span style="color:{down_label_color};">ขาลง</span>
+<span style="color:{up_label_color};">ขาขึ้น</span>
 </div>
 
 <div style="width:100%; height:8px; background:#E2E8F0; border-radius:6px; overflow:hidden;">
