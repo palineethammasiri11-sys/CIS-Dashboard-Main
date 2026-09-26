@@ -114,11 +114,11 @@ def render(ctx):
 
         st.markdown(f"""<div style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; text-align:center; display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box;">
     <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:8px;">RANKING</div>
-    <div style="background-color:rgba(56,189,248,0.10); border:1.5px solid rgba(56,189,248,0.45); border-radius:12px; padding:8px 8px 10px 8px; margin-bottom:10px;">
+    <div style="background-color:{cup_bg}; border:1.5px solid {star_color}; border-radius:12px; padding:8px 8px 10px 8px; margin-bottom:10px;">
     <div style="font-size:14px; color:#0F172A; font-weight:bold;">ทั้งตลาด</div>
     <div style="font-size:13px; color:#64748B; margin-bottom:2px;">{n_all} หุ้นที่ติดตาม</div>
     <div><span style="font-size:32px; color:#0F172A; font-weight:800;">{rank_txt(overall_rank)}</span> <span style="font-size:14px; color:#64748B;">/ {n_all} หุ้น</span></div>
-    <span style="display:inline-block; margin-top:6px; background-color:#38BDF8; color:#FFFFFF; font-size:14px; font-weight:bold; padding:3px 14px; border-radius:8px; box-shadow:0 2px 6px rgba(56,189,248,0.35);">Top {pct_overall}%</span>
+    <span style="display:inline-block; margin-top:6px; background-color:{star_color}; color:#FFFFFF; font-size:14px; font-weight:bold; padding:3px 14px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.12);">Top {pct_overall}%</span>
     </div>
     <div style="border-top:1px solid #E2E8F0; padding-top:10px;">
     <div style="font-size:14px; color:#64748B;">ในกลุ่ม</div>
