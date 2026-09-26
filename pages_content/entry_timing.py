@@ -57,32 +57,6 @@ Changelog vs v3.1:
   12-13px ให้สอดคล้องกับสเกลฟอนต์ของหน้า Company Health (บรรทัดข้อมูล header
   bar, ป้ายชื่อ missing_fields, กล่องเหตุผลในหน้า "ข้อมูลไม่เพียงพอ", และ
   หมายเหตุใน SYSTEM SCORING METHODOLOGY)
-
-=== PATCH NOTE (layout: เติมพื้นที่ว่างคอลัมน์ขวา — ลองแนวทางที่ 1) ===
-- ปัญหา: คอลัมน์ขวา (PRICE SETUP + SYSTEM SCORING METHODOLOGY) เนื้อหาสั้นกว่า
-  คอลัมน์กลาง (กราฟราคา สูง 525px) และคอลัมน์ซ้าย (SIGNAL CHECKLIST 6 ข้อ) มาก
-  ทำให้เหลือพื้นที่ว่างจำนวนมากด้านล่างคอลัมน์ขวา เพราะ Streamlit บังคับความสูง
-  ของแถว columns ให้เท่ากับคอลัมน์ที่สูงที่สุดเสมอ
-- ลองแนวทางแรก: ย้ายการ์ด RISK / REWARD ขึ้นมาไว้ในคอลัมน์ขวาเป็นการ์ดที่ 3
-  --> ทดสอบแล้วพื้นที่ว่างยังเหลือเยอะอยู่ดี (การ์ด RISK/REWARD สั้นกว่าที่คิด)
-
-=== PATCH NOTE (layout: เติมพื้นที่ว่างคอลัมน์ขวา — แนวทางที่ 2, ใช้จริง) ===
-- ยกเลิกแนวทางเพิ่มการ์ดที่ 3 (RISK/REWARD ย้ายกลับไปแถวล่างเหมือนเดิม)
-- แก้ปัญหาที่ต้นเหตุแทน: ใช้ CSS flexbox ทำให้การ์ด PRICE SETUP กับ SYSTEM
-  SCORING METHODOLOGY "ยืดเต็มความสูง" ของคอลัมน์ขวาโดยอัตโนมัติ แทนการเดา
-  ค่า pixel ตายตัว วิธีนี้จะปรับตามความสูงจริงของคอลัมน์กลาง/ซ้ายเสมอ ไม่ว่า
-  เนื้อหาของหุ้นแต่ละตัวจะยาวสั้นแค่ไหน (checklist มี badge N/A กี่รายการ,
-  ข้อความ setup_warning_html โผล่มาหรือไม่ ก็ไม่กระทบ)
-- วิธีทำ: แปะ marker (<span class="right-col-marker">) ที่จุดเริ่มต้นของ
-  "with right:" แล้วใช้ CSS selector `:has()` หา parent vertical-block ของ
-  คอลัมน์ขวาโดยเฉพาะ (ไม่กระทบคอลัมน์ซ้าย/กลาง หรือ columns คู่อื่นในหน้า เช่น
-  c_head1/c_head2 ของแถบเลือกช่วงเวลากราฟ) แล้วสั่ง display:flex ให้การ์ด
-  ทั้งสองยืด (flex:1) เต็มพื้นที่ที่เหลือ พร้อม fallback selector ให้ครอบคลุม
-  ทั้ง Streamlit เวอร์ชันเก่า (class "element-container") และใหม่
-  (data-testid="stElementContainer")
-- ข้อควรทราบ: นี่คือ CSS ที่พึ่งพาโครงสร้าง DOM ภายในของ Streamlit ซึ่งอาจ
-  เปลี่ยนแปลงได้ตามเวอร์ชัน ถ้าทดสอบแล้วยังไม่ยืดตามที่ต้องการ ให้แจ้งเวอร์ชัน
-  Streamlit ที่ใช้ (`streamlit version`) เพื่อปรับ selector ให้ตรง
 """
 import html
 import json
@@ -210,46 +184,6 @@ def _missing_list(raw):
         return []
 
 
-def _render_header_bar(ticker_safe, sector_label, c_p, price_chg_pct, pe_ratio, roe_pct, data_as_of):
-    chg_color = GREEN if (price_chg_pct or 0.0) >= 0 else RED
-    chg_arrow = "▲" if (price_chg_pct or 0.0) >= 0 else "▼"
-    price_html = (
-        f'<b style="color:{TEXT_WHITE};font-size:14px;">{c_p:.2f} THB</b>'
-        if c_p is not None else f'<b style="color:{TEXT_MUTED};font-size:14px;">N/A</b>'
-    )
-    chg_html = (
-        f'<span style="color:{chg_color};font-weight:700;">({price_chg_pct:+.2f}%) {chg_arrow}</span>'
-        if price_chg_pct is not None else ""
-    )
-    pe_html = (
-        f'<div><span style="color:{TEXT_MUTED};">P/E:</span> <b style="color:{TEXT_WHITE};">{pe_ratio}x</b></div>'
-        if pe_ratio not in (None, "") else ""
-    )
-    roe_html = (
-        f'<div><span style="color:{TEXT_MUTED};">ROE:</span> <b style="color:{TEXT_WHITE};">{roe_pct}%</b></div>'
-        if roe_pct not in (None, "") else ""
-    )
-    _render_html(
-        f"""
-        <div style="{_card_style('display:flex;justify-content:space-between;align-items:center;padding:12px 20px;margin-bottom:12px;')}">
-            <div style="font-size:18px;font-weight:900;color:{TEXT_WHITE};letter-spacing:.5px;">
-                {ticker_safe} <span style="font-size:13px;font-weight:500;color:{TEXT_MUTED};">{sector_label}</span>
-            </div>
-            <div style="display:flex;gap:20px;font-size:13px;align-items:center;">
-                <div>
-                    <span style="color:{TEXT_MUTED};">Price:</span>
-                    {price_html} {chg_html}
-                </div>
-                {pe_html} {roe_html}
-                <div>
-                    <span style="color:{TEXT_MUTED};">Data as of:</span>
-                    <b style="color:{ACCENT};">{data_as_of}</b>
-                </div>
-            </div>
-        </div>
-        """
-    )
-
 
 def _render_insufficient(sig, reason, missing_fields):
     """ISSUE 01: หน้าจอสถานะ "ยังไม่ได้ประเมิน"
@@ -331,7 +265,6 @@ def render(ctx):
 
     # ---- ISSUE 01: ข้อมูลไม่พอ -> ออกจาก render() ตั้งแต่ต้น ----
     if total_score is None or data_status == "INSUFFICIENT_DATA":
-        _render_header_bar(ticker_safe, sector_label, c_p, price_chg_pct, pe_ratio, roe_pct, data_as_of)
         reason = str(info.get("data_status_reason") or info.get("summary_text") or sig["summary_text"])
         _render_insufficient(sig, reason, _missing_list(info.get("missing_fields")))
         render_nav_footer("m3", prev_page=" Fair Value", next_page=" AI Prediction")
@@ -396,27 +329,6 @@ def render(ctx):
 
     downside_pct = _num(info.get("downside_pct"))
     upside_pct = _num(info.get("upside_pct"))
-
-    # PATCH (layout): ย้ายการคำนวณตัวแปรของการ์ด RISK/REWARD มาไว้ตรงนี้
-    # (จากเดิมที่คำนวณอยู่ใน b_c1 ของแถวล่างสุด) เพื่อให้ใช้ค่าเดียวกันได้ทั้งใน
-    # คอลัมน์ขวา (right) และ ไม่ต้องคำนวณซ้ำอีกครั้งด้านล่าง — ไม่กระทบ logic
-    # การคำนวณ rr_ratio / rr_computable เดิมแต่อย่างใด (ดู ISSUE 03 ด้านบน)
-    if not rr_computable:
-        rr_color = GRAY
-        rr_headline = "N/A"
-        rr_note = rr_status_reason
-    else:
-        rr_color = GREEN if rr_ratio >= 2.0 else (AMBER if rr_ratio >= 1.5 else RED)
-        rr_headline = f"{_f(rr_ratio)} : 1"
-        if rr_ratio >= 2.0:
-            rr_note = "อัพไซด์สูงกว่าระยะความเสี่ยงที่นิยามไว้อย่างมีนัยสำคัญ"
-        elif rr_ratio >= 1.0:
-            rr_note = "อัพไซด์สูงกว่าระยะความเสี่ยง แต่ส่วนต่างยังไม่มาก"
-        else:
-            rr_note = "อัพไซด์ต่ำกว่าระยะความเสี่ยง ยังไม่คุ้มค่าที่จะเข้า"
-
-    upside_bar = min(100, max(0, (upside_pct or 0.0) * 2))
-    downside_bar = min(100, max(0, (downside_pct or 0.0) * 5))
 
     # TRADER MODE (v2.3): Stop Loss = 30-Day Low, Target 1/2 = Risk x 2 / x 3.
     # เมื่อ New Low Guardrails สั่งงดเข้าเทรด (rr_computable == False) ต้องไม่โชว์
@@ -503,7 +415,6 @@ def render(ctx):
         summary_text = f"ผ่าน {bullish_count}/{total_checks} เกณฑ์ --- <b>สัญญาณยังไม่ครบถ้วน ควรงดเข้าซื้อ</b>"
 
     # --- TOP HEADER BAR ---
-    _render_header_bar(ticker_safe, sector_label, c_p, price_chg_pct, pe_ratio, roe_pct, data_as_of)
     readiness_color = GREEN if readiness == "READY" else AMBER
 
     confidence_dots = "".join([
@@ -779,36 +690,6 @@ def render(ctx):
     # ==================================================================
     with right:
 
-        # PATCH (layout, แนวทางที่ 2): marker + CSS flexbox ทำให้การ์ด 2 ใบ
-        # ในคอลัมน์นี้ (PRICE SETUP, SYSTEM SCORING METHODOLOGY) ยืดเต็มความสูง
-        # ของคอลัมน์โดยอัตโนมัติ แทนการเพิ่มการ์ดที่ 3 หรือเดา pixel ตายตัว
-        st.markdown(
-            """
-            <span class="right-col-marker" style="display:block;height:0;width:0;overflow:hidden;"></span>
-            <style>
-            div[data-testid="stVerticalBlock"]:has(> div .right-col-marker) {
-                height: 100% !important;
-            }
-            div[data-testid="stVerticalBlock"]:has(> div .right-col-marker) > div[data-testid="stElementContainer"],
-            div[data-testid="stVerticalBlock"]:has(> div .right-col-marker) > div.element-container {
-                display: flex !important;
-                flex-direction: column !important;
-            }
-            div[data-testid="stVerticalBlock"]:has(> div .right-col-marker) > div[data-testid="stElementContainer"]:not(:first-child),
-            div[data-testid="stVerticalBlock"]:has(> div .right-col-marker) > div.element-container:not(:first-child) {
-                flex: 1 1 0 !important;
-                min-height: 0 !important;
-            }
-            div[data-testid="stVerticalBlock"]:has(> div .right-col-marker) > div[data-testid="stElementContainer"]:not(:first-child) > div,
-            div[data-testid="stVerticalBlock"]:has(> div .right-col-marker) > div.element-container:not(:first-child) > div {
-                height: 100% !important;
-                box-sizing: border-box !important;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-
         _render_html(
             f"""
             <div style="{_card_style('margin-bottom:12px;')}">
@@ -845,7 +726,7 @@ def render(ctx):
 
         _render_html(
             f"""
-            <div style="{_card_style('margin-bottom:12px;')}">
+            <div style="{_card_style()}">
                 <div style="
                     font-size:16px;
                     font-weight:800;
@@ -874,19 +755,33 @@ def render(ctx):
         )
 
     # ==================================================================
-    # BOTTOM SECTION (กลับไปใช้โครง 2 คอลัมน์เหมือนต้นฉบับ: RISK/REWARD ซ้าย
-    # + WHY WAIT?/WHY NOW? ขวา — เพราะ RISK/REWARD ไม่ได้ย้ายไปคอลัมน์ขวาบน
-    # แล้ว ปัญหาพื้นที่ว่างแก้ด้วย CSS flexbox ใน "with right:" ด้านบนแทน)
+    # BOTTOM SECTION
     # ==================================================================
     st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
     b_c1, b_c2 = st.columns([1.0, 1.5], gap="medium")
 
     # ------------------------------------------------------------
     # BOTTOM LEFT - RISK / REWARD
-    # (ตัวแปร rr_color / rr_headline / rr_note / upside_bar / downside_bar
-    # คำนวณไว้ล่วงหน้าแล้วก่อนหน้านี้ในฟังก์ชัน — ดู PATCH NOTE ด้านบนของไฟล์)
     # ------------------------------------------------------------
     with b_c1:
+
+        # ISSUE 03: NOT_COMPUTABLE ต้องไม่ถูกแสดงเป็น "0.00 : 1" ปนกับค่าที่คำนวณได้จริง
+        if not rr_computable:
+            rr_color = GRAY
+            rr_headline = "N/A"
+            rr_note = rr_status_reason
+        else:
+            rr_color = GREEN if rr_ratio >= 2.0 else (AMBER if rr_ratio >= 1.5 else RED)
+            rr_headline = f"{_f(rr_ratio)} : 1"
+            if rr_ratio >= 2.0:
+                rr_note = "อัพไซด์สูงกว่าระยะความเสี่ยงที่นิยามไว้อย่างมีนัยสำคัญ"
+            elif rr_ratio >= 1.0:
+                rr_note = "อัพไซด์สูงกว่าระยะความเสี่ยง แต่ส่วนต่างยังไม่มาก"
+            else:
+                rr_note = "อัพไซด์ต่ำกว่าระยะความเสี่ยง ยังไม่คุ้มค่าที่จะเข้า"
+
+        upside_bar = min(100, max(0, (upside_pct or 0.0) * 2))
+        downside_bar = min(100, max(0, (downside_pct or 0.0) * 5))
 
         _render_html(
             f"""
