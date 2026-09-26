@@ -21,10 +21,10 @@ def render(ctx):
 
     st.html("""
     <div style="margin-bottom:20px;">
-        <div style="font-size:23px;font-weight:700;color:#0F172A;letter-spacing:0.3px;">
+        <div style="font-size:26px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
             OVERVIEW DASHBOARD
         </div>
-        <div style="font-size:15px;color:#64748B;margin-top:4px;">
+        <div style="font-size:16px; color:#64748B; margin-top:4px;">
             ภาพรวมข้อมูลและการวิเคราะห์เพื่อสนับสนุนการตัดสินใจลงทุน
         </div>
     </div>
