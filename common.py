@@ -45,10 +45,9 @@ COMPANY_NAMES = {
 
 # ลำดับหน้า + emoji ประจำแต่ละโมดูล (ห้ามเปลี่ยน emoji ให้ซ้ำกันข้ามโมดูล — ดูตารางสี/emoji ในเอกสารแบ่งงาน)
 PAGES = [
-    " Overview", " Company Health", " Fair Value",
-    " Entry Timing", " AI Prediction", " Risk Analysis", " Industry Benchmark"
+    " Industry Benchmark", " Overview", " Company Health", " Fair Value",
+    " Entry Timing", " AI Prediction", " Risk Analysis"
 ]
-
 
 # ============================================================================
 # 2. CSS / ธีม Light Clean ของทั้งแอป
