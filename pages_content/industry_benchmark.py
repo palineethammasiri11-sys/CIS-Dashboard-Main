@@ -179,17 +179,19 @@ def render(ctx):
     {''.join([dim_pct_card(l, p, c) for l, p, c in dims_sector])}
     </div>"""
 
+        market_section = f"""<div style="font-size:15px; color:#475569; margin-bottom:6px;">เปรียบเทียบกับหุ้นทั้ง {n_all} ตัว</div>
+    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; text-align:center; margin-bottom:16px; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
+    {''.join([dim_pct_card(l, p, c) for l, p, c in dims_market])}
+    </div>"""
+
         st.markdown(f"""<div class="dimension-percentile-card" style="background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:14px; height:360px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
     <div>
     <div style="font-size:16px; color:#64748B; font-weight:bold; margin-bottom:10px;">DIMENSION PERCENTILE RANK</div>
-    {sector_section}
+    {market_section}
     </div>
     <div style="border-top:1px dashed #CBD5E1; margin-bottom:12px;"></div>
     <div>
-    <div style="font-size:15px; color:#475569; margin-bottom:6px;">เปรียบเทียบกับหุ้นทั้ง {n_all} ตัว</div>
-    <div class="industry-dimension-grid" style="display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; text-align:center; width:100%; min-width:0; max-width:100%; box-sizing:border-box;">
-    {''.join([dim_pct_card(l, p, c) for l, p, c in dims_market])}
-    </div>
+    {sector_section}
     </div>
     </div>""", unsafe_allow_html=True)
 
