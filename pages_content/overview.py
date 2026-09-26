@@ -21,10 +21,10 @@ def render(ctx):
 
     st.html("""
     <div style="margin-bottom:20px;">
-        <div style="font-size:23px;font-weight:700;color:#0F172A;letter-spacing:0.3px;">
-            OVERVIEW DASHBOARD
+        <div style="font-size:26px; font-weight:700; color:#0F172A; letter-spacing:0.3px;">
+            STOCK OVERVIEW
         </div>
-        <div style="font-size:15px;color:#64748B;margin-top:4px;">
+        <div style="font-size:16px; color:#64748B; margin-top:4px;">
             ภาพรวมข้อมูลและการวิเคราะห์เพื่อสนับสนุนการตัดสินใจลงทุน
         </div>
     </div>
@@ -848,9 +848,27 @@ def render(ctx):
         unsafe_allow_html=True
     )
 
-    col_space1, col_space2, col_next, col_disc = st.columns(
+    col_prev, col_home, col_next, col_disc = st.columns(
         [1.3, 1.3, 1.3, 3.3]
     )
+
+    with col_prev:
+        if st.button(
+            "⬅ หน้าก่อนหน้า",
+            key="overview_prev_industry_benchmark",
+            use_container_width=True
+        ):
+            st.session_state["pending_nav"] = "Industry Benchmark"
+            st.rerun()
+
+    with col_home:
+        if st.button(
+            "หน้าหลัก",
+            key="overview_home",
+            use_container_width=True
+        ):
+            st.session_state["pending_nav"] = "Industry Benchmark"
+            st.rerun()
 
     with col_next:
         if st.button(
@@ -858,7 +876,7 @@ def render(ctx):
             key="overview_next_company_health",
             use_container_width=True
         ):
-            st.session_state["pending_nav"] = " Company Health"
+            st.session_state["pending_nav"] = "Company Health"
             st.rerun()
 
     with col_disc:

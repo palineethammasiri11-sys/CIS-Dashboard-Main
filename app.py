@@ -29,6 +29,8 @@ from pages_content import (
     industry_benchmark,
 )
 
+
+
 # 1. ตั้งค่าหน้าเว็บ + CSS ธีมทั้งหมด (ต้องเรียกเป็นคำสั่งแรกสุดของแอป)
 common.setup_page_and_css()
 
@@ -68,7 +70,7 @@ common.render_header_bar(ctx)
 
 # 7. Routing → เรียกหน้าที่เลือกอยู่
 PAGE_RENDERERS = {
-    " Overview": overview.render,
+    " Stock Overview": overview.render,
     " Company Health": company_health.render,
     " Fair Value": fair_value.render,
     " Entry Timing": entry_timing.render,

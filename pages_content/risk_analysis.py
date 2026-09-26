@@ -416,4 +416,4 @@ def render(ctx):
             unsafe_allow_html=True
         )
 
-    render_nav_footer("m5", prev_page=" AI Prediction", next_page=" Industry Benchmark")
+    render_nav_footer("m5", prev_page=" AI Prediction", next_page=None)
