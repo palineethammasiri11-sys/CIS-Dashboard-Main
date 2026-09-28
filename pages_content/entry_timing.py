@@ -57,6 +57,14 @@ Changelog vs v3.1:
   12-13px ให้สอดคล้องกับสเกลฟอนต์ของหน้า Company Health (บรรทัดข้อมูล header
   bar, ป้ายชื่อ missing_fields, กล่องเหตุผลในหน้า "ข้อมูลไม่เพียงพอ", และ
   หมายเหตุใน SYSTEM SCORING METHODOLOGY)
+
+=== PATCH NOTE (คำอธิบาย WHY NOW?/WHY WAIT? อ่านเข้าใจง่ายขึ้นทุกสถานะ) ===
+- คำอธิบายย่อยของการ์ด Trend / Momentum / Volume / Risk-Reward ใน
+  "WHY NOW? / WHY WAIT?" เดิมสั้นและกำกวมในบางสถานะ (โดยเฉพาะตอนกาผิด ✕
+  หรือไม่มีข้อมูล --) แก้เป็นประโยคเต็มที่บอกทั้ง "สิ่งที่ระบบเห็น" และ
+  "ทำไมถึงถูก/ผิด" ให้คนทั่วไปอ่านแล้วเข้าใจได้ทันที ครบทั้ง 3 สถานะ
+  (ผ่าน ✓ / ไม่ผ่าน ✕ / ไม่มีข้อมูล --) ของทั้ง 4 หัวข้อ ไม่กระทบ logic การ
+  ตัดสิน ok/available หรือค่าตัวเลขใดๆ เปลี่ยนแค่ข้อความที่แสดงผล
 """
 import html
 import json
@@ -830,24 +838,51 @@ def render(ctx):
         trend_ok = k15_ok and k16_ok
         trend_av = k15_av and k16_av
 
+        # PATCH: คำอธิบายย่อยของแต่ละหัวข้อ เขียนใหม่ให้เป็นประโยคเต็มที่บอกทั้ง
+        # "สิ่งที่ระบบเห็นจากข้อมูลจริง" และ "ทำไมถึงผ่าน/ไม่ผ่าน" ครบทั้ง 3 สถานะ
+        # (✓ ผ่าน / ✕ ไม่ผ่าน / -- ไม่มีข้อมูล) เพื่อให้คนอ่านทั่วไปเข้าใจได้ทันที
+        # โดยไม่ต้องรู้ศัพท์เทคนิคมาก่อน — ไม่กระทบ logic การตัดสิน ok/available ใดๆ
+        if trend_ok:
+            trend_desc = "ราคาปัจจุบันยืนอยู่เหนือเส้นค่าเฉลี่ยทั้งระยะสั้นและระยะกลาง (EMA20, EMA50) ซึ่งบ่งชี้ว่าแนวโน้มโดยรวมยังเป็นขาขึ้น"
+        elif trend_av:
+            trend_desc = "ราคาปัจจุบันหลุดลงต่ำกว่าเส้นค่าเฉลี่ยระยะสั้น (EMA20) แล้ว ทำให้ยังไม่สามารถยืนยันแนวโน้มขาขึ้นได้ในตอนนี้"
+        else:
+            trend_desc = "ข้อมูลราคาย้อนหลังยังไม่พอสำหรับคำนวณเส้นค่าเฉลี่ย จึงยังบอกทิศทางแนวโน้มไม่ได้"
+
+        if k18_ok:
+            momentum_desc = "เส้น MACD อยู่ในโซนบวก หมายความว่าแรงซื้อในระยะสั้นกำลังแข็งแกร่งกว่าแรงขาย"
+        elif k18_av:
+            momentum_desc = "เส้น MACD อยู่ในโซนลบ หมายความว่าแรงขายในระยะสั้นยังมีน้ำหนักมากกว่าแรงซื้อ"
+        else:
+            momentum_desc = "ข้อมูลไม่พอสำหรับคำนวณ MACD จึงยังประเมินแรงซื้อ-ขายระยะสั้นไม่ได้"
+
+        if k20_ok:
+            volume_desc = "ปริมาณการซื้อขายล่าสุดสูงกว่าค่าเฉลี่ย 20 วันที่ผ่านมา แปลว่ามีแรงซื้อ-ขายจริงเข้ามายืนยันการเคลื่อนไหวของราคา"
+        elif k20_av:
+            volume_desc = "ปริมาณการซื้อขายล่าสุดยังต่ำกว่าค่าเฉลี่ย 20 วันที่ผ่านมา แปลว่ายังไม่มีแรงซื้อ-ขายมากพอมายืนยันสัญญาณ"
+        else:
+            volume_desc = "ข้อมูลปริมาณการซื้อขายไม่พอ จึงยังใช้ยืนยันความน่าเชื่อถือของสัญญาณไม่ได้"
+
+        if not rr_computable:
+            rr_desc = "ยังคำนวณอัตราส่วนผลตอบแทนต่อความเสี่ยง (Risk/Reward) ไม่ได้ เนื่องจากข้อมูลราคาที่ใช้อ้างอิงจุดตัดขาดทุนไม่เพียงพอ"
+        elif k_rr_ok:
+            rr_desc = "ผลตอบแทนที่คาดว่าจะได้รับ (อัพไซด์) สูงกว่าความเสี่ยงที่ต้องยอมรับ (ระยะขาดทุนสูงสุด) อย่างคุ้มค่าพอที่จะเข้าซื้อ"
+        else:
+            rr_desc = "ผลตอบแทนที่คาดว่าจะได้รับยังต่ำกว่าความเสี่ยงที่ต้องยอมรับ จึงยังไม่คุ้มค่าที่จะเข้าซื้อในจุดนี้"
+
         reasons = [
-            ("Trend", "✓" if trend_ok else "✕", GREEN if trend_ok else (RED if trend_av else GRAY),
-             "โครงสร้างราคาเหนือเส้นเฉลี่ย" if trend_ok else ("ราคาอยู่ใต้ EMA20" if trend_av else "ไม่มีข้อมูลเส้นเฉลี่ย")),
-            ("Momentum", "✓" if k18_ok else "✕", GREEN if k18_ok else (RED if k18_av else GRAY),
-             "MACD สนับสนุนโมเมนตัม" if k18_ok else ("MACD เป็นขาลง" if k18_av else "ไม่มีข้อมูล MACD")),
-            ("Volume", "✓" if k20_ok else "✕", GREEN if k20_ok else (RED if k20_av else GRAY),
-             "มี Volume ยืนยัน" if k20_ok else ("วอลุ่มไม่หนุน" if k20_av else "ไม่มีข้อมูลวอลุ่ม")),
+            ("Trend", "✓" if trend_ok else "✕", GREEN if trend_ok else (RED if trend_av else GRAY), trend_desc),
+            ("Momentum", "✓" if k18_ok else "✕", GREEN if k18_ok else (RED if k18_av else GRAY), momentum_desc),
+            ("Volume", "✓" if k20_ok else "✕", GREEN if k20_ok else (RED if k20_av else GRAY), volume_desc),
             ("Risk / Reward", "✓" if (rr_computable and k_rr_ok) else "✕",
-             GREEN if (rr_computable and k_rr_ok) else (RED if rr_computable else GRAY),
-             (("อัตราผลตอบแทนคุ้มค่า" if k_rr_ok else "อัตราผลตอบแทนยังไม่คุ้มความเสี่ยง")
-              if rr_computable else "คำนวณไม่ได้ (ข้อมูลไม่พอ)")),
+             GREEN if (rr_computable and k_rr_ok) else (RED if rr_computable else GRAY), rr_desc),
         ]
 
         reason_cards = "".join(
             f"""
-            <div style="background:{BG_CHIP};padding:7px;border-radius:6px;text-align:center;">
+            <div style="background:{BG_CHIP};padding:8px;border-radius:6px;">
                 <div style="font-size:14px;color:{color};font-weight:bold;">{icon} {name}</div>
-                <div style="font-size:13px;color:{TEXT_MUTED};margin-top:2px;">{desc}</div>
+                <div style="font-size:12.5px;color:{TEXT_MUTED};margin-top:3px;line-height:1.4;">{desc}</div>
             </div>
             """
             for name, icon, color, desc in reasons
