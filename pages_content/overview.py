@@ -153,8 +153,19 @@ def render(ctx):
         "REDUCE / SELL": "#FEF2F2"
     }.get(rec, "#FFFBEB")
 
+    # PATCH: label (ATTRACTIVE/FAIR/CAUTION) ต้องคำนวณจาก "stars" โดยตรง แทนที่จะใช้
+    # เกณฑ์ overall>=65/45 แยกต่างหากจากเกณฑ์ที่ใช้ปัดดาว (ขั้นละ 20 คะแนน) เพราะ
+    # เกณฑ์เดิมตัดกลางช่วงดาวเดียวกันพอดี ทำให้หุ้นที่ได้ 2 ดาวเท่ากันบางตัวขึ้น FAIR
+    # บางตัวขึ้น CAUTION (ไม่สอดคล้องกัน) — ตอนนี้ label ผูกกับจำนวนดาวตรงๆ ทุกตัว
+    # ที่ได้ดาวเท่ากันจะได้ label เดียวกันเสมอ และมีสีของตัวเอง (score_label_color)
+    # ไม่ยืมสีมาจาก rec_color (คำแนะนำซื้อ/ขาย) อีกต่อไป เพราะเป็นคนละความหมายกัน
     stars = min(5, max(1, round(overall / 20)))
-    label = "ATTRACTIVE" if overall >= 65 else "FAIR" if overall >= 45 else "CAUTION"
+    if stars >= 4:
+        label, score_label_color = "ATTRACTIVE", "#10B981"
+    elif stars == 3:
+        label, score_label_color = "FAIR", "#F59E0B"
+    else:
+        label, score_label_color = "CAUTION", "#EF4444"
 
     rec_th = {
         "STRONG BUY": "ซื้อแรง",
@@ -447,7 +458,7 @@ def render(ctx):
                 </div>
 
                 <div style="
-                    color:#F59E0B;
+                    color:{score_label_color};
                     font-size:32px;
                     letter-spacing:5px;
                     line-height:1.2;
@@ -456,7 +467,7 @@ def render(ctx):
                 </div>
 
                 <div style="
-                    color:{rec_color};
+                    color:{score_label_color};
                     font-size:23px;
                     font-weight:800;
                     margin-top:10px;
